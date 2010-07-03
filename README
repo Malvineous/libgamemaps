@@ -1,0 +1,57 @@
+Camoto: Classic-game Modding Tools
+Copyright 2010 Adam Nielsen <malvineous@shikadi.net>
+http://www.shikadi.net/camoto/
+
+Camoto is a collection of utilities for editing (modding) "classic games",
+those from the early to mid 1990s.
+
+This is libgamemaps, one component of the Camoto suite.  libgamemaps is a
+library that provides a uniform method of accessing the different file formats
+used by games to store their levels.
+
+Currently it only supports 2D levels, constructed via a grid of "tiles" (small
+images, usually 16x16 pixels each.)  Each game-specific format can be read as
+a list of tiles, the list can be modified, and then written back to disk in
+the game-specific format.  Multiple layers are supported (to handle games
+which have foreground and background tiles) and each layer can have a different
+grid size (however the grid size must be consistent within the layer, although
+a grid size of 1x1 pixel is possible.)
+
+The library also provides an interface to examine map rules, such as whether a
+particular tile is allowed to be placed at a given location.  This can be used
+by graphical map editors to provide real-time feedback to a user.
+
+The information provided about each grid element also contains an image
+reference, so that a visual representation of the map can be drawn in a user
+interface.  The image references are tied in with the libgamegraphics library,
+so any application wishing to display a game map as it would look in the game
+itself will also need to interact with libgamegraphics to obtain the
+appropriate images.  The image references provided by libgamemaps are indices
+into a tileset, so in theory a set of hard-coded images could also be used
+by an application wishing to avoid a dependency on libgamegraphics.
+
+Also note that any user of this library will most likely need additional
+game-specific information (not supplied by the library) such as which tileset
+to use for particular levels and where (in which files) that data is stored.
+Some formats (Duke Nukem II) supply filenames of tilesets, while others
+(Xargon) do not.  libgamemaps makes this information available if it exists.
+
+This library is still in the preliminary stages, so only the following formats
+have been implemented:
+
+  * None yet!
+
+Many more formats are planned.
+
+The library is compiled and installed in the usual way:
+
+  ./configure && make
+  sudo make install
+  sudo ldconfig
+
+If you downloaded the git release, run ./autogen.sh before the commands above.
+
+All supported map formats are fully documented on the ModdingWiki - see
+http://www.shikadi.net/moddingwiki/
+
+This library is released under the GPLv3 license.
