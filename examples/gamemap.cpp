@@ -22,28 +22,354 @@
 #include <boost/program_options.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/bind.hpp>
+#include <camoto/gamegraphics.hpp>
 #include <camoto/gamemaps.hpp>
 #include <iostream>
 #include <fstream>
+#include "png++/png.hpp"
 
 namespace po = boost::program_options;
 namespace gm = camoto::gamemaps;
+namespace gg = camoto::gamegraphics;
 
 #define PROGNAME "gamemap"
 
-/*** Return values ***/
-// All is good
+/// Return value: All is good
 #define RET_OK                 0
-// Bad arguments (missing/invalid parameters)
+/// Return value: Bad arguments (missing/invalid parameters)
 #define RET_BADARGS            1
-// Major error (couldn't open map file, etc.)
+/// Return value: Major error (couldn't open map file, etc.)
 #define RET_SHOWSTOPPER        2
-// More info needed (-t auto didn't work, specify a type)
+/// Return value: More info needed (-t auto didn't work, specify a type)
 #define RET_BE_MORE_SPECIFIC   3
-// One or more files failed, probably user error (file not found, etc.)
+/// Return value: One or more files failed, probably user error (file not found, etc.)
 #define RET_NONCRITICAL_FAILURE 4
-// Some files failed, but not in a common way (cut off write, disk full, etc.)
+/// Return value: Some files failed, but not in a common way (cut off write, disk full, etc.)
 #define RET_UNCOMMON_FAILURE   5
+
+/// Place to cache tiles when rendering a map to a .png file
+struct CachedTile {
+	unsigned int code;
+	gg::StdImageDataPtr data;
+	gg::StdImageDataPtr mask;
+	unsigned int width;
+	unsigned int height;
+};
+
+/// Open a tileset.
+/**
+ * @param filename
+ *   File to open.
+ *
+ * @param type
+ *   File type if it can't be autodetected.
+ *
+ * @return Shared pointer to the tileset.
+ *
+ * @throw std::ios::failure on error
+ */
+gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
+	throw (std::ios::failure)
+{
+	gg::ManagerPtr pManager(gg::getManager());
+
+	boost::shared_ptr<std::fstream> psTileset(new std::fstream());
+	psTileset->exceptions(std::ios::badbit | std::ios::failbit);
+	try {
+		psTileset->open(filename.c_str(), std::ios::in | std::ios::out | std::ios::binary);
+	} catch (std::ios::failure& e) {
+		std::cerr << "Error opening " << filename << std::endl;
+		throw std::ios::failure("Unable to open tileset");
+	}
+
+	gg::TilesetTypePtr pGfxType;
+	if (type.empty()) {
+		// Need to autodetect the file format.
+		gg::TilesetTypePtr pTestType;
+		int i = 0;
+		while ((pTestType = pManager->getTilesetType(i++))) {
+			gg::TilesetType::Certainty cert = pTestType->isInstance(psTileset);
+			switch (cert) {
+				case gg::TilesetType::DefinitelyNo:
+					break;
+				case gg::TilesetType::Unsure:
+					// If we haven't found a match already, use this one
+					if (!pGfxType) pGfxType = pTestType;
+					break;
+				case gg::TilesetType::PossiblyYes:
+					// Take this one as it's better than an uncertain match
+					pGfxType = pTestType;
+					break;
+				case gg::TilesetType::DefinitelyYes:
+					pGfxType = pTestType;
+					// Don't bother checking any other formats if we got a 100% match
+					goto finishTesting;
+			}
+		}
+finishTesting:
+		if (!pGfxType) {
+			std::cerr << "Unable to automatically determine the graphics file "
+				"type.  Use the --graphics-type option to manually specify the file "
+				"format." << std::endl;
+			throw std::ios::failure("Unable to open tileset");
+		}
+	} else {
+		gg::TilesetTypePtr pTestType(pManager->getTilesetTypeByCode(type));
+		if (!pTestType) {
+			std::cerr << "Unknown file type given to -y/--graphics-type: " << type
+				<< std::endl;
+			throw std::ios::failure("Unable to open tileset");
+		}
+		pGfxType = pTestType;
+	}
+
+	assert(pGfxType != NULL);
+
+	// See if the format requires any supplemental files
+	gg::MP_SUPPLIST suppList = pGfxType->getRequiredSupps(filename);
+	gg::MP_SUPPDATA suppData;
+	if (suppList.size() > 0) {
+		for (gg::MP_SUPPLIST::iterator i = suppList.begin(); i != suppList.end(); i++) {
+			try {
+				boost::shared_ptr<std::fstream> suppStream(new std::fstream());
+				suppStream->exceptions(std::ios::badbit | std::ios::failbit);
+				std::cout << "Opening supplemental file " << i->second << std::endl;
+				suppStream->open(i->second.c_str(), std::ios::in | std::ios::out | std::ios::binary);
+				gg::SuppItem si;
+				si.stream = suppStream;
+				si.fnTruncate = boost::bind<void>(truncate, i->second.c_str(), _1);
+				suppData[i->first] = si;
+			} catch (std::ios::failure e) {
+				std::cerr << "Error opening supplemental file " << i->second.c_str() << std::endl;
+				throw std::ios::failure("Unable to open tileset");
+			}
+		}
+	}
+
+	// Open the graphics file
+	camoto::FN_TRUNCATE fnTruncate =
+		boost::bind<void>(truncate, filename.c_str(), _1);
+	gg::TilesetPtr pTileset(pGfxType->open(psTileset, fnTruncate, suppData));
+	assert(pTileset);
+
+	return pTileset;
+}
+
+/// Export a map to .png file
+/**
+ * Convert the given map into a PNG file on disk, by rendering the map as it
+ * would appear in the game.
+ *
+ * @param map
+ *   Map file to export.
+ *
+ * @param gfxFile
+ *   Filename of the tileset to use.
+ *
+ * @param destFile
+ *   Filename of destination (including ".png")
+ *
+ * @throw std::ios::failure on error
+ */
+void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
+	const std::string& destFile)
+	throw (std::ios::failure)
+{
+	int mapCaps = map->getCaps();
+	int outWidth, outHeight; // in pixels
+	if (mapCaps & gm::Map2D::HasGlobalSize) {
+		map->getMapSize(&outWidth, &outHeight);
+		// Convert to pixels if not already
+		if (mapCaps & gm::Map2D::HasGlobalTileSize) {
+			int x, y;
+			map->getTileSize(&x, &y);
+			outWidth *= x;
+			outHeight *= y;
+		}
+	} else {
+		outWidth = outHeight = 0;
+		int layerCount = map->getLayerCount();
+		for (int i = 0; i < layerCount; i++) {
+			gm::Map2D::LayerPtr layer = map->getLayer(i);
+			int layerCaps = layer->getCaps();
+			if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
+				int layerX, layerY;
+				layer->getLayerSize(&layerX, &layerY);
+				// Convert to pixels if not already
+				if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
+					int x, y;
+					layer->getTileSize(&x, &y);
+					layerX *= x;
+					layerY *= y;
+				} else if (mapCaps & gm::Map2D::HasGlobalTileSize) {
+					int x, y;
+					map->getTileSize(&x, &y);
+					layerX *= x;
+					layerY *= y;
+				} // else no grids at all, already in pixels
+				if (layerX > outWidth) outWidth = layerX;
+				if (layerY > outHeight) outHeight = layerY;
+			}
+		}
+	}
+
+	png::image<png::index_pixel> png(outWidth, outHeight);
+
+	png::palette pal(17);
+	pal[ 0] = png::color(0xFF, 0x00, 0xFF); // transparent
+	pal[ 1] = png::color(0x00, 0x00, 0x00);
+	pal[ 2] = png::color(0x00, 0x00, 0xAA);
+	pal[ 3] = png::color(0x00, 0xAA, 0x00);
+	pal[ 4] = png::color(0x00, 0xAA, 0xAA);
+	pal[ 5] = png::color(0xAA, 0x00, 0x00);
+	pal[ 6] = png::color(0xAA, 0x00, 0xAA);
+	pal[ 7] = png::color(0xAA, 0x55, 0x00);
+	pal[ 8] = png::color(0xAA, 0xAA, 0xAA);
+	pal[ 9] = png::color(0x55, 0x55, 0x55);
+	pal[10] = png::color(0x55, 0x55, 0xFF);
+	pal[11] = png::color(0x55, 0xFF, 0x55);
+	pal[12] = png::color(0x55, 0xFF, 0xFF);
+	pal[13] = png::color(0xFF, 0x55, 0x55);
+	pal[14] = png::color(0xFF, 0x55, 0xFF);
+	pal[15] = png::color(0xFF, 0xFF, 0x55);
+	pal[16] = png::color(0xFF, 0xFF, 0xFF);
+	png.set_palette(pal);
+
+	// Make first colour transparent
+	png::tRNS transparency;
+	transparency.push_back(0);
+	png.set_tRNS(transparency);
+
+	int layerCount = map->getLayerCount();
+	for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+		gm::Map2D::LayerPtr layer = map->getLayer(layerIndex);
+		int layerCaps = layer->getCaps();
+
+		// Figure out the layer size (in tiles) and the tile size
+		int layerWidth, layerHeight;
+		if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
+			layer->getLayerSize(&layerWidth, &layerHeight);
+		} else {
+			// Layer doesn't have own size, use map
+			if (mapCaps & gm::Map2D::HasGlobalSize) {
+				map->getMapSize(&layerHeight, &layerHeight);
+				if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
+					// The layer is the same size as the map, but it has a
+					// different tile size.
+
+					if (mapCaps & gm::Map2D::HasGlobalTileSize) {
+						// The map also has a tile size, so multiply it out to get
+						// dimensions in pixels (which they are if the map doesn't
+						// have a global tile size.)
+						int mtx, mty;
+						map->getTileSize(&mtx, &mty);
+						layerHeight *= mtx;
+						layerWidth *= mty;
+					}
+
+					// Convert the global map size (in pixels) to this layer's
+					// size (in tiles)
+					int tileWidth, tileHeight;
+					layer->getTileSize(&tileWidth, &tileHeight);
+					layerWidth /= tileWidth;
+					layerHeight /= tileHeight;
+				} // else layer size is same as map size
+			} else {
+				std::cout << "Warning: Layer " << layerIndex + 1 << " has no dimensions, and "
+					"neither does the map!  Skipping layer." << std::endl;
+				continue;
+			}
+		}
+
+		int tileWidth, tileHeight;
+		if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
+			layer->getTileSize(&tileWidth, &tileHeight);
+		} else if (mapCaps & gm::Map2D::HasGlobalTileSize) {
+			// The layer doesn't have its own tile size, so use the map's.
+			map->getTileSize(&tileWidth, &tileHeight);
+		} else {
+			// Neither the map nor the layer have a tile size, use the default.
+			tileWidth = tileHeight = 1;
+		}
+		assert((tileWidth != 0) && (tileHeight != 0));
+
+		// Prepare tileset
+		std::vector<CachedTile> cache;
+		const gg::Tileset::VC_ENTRYPTR& allTiles = tileset->getItems();
+
+		// Run through all items in the layer and render them one by one
+		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+		gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
+		int numItems = items->size();
+		if (t != items->end()) {
+			CachedTile thisTile;
+			for (int y = 0; y < layerHeight; y++) {
+				for (int x = 0; x < layerWidth; x++) {
+					for (int i = 0; i < numItems; i++) {
+						if (t == items->end()) t = items->begin();
+						if (((*t)->x == x) && ((*t)->y == y)) break;
+						t++;
+					}
+					if (((*t)->x == x) && ((*t)->y == y)) {
+						// Found tile at this location
+
+						// TODO: Move this mapping code into a per-format class
+						int tileCode = (*t)->code;
+						if (tileCode >= allTiles.size()) tileCode = 0;
+
+						// Find the cached tile
+						bool found = false;
+						for (std::vector<CachedTile>::iterator ct = cache.begin();
+							ct != cache.end(); ct++
+						) {
+							if (ct->code == tileCode) {
+								thisTile = *ct;
+								found = true;
+								break;
+							}
+						}
+						if (!found) {
+							// Tile hasn't been cached yet, load it from the tileset
+							gg::ImagePtr img = tileset->openImage(allTiles[tileCode]);
+							thisTile.data = img->toStandard();
+							thisTile.mask = img->toStandardMask();
+							img->getDimensions(&thisTile.width, &thisTile.height);
+							thisTile.code = tileCode;
+							cache.push_back(thisTile);
+						}
+
+						// Draw tile onto png
+						int offX = x * tileWidth;
+						int offY = y * tileHeight;
+						for (int tY = 0; tY < thisTile.height; tY++) {
+							int pngY = offY+tY;
+							if (pngY >= outHeight) break; // don't write past image edge
+							for (int tX = 0; tX < thisTile.width; tX++) {
+								int pngX = offX+tX;
+								if (pngX >= outWidth) break; // don't write past image edge
+								//png[offY + tY][offX + tX] = png::index_pixel(((*t)->code % 16) + 1);
+								// Only write opaque pixels
+								if (thisTile.mask[tY*thisTile.width+tX] & 0x01) {
+									if (layerIndex == 0) {
+										png[pngY][pngX] = png::index_pixel(0);
+									} // else let higher layers see through to lower ones
+								} else {
+									png[pngY][pngX] =
+										// +1 to the colour to skip over transparent (#0)
+										png::index_pixel(thisTile.data[tY*thisTile.width+tX] + 1);
+								}
+							}
+						}
+
+					} // else no tile at all at this position!
+				}
+			}
+		} // else layer is empty
+	}
+
+	png.write(destFile);
+	return;
+}
 
 int main(int iArgC, char *cArgV[])
 {
@@ -61,12 +387,19 @@ int main(int iArgC, char *cArgV[])
 
 		("print,p", po::value<int>(),
 			"print the given layer in ASCII")
+
+		("render,r", po::value<std::string>(),
+			"render the map to the given .png file")
 	;
 
 	po::options_description poOptions("Options");
 	poOptions.add_options()
 		("type,t", po::value<std::string>(),
 			"specify the map type (default is autodetect)")
+		("graphics,g", po::value<std::string>(),
+			"filename storing game graphics (required with --render)")
+		("graphics-type,y", po::value<std::string>(),
+			"specify format of file passed with --graphics")
 		("script,s",
 			"format output suitable for script parsing")
 		("force,f",
@@ -86,8 +419,8 @@ int main(int iArgC, char *cArgV[])
 	poComplete.add(poActions).add(poOptions).add(poHidden);
 	po::variables_map mpArgs;
 
-	std::string strFilename;
-	std::string strType;
+	std::string strFilename, strType;
+	std::string strGraphics, strGraphicsType;
 
 	bool bScript = false; // show output suitable for script parsing?
 	bool bForceOpen = false; // open anyway even if map not in given format?
@@ -131,6 +464,26 @@ int main(int iArgC, char *cArgV[])
 				}
 				strType = i->value[0];
 			} else if (
+				(i->string_key.compare("g") == 0) ||
+				(i->string_key.compare("graphics") == 0)
+			) {
+				if (i->value.size() == 0) {
+					std::cerr << PROGNAME ": --graphics (-g) requires a parameter."
+						<< std::endl;
+					return RET_BADARGS;
+				}
+				strGraphics = i->value[0];
+			} else if (
+				(i->string_key.compare("y") == 0) ||
+				(i->string_key.compare("graphics-type") == 0)
+			) {
+				if (i->value.size() == 0) {
+					std::cerr << PROGNAME ": --graphics-type (-y) requires a parameter."
+						<< std::endl;
+					return RET_BADARGS;
+				}
+				strGraphicsType = i->value[0];
+			} else if (
 				(i->string_key.compare("s") == 0) ||
 				(i->string_key.compare("script") == 0)
 			) {
@@ -163,7 +516,7 @@ int main(int iArgC, char *cArgV[])
 		}
 
 		// Get the format handler for this file format
-		boost::shared_ptr<gm::Manager> pManager(gm::getManager());
+		gm::ManagerPtr pManager(gm::getManager());
 
 		gm::MapTypePtr pMapType;
 		if (strType.empty()) {
@@ -488,6 +841,21 @@ finishTesting:
 				} else {
 					std::cerr << "Support for printing this map type has not yet "
 						"been implemented!" << std::endl;
+				}
+
+			} else if (i->string_key.compare("render") == 0) {
+				if (strGraphics.empty()) {
+					std::cerr << "You must use --graphics to specify a tileset."
+						<< std::endl;
+					iRet = RET_BADARGS;
+					continue;
+				}
+				// Don't need to check i->value[0], program_options does that for us
+
+				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
+				if (map2d) {
+					gg::TilesetPtr tileset = openTileset(strGraphics, strGraphicsType);
+					map2dToPng(map2d, tileset, i->value[0]);
 				}
 
 			// Ignore --type/-t
