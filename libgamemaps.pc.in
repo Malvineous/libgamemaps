@@ -6,7 +6,6 @@ includedir=@includedir@
 Name: libgamemaps
 Description: Access and modify level data from many different games
 URL: http://www.shikadi.net/camoto/
-Requires: boost >= 1.37
 Version: @VERSION@
-Libs: -L${libdir}
+Libs: -L${libdir} -lgamemaps
 Cflags: -I${includedir}/@camoto_release@
