@@ -36,10 +36,11 @@ to use for particular levels and where (in which files) that data is stored.
 Some formats (Duke Nukem II) supply filenames of tilesets, while others
 (Xargon) do not.  libgamemaps makes this information available if it exists.
 
-This library is still in the preliminary stages, so only the following formats
-have been implemented:
+This library is still in the preliminary stages, so only maps from these
+games have been implemented:
 
-  * None yet!
+  * Dangerous Dave
+  * Xargon
 
 Many more formats are planned.
 
@@ -49,9 +50,17 @@ The library is compiled and installed in the usual way:
   sudo make install
   sudo ldconfig
 
-If you downloaded the git release, run ./autogen.sh before the commands above.
+You will need libgamecommon installed first.  If you downloaded the git
+release, run ./autogen.sh before the commands above.  You can also run
+"make check" to compile and run the tests.
+
+This distribution includes an example program "gamemap" which serves as both
+a command-line interface to the library as well as an example of how to use
+the library.  This program is installed as part of the "make install" process.
+See "man gamemap" for full details (note the manpage is currently documenting
+intended behaviour, but not everything has been implemented yet.)
 
 All supported map formats are fully documented on the ModdingWiki - see
-http://www.shikadi.net/moddingwiki/
+http://www.shikadi.net/moddingwiki/Category:Map_Files
 
 This library is released under the GPLv3 license.

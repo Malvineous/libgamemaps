@@ -1,0 +1,18 @@
+lib_LTLIBRARIES = libgamemaps.la
+
+libgamemaps_la_SOURCES = main.cpp
+libgamemaps_la_SOURCES += map.cpp
+libgamemaps_la_SOURCES += maptype.cpp
+libgamemaps_la_SOURCES += map2d.cpp
+libgamemaps_la_SOURCES += map2d_layer.cpp
+libgamemaps_la_SOURCES += fmt-map-xargon.cpp
+libgamemaps_la_SOURCES += fmt-map-ddave.cpp
+
+EXTRA_libgamemaps_la_SOURCES = fmt-map-xargon.hpp
+EXTRA_libgamemaps_la_SOURCES += fmt-map-ddave.hpp
+
+AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(BOOST_CPPFLAGS) -I $(top_srcdir)/include $(libgamecommon_CFLAGS)
+AM_CXXFLAGS = $(DEBUG_CXXFLAGS)
+
+libgamemaps_la_LDFLAGS = $(AM_LDFLAGS) -release @VERSION@ -version-info 0
+libgamemaps_la_LIBADD = $(BOOST_SYSTEM_LIBS) $(BOOST_FILESYSTEM_LIBS) $(libgamecommon_LIBS)

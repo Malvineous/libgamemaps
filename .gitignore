@@ -32,5 +32,6 @@ doxygen/api/
 doxygen/full/
 
 # Compiled binaries
-examples/gamearch
+examples/gamemap
+examples/hello
 tests/tests
