@@ -31,6 +31,9 @@ libtool
 doxygen/api/
 doxygen/full/
 
+# libpng
+examples/png++/
+
 # Compiled binaries
 examples/gamemap
 examples/hello
