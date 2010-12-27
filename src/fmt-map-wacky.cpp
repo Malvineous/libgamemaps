@@ -136,7 +136,7 @@ MapPtr WackyMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 		Map2D::NoCaps,
 		0, 0,
 		0, 0,
-		layers
+		layers, Map2D::PathPtrVectorPtr()
 	));
 
 	return map;

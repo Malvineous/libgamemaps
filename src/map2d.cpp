@@ -24,12 +24,13 @@ namespace camoto {
 namespace gamemaps {
 
 Map2D::Map2D(int caps, int width, int height, int tileWidth, int tileHeight,
-	LayerPtrVector& layers)
+	LayerPtrVector& layers, PathPtrVectorPtr paths)
 	throw () :
 		caps(caps),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
-		layers(layers)
+		layers(layers),
+		paths(paths)
 {
 }
 
@@ -95,6 +96,12 @@ Map2D::LayerPtr Map2D::getLayer(int index)
 {
 	assert(index < this->getLayerCount());
 	return this->layers[index];
+}
+
+Map2D::PathPtrVectorPtr Map2D::getPaths()
+	throw ()
+{
+	return this->paths;
 }
 
 } // namespace gamemaps

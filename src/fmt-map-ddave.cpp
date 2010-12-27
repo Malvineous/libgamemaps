@@ -36,6 +36,8 @@
 
 #define DD_MAP_WIDTH            100
 #define DD_MAP_HEIGHT           10
+#define DD_TILE_WIDTH           16
+#define DD_TILE_HEIGHT          16
 
 #define DD_LAYER_OFF_PATH       0
 #define DD_LAYER_LEN_PATH       256
@@ -45,6 +47,9 @@
 
 /// This is the largest valid tile code in the background layer.
 #define DD_MAX_VALID_TILECODE 52
+
+/// This is the code used in both X and Y coords to terminate a path.
+#define DD_PATH_END  0xEA
 
 namespace camoto {
 namespace gamemaps {
@@ -112,8 +117,15 @@ MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	input->seekg(0, std::ios::beg);
 
 	// Read the path
-	uint8_t path[DD_LAYER_LEN_PATH];
-	input->read((char *)path, DD_LAYER_LEN_PATH);
+	uint8_t pathdata[DD_LAYER_LEN_PATH];
+	input->read((char *)pathdata, DD_LAYER_LEN_PATH);
+	Map2D::PathPtr pathptr(new Map2D::Path());
+	for (int i = 0; i < DD_LAYER_LEN_PATH; i += 2) {
+		if ((pathdata[i] == DD_PATH_END) && (pathdata[i+1] == DD_PATH_END)) break; // end of path
+		pathptr->points.push_back(Map2D::Path::point(pathdata[i], pathdata[i+1]));
+	}
+	Map2D::PathPtrVectorPtr paths(new Map2D::PathPtrVector());
+	paths->push_back(pathptr);
 
 	// Read the background layer
 	uint8_t bg[DD_LAYER_LEN_BG];
@@ -131,7 +143,7 @@ MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
 		DD_MAP_WIDTH, DD_MAP_HEIGHT,
-		16, 16,
+		DD_TILE_WIDTH, DD_TILE_HEIGHT,
 		tiles
 	));
 
@@ -139,10 +151,10 @@ MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new Map2D(
-		Map2D::NoCaps,
+		Map2D::HasPaths | Map2D::FixedPaths,
 		0, 0,
 		0, 0,
-		layers
+		layers, paths
 	));
 
 	return map;

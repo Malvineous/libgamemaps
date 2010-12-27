@@ -41,6 +41,8 @@ class Map2D: virtual public Map {
 			CanResize         = 0x02, ///< Can the map be resized as a whole?
 			HasGlobalTileSize = 0x04, ///< Does the map have one tile size for all layers?
 			ChangeTileSize    = 0x08, ///< Can the map's grid size be changed?
+			HasPaths          = 0x10, ///< Does the map support paths?
+			FixedPaths        = 0x20, ///< If set, paths cannot be added/removed, only edited
 		};
 
 		class Layer;
@@ -48,6 +50,15 @@ class Map2D: virtual public Map {
 		typedef boost::shared_ptr<Layer> LayerPtr;
 		/// Vector of layers.
 		typedef std::vector<LayerPtr> LayerPtrVector;
+
+		class Path;
+		/// Shared pointer to a path instance.
+		typedef boost::shared_ptr<Path> PathPtr;
+		/// Vector of paths.
+		typedef std::vector<PathPtr> PathPtrVector;
+		/// Shared pointer to a vector of paths.
+		typedef boost::shared_ptr<PathPtrVector> PathPtrVectorPtr;
+
 
 		/// Create a new 2D map.
 		/**
@@ -72,9 +83,12 @@ class Map2D: virtual public Map {
 		 *
 		 * @param layers
 		 *   Vector of map layers.
+		 *
+		 * @param paths
+		 *   Possibly empty vector of map paths.
 		 */
 		Map2D(int caps, int width, int height, int tileWidth, int tileHeight,
-			LayerPtrVector& layers)
+			LayerPtrVector& layers, PathPtrVectorPtr paths)
 			throw ();
 
 		/// Destructor.
@@ -159,13 +173,28 @@ class Map2D: virtual public Map {
 		virtual LayerPtr getLayer(int index)
 			throw ();
 
+		/// Get a list of paths in the level.
+		/**
+		 * A path is a series of points/vectors defining a travel route.  Unlike
+		 * layers, paths are always expressed in pixels, irrespective of tile size.
+		 *
+		 * @pre getCaps() includes HasPaths.
+		 *
+		 * @return A shared pointer to a vector of Path instances.  The paths in
+		 *   the vector can be edited, but if getCaps() includes FixedPaths then
+		 *   paths cannot be created or removed.
+		 */
+		virtual PathPtrVectorPtr getPaths()
+			throw ();
+
 	protected:
-		int caps;       ///< Value to return in getCaps().
-		int width;      ///< Width of map as number of tiles.
-		int height;     ///< Height of map as number of tiles.
-		int tileWidth;  ///< Width of tiles in all layers, in pixels.
-		int tileHeight; ///< Height of tiles in all layers, in pixels.
-		LayerPtrVector layers; ///< Map layers
+		int caps;               ///< Value to return in getCaps().
+		int width;              ///< Width of map as number of tiles.
+		int height;             ///< Height of map as number of tiles.
+		int tileWidth;          ///< Width of tiles in all layers, in pixels.
+		int tileHeight;         ///< Height of tiles in all layers, in pixels.
+		LayerPtrVector layers;  ///< Map layers
+		PathPtrVectorPtr paths; ///< Map paths
 };
 
 /// Shared pointer to an MapType.
@@ -296,11 +325,11 @@ class Map2D::Layer {
 			throw ();
 
 	protected:
-		int caps;         ///< Map capabilities
-		int width;        ///< Map width, in tiles
-		int height;       ///< Map height, in tiles
-		int tileWidth;    ///< Tile width, in pixels
-		int tileHeight;   ///< Tile height, in pixels
+		int caps;               ///< Map capabilities
+		int width;              ///< Map width, in tiles
+		int height;             ///< Map height, in tiles
+		int tileWidth;          ///< Tile width, in pixels
+		int tileHeight;         ///< Tile height, in pixels
 		ItemPtrVectorPtr items; ///< Vector of all items in the layer
 		TextPtrVector strings;  ///< Vector of all text elements in the layer
 };
@@ -320,6 +349,15 @@ class Map2D::Layer::Item {
 class Map2D::Layer::Text: virtual public Map2D::Layer::Item {
 	public:
 		std::string content;  ///< Actual content of the text element
+};
+
+/// A path of points in a map.
+class Map2D::Path {
+	public:
+		typedef std::pair<int, int> point;
+		typedef std::vector<point> point_vector;
+
+		point_vector points;
 };
 
 } // namespace gamemaps
