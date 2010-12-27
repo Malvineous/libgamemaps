@@ -43,7 +43,8 @@
 #define DD_LAYER_LEN_PATH       256
 #define DD_LAYER_OFF_BG         (DD_LAYER_OFF_PATH + DD_LAYER_LEN_PATH)
 #define DD_LAYER_LEN_BG         (DD_MAP_WIDTH * DD_MAP_HEIGHT)
-#define DD_FILESIZE             (256 + 1024)
+#define DD_PAD_LEN              24 // to round DD_LAYER_LEN_BG to nearest power of two
+#define DD_FILESIZE             (DD_LAYER_LEN_PATH + DD_LAYER_LEN_BG + DD_PAD_LEN)
 
 /// This is the largest valid tile code in the background layer.
 #define DD_MAX_VALID_TILECODE 52
@@ -97,6 +98,7 @@ E_CERTAINTY DDaveMapType::isInstance(iostream_sptr psMap) const
 	psMap->read((char *)bg, DD_LAYER_LEN_BG);
 	if (psMap->gcount() != DD_LAYER_LEN_BG) return EC_DEFINITELY_NO; // read error
 	for (int i = 0; i < DD_LAYER_LEN_BG; i++) {
+		// TESTED BY: fmt_map_ddave_isinstance_c02
 		if (bg[i] > DD_MAX_VALID_TILECODE) return EC_DEFINITELY_NO; // invalid tile
 	}
 
@@ -163,7 +165,63 @@ MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, MP_SUPPDATA& suppData) const
 	throw (std::ios::failure)
 {
-	throw std::ios::failure("Not implemented yet");
+	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
+	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (map2d->getLayerCount() != 1)
+		throw std::ios::failure("Incorrect layer count for this format.");
+
+	unsigned long lenWritten = 0;
+
+	output->seekp(0, std::ios::beg);
+
+	// Write the path
+	uint8_t path[DD_LAYER_LEN_PATH];
+	memset(path, 0, DD_LAYER_LEN_PATH);
+	Map2D::PathPtrVectorPtr paths = map2d->getPaths();
+	if (paths->size() != 1) throw std::ios::failure("Incorrect path count for this format.");
+	Map2D::PathPtr first_path = paths->at(0);
+	int pathpos = 0;
+	for (Map2D::Path::point_vector::const_iterator i = first_path->points.begin();
+		i != first_path->points.end();
+		i++
+	) {
+		if (pathpos > 256) throw std::ios::failure("Path too long (max 128 segments)");
+		path[pathpos++] = (uint8_t)((int8_t)(i->first));
+		path[pathpos++] = (uint8_t)((int8_t)(i->second));
+	}
+	// Add terminator if there's enough room.
+	// TODO: Test to see if this is correct, or if a terminator is always required
+	if (pathpos < 256) {
+		path[pathpos++] = DD_PATH_END;
+		path[pathpos++] = DD_PATH_END;
+	}
+	output->write((char *)path, DD_LAYER_LEN_PATH);
+	lenWritten += DD_LAYER_LEN_PATH;
+
+	// Write the background layer
+	uint8_t bg[DD_LAYER_LEN_BG];
+	Map2D::LayerPtr layer = map2d->getLayer(0);
+	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
+		i != items->end();
+		i++
+	) {
+		if (((*i)->x > DD_MAP_WIDTH) || ((*i)->y > DD_MAP_HEIGHT)) {
+			throw std::ios::failure("Layer has tiles outside map boundary!");
+		}
+		bg[(*i)->y * DD_MAP_WIDTH + (*i)->x] = (*i)->code;
+	}
+
+	output->write((char *)bg, DD_LAYER_LEN_BG);
+	lenWritten += DD_LAYER_LEN_BG;
+
+	// Write out padding
+	uint8_t pad[DD_PAD_LEN];
+	memset(pad, 0, DD_PAD_LEN);
+	output->write((char *)pad, DD_PAD_LEN);
+	lenWritten += DD_PAD_LEN;
+
+	return lenWritten;
 }
 
 
