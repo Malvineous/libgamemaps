@@ -25,6 +25,7 @@
 // Include all the file formats for the Manager to load
 #include "fmt-map-xargon.hpp"
 #include "fmt-map-ddave.hpp"
+#include "fmt-map-wacky.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -40,6 +41,7 @@ Manager::Manager()
 {
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
+	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
 }
 
 Manager::~Manager()

@@ -7,9 +7,11 @@ libgamemaps_la_SOURCES += map2d.cpp
 libgamemaps_la_SOURCES += map2d_layer.cpp
 libgamemaps_la_SOURCES += fmt-map-xargon.cpp
 libgamemaps_la_SOURCES += fmt-map-ddave.cpp
+libgamemaps_la_SOURCES += fmt-map-wacky.cpp
 
 EXTRA_libgamemaps_la_SOURCES = fmt-map-xargon.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ddave.hpp
+EXTRA_libgamemaps_la_SOURCES += fmt-map-wacky.hpp
 
 AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(BOOST_CPPFLAGS) -I $(top_srcdir)/include $(libgamecommon_CFLAGS)
 AM_CXXFLAGS = $(DEBUG_CXXFLAGS)
