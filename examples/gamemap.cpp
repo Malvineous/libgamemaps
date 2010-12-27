@@ -425,6 +425,8 @@ int main(int iArgC, char *cArgV[])
 			"format output suitable for script parsing")
 		("force,f",
 			"force open even if the map is not in the given format")
+		("list,l",
+			"list supported file types")
 	;
 
 	po::options_description poHidden("Hidden parameters");
@@ -442,6 +444,9 @@ int main(int iArgC, char *cArgV[])
 
 	std::string strFilename, strType;
 	std::string strGraphics, strGraphicsType;
+
+	// Get the format handler for this file format
+	gm::ManagerPtr pManager(gm::getManager());
 
 	bool bScript = false; // show output suitable for script parsing?
 	bool bForceOpen = false; // open anyway even if map not in given format?
@@ -514,6 +519,27 @@ int main(int iArgC, char *cArgV[])
 				(i->string_key.compare("force") == 0)
 			) {
 				bForceOpen = true;
+			} else if (
+				(i->string_key.compare("l") == 0) ||
+				(i->string_key.compare("list") == 0)
+			) {
+				for (int i = 0; ; i++) {
+					gm::MapTypePtr pMapType(pManager->getMapType(i));
+					if (!pMapType) break;
+					std::cout << pMapType->getMapCode() << "\t"
+						<< pMapType->getFriendlyName();
+					std::vector<std::string> ext = pMapType->getFileExtensions();
+					if (ext.size()) {
+						std::vector<std::string>::iterator i = ext.begin();
+						std::cout << " (*." << *i;
+						for (i++; i != ext.end(); i++) {
+							std::cout << "; *." << *i;
+						}
+						std::cout << ")";
+					}
+					std::cout << std::endl;
+				}
+				return RET_OK;
 			}
 		}
 
@@ -535,9 +561,6 @@ int main(int iArgC, char *cArgV[])
 			#endif
 			return RET_SHOWSTOPPER;
 		}
-
-		// Get the format handler for this file format
-		gm::ManagerPtr pManager(gm::getManager());
 
 		gm::MapTypePtr pMapType;
 		if (strType.empty()) {
