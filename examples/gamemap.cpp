@@ -2,7 +2,7 @@
  * @file   gamemap.cpp
  * @brief  Command-line interface to libgamemaps.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,14 +109,14 @@ gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
 finishTesting:
 		if (!pGfxType) {
 			std::cerr << "Unable to automatically determine the graphics file "
-				"type.  Use the --graphics-type option to manually specify the file "
+				"type.  Use the --graphicstype option to manually specify the file "
 				"format." << std::endl;
 			throw std::ios::failure("Unable to open tileset");
 		}
 	} else {
 		gg::TilesetTypePtr pTestType(pManager->getTilesetTypeByCode(type));
 		if (!pTestType) {
-			std::cerr << "Unknown file type given to -y/--graphics-type: " << type
+			std::cerr << "Unknown file type given to -y/--graphicstype: " << type
 				<< std::endl;
 			throw std::ios::failure("Unable to open tileset");
 		}
@@ -419,7 +419,7 @@ int main(int iArgC, char *cArgV[])
 			"specify the map type (default is autodetect)")
 		("graphics,g", po::value<std::string>(),
 			"filename storing game graphics (required with --render)")
-		("graphics-type,y", po::value<std::string>(),
+		("graphicstype,y", po::value<std::string>(),
 			"specify format of file passed with --graphics")
 		("script,s",
 			"format output suitable for script parsing")
@@ -468,7 +468,7 @@ int main(int iArgC, char *cArgV[])
 				strFilename = i->value[0];
 			} else if (i->string_key.compare("help") == 0) {
 				std::cout <<
-					"Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>\n"
+					"Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>\n"
 					"This program comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 					"and you are welcome to change and redistribute it under certain conditions;\n"
 					"see <http://www.gnu.org/licenses/> for details.\n"
@@ -483,31 +483,16 @@ int main(int iArgC, char *cArgV[])
 				(i->string_key.compare("t") == 0) ||
 				(i->string_key.compare("type") == 0)
 			) {
-				if (i->value.size() == 0) {
-					std::cerr << PROGNAME ": --type (-t) requires a parameter."
-						<< std::endl;
-					return RET_BADARGS;
-				}
 				strType = i->value[0];
 			} else if (
 				(i->string_key.compare("g") == 0) ||
 				(i->string_key.compare("graphics") == 0)
 			) {
-				if (i->value.size() == 0) {
-					std::cerr << PROGNAME ": --graphics (-g) requires a parameter."
-						<< std::endl;
-					return RET_BADARGS;
-				}
 				strGraphics = i->value[0];
 			} else if (
 				(i->string_key.compare("y") == 0) ||
-				(i->string_key.compare("graphics-type") == 0)
+				(i->string_key.compare("graphicstype") == 0)
 			) {
-				if (i->value.size() == 0) {
-					std::cerr << PROGNAME ": --graphics-type (-y) requires a parameter."
-						<< std::endl;
-					return RET_BADARGS;
-				}
 				strGraphicsType = i->value[0];
 			} else if (
 				(i->string_key.compare("s") == 0) ||
@@ -523,21 +508,51 @@ int main(int iArgC, char *cArgV[])
 				(i->string_key.compare("l") == 0) ||
 				(i->string_key.compare("list") == 0)
 			) {
-				for (int i = 0; ; i++) {
-					gm::MapTypePtr pMapType(pManager->getMapType(i));
-					if (!pMapType) break;
-					std::cout << pMapType->getMapCode() << "\t"
-						<< pMapType->getFriendlyName();
-					std::vector<std::string> ext = pMapType->getFileExtensions();
-					if (ext.size()) {
-						std::vector<std::string>::iterator i = ext.begin();
-						std::cout << " (*." << *i;
-						for (i++; i != ext.end(); i++) {
-							std::cout << "; *." << *i;
+				std::cout << "Map types: (--type)\n";
+				int i = 0;
+				{
+					gm::MapTypePtr nextType;
+					while ((nextType = pManager->getMapType(i++))) {
+						std::string code = nextType->getMapCode();
+						std::cout << "  " << code;
+						int len = code.length();
+						if (len < 20) std::cout << std::string(20-code.length(), ' ');
+						std::cout << ' ' << nextType->getFriendlyName();
+						std::vector<std::string> ext = nextType->getFileExtensions();
+						if (ext.size()) {
+							std::vector<std::string>::iterator i = ext.begin();
+							std::cout << " (*." << *i;
+							for (i++; i != ext.end(); i++) {
+								std::cout << "; *." << *i;
+							}
+							std::cout << ")";
 						}
-						std::cout << ")";
+						std::cout << '\n';
 					}
-					std::cout << std::endl;
+				}
+
+				std::cout << "\nMap tilesets: (--graphicstype)\n";
+				i = 0;
+				gg::ManagerPtr pManager(gg::getManager());
+				{
+					gg::TilesetTypePtr nextType;
+					while ((nextType = pManager->getTilesetType(i++))) {
+						std::string code = nextType->getCode();
+						std::cout << "  " << code;
+						int len = code.length();
+						if (len < 20) std::cout << std::string(20-code.length(), ' ');
+						std::cout << ' ' << nextType->getFriendlyName();
+						std::vector<std::string> ext = nextType->getFileExtensions();
+						if (ext.size()) {
+							std::vector<std::string>::iterator i = ext.begin();
+							std::cout << " (*." << *i;
+							for (i++; i != ext.end(); i++) {
+								std::cout << "; *." << *i;
+							}
+							std::cout << ")";
+						}
+						std::cout << '\n';
+					}
 				}
 				return RET_OK;
 			}
@@ -915,14 +930,14 @@ finishTesting:
 			}
 		} // for (all command line elements)
 		//pMap->flush();
-	} catch (po::unknown_option& e) {
+	} catch (po::error& e) {
 		std::cerr << PROGNAME ": " << e.what()
 			<< ".  Use --help for help." << std::endl;
 		return RET_BADARGS;
-	} catch (po::invalid_command_line_syntax& e) {
+	} catch (std::ios::failure& e) {
 		std::cerr << PROGNAME ": " << e.what()
 			<< ".  Use --help for help." << std::endl;
-		return RET_BADARGS;
+		return RET_SHOWSTOPPER;
 	}
 
 	return iRet;
