@@ -80,14 +80,14 @@ std::vector<std::string> XargonMapType::getGameList() const
 	return vcGames;
 }
 
-E_CERTAINTY XargonMapType::isInstance(iostream_sptr psMap) const
+MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 	throw (std::ios::failure)
 {
 	psMap->seekg(0, std::ios::end);
 	io::stream_offset lenMap = psMap->tellg();
 
 	// TESTED BY: fmt_map_xargon_isinstance_c01
-	if (lenMap < XR_OFFSET_OBJLAYER + 2) return EC_DEFINITELY_NO; // too short
+	if (lenMap < XR_OFFSET_OBJLAYER + 2) return MapType::DefinitelyNo; // too short
 
 	psMap->seekg(XR_OFFSET_OBJLAYER, std::ios::beg);
 	uint16_t numObjects;
@@ -95,7 +95,7 @@ E_CERTAINTY XargonMapType::isInstance(iostream_sptr psMap) const
 
 	io::stream_offset offStrings = XR_OFFSET_OBJLAYER + 2 +
 		numObjects * XR_OBJ_ENTRY_LEN + XR_LEN_SAVEDATA;
-	if (lenMap < offStrings) return EC_DEFINITELY_NO; // too short
+	if (lenMap < offStrings) return MapType::DefinitelyNo; // too short
 	psMap->seekg(offStrings, std::ios::beg);
 
 	int i;
@@ -103,15 +103,15 @@ E_CERTAINTY XargonMapType::isInstance(iostream_sptr psMap) const
 		uint16_t lenStr;
 		psMap >> u16le(lenStr);
 		offStrings += lenStr + 2 + 1; // +2 for uint16le, +1 for terminating null
-		if (lenMap < offStrings) return EC_DEFINITELY_NO; // too short
+		if (lenMap < offStrings) return MapType::DefinitelyNo; // too short
 
 		psMap->seekg(offStrings, std::ios::beg);
 		if (offStrings == lenMap) break; // reached EOF
 	}
-	if (i == XR_SAFETY_MAX_STRINGS) return EC_DEFINITELY_NO; // too many strings
+	if (i == XR_SAFETY_MAX_STRINGS) return MapType::DefinitelyNo; // too many strings
 
 	// TESTED BY: fmt_map_xargon_isinstance_c00
-	return EC_DEFINITELY_YES;
+	return MapType::DefinitelyYes;
 }
 
 MapPtr XargonMapType::create(MP_SUPPDATA& suppData) const

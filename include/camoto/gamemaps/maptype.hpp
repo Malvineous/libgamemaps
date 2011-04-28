@@ -33,19 +33,6 @@ namespace camoto {
 /// Namespace for this library
 namespace gamemaps {
 
-/// Confidence level when guessing an map format.
-enum E_CERTAINTY {
-	/// Certain this file is not of the map format.
-	EC_DEFINITELY_NO,
-	/// The checks were inconclusive, it could go either way.
-	EC_UNSURE,
-	/// Everything checked out OK, but this format has no signature or other
-	/// test to be completely certain.
-	EC_POSSIBLY_YES,
-	/// This format has a signature and it matched.
-	EC_DEFINITELY_YES,
-};
-
 /// Type of supplemental file.
 enum E_SUPPTYPE {
 	/// Compression dictionary is external
@@ -78,6 +65,14 @@ typedef std::map<E_SUPPTYPE, SuppItem> MP_SUPPDATA;
 class MapType {
 
 	public:
+
+		/// Confidence level when guessing a file format.
+		enum Certainty {
+			DefinitelyNo,  ///< Definitely not in this format
+			Unsure,        ///< The checks were inconclusive, it could go either way
+			PossiblyYes,   ///< Everything checked out OK, but there's no signature
+			DefinitelyYes, ///< This format has a signature and it matched
+		};
 
 		/// Get a short code to identify this file format, e.g. "map-xargon"
 		/**
@@ -119,7 +114,7 @@ class MapType {
 		 *
 		 * @return A single confidence value from \ref E_CERTAINTY.
 		 */
-		virtual E_CERTAINTY isInstance(iostream_sptr psMap) const
+		virtual Certainty isInstance(istream_sptr psMap) const
 			throw (std::ios::failure) = 0;
 
 		/// Create a blank map in this format.

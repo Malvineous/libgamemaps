@@ -51,7 +51,7 @@ class WackyMapType: virtual public MapType {
 		virtual std::vector<std::string> getGameList() const
 			throw ();
 
-		virtual E_CERTAINTY isInstance(iostream_sptr psMap) const
+		virtual Certainty isInstance(istream_sptr psMap) const
 			throw (std::ios::failure);
 
 		virtual MapPtr create(MP_SUPPDATA& suppData) const

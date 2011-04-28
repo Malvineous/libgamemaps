@@ -583,31 +583,31 @@ int main(int iArgC, char *cArgV[])
 			gm::MapTypePtr pTestType;
 			int i = 0;
 			while ((pTestType = pManager->getMapType(i++))) {
-				gm::E_CERTAINTY cert = pTestType->isInstance(psMap);
+				gm::MapType::Certainty cert = pTestType->isInstance(psMap);
 				switch (cert) {
-					case gm::EC_DEFINITELY_NO:
+					case gm::MapType::DefinitelyNo:
 						// Don't print anything (TODO: Maybe unless verbose?)
 						break;
-					case gm::EC_UNSURE:
+					case gm::MapType::Unsure:
 						std::cout << "File could be a " << pTestType->getFriendlyName()
 							<< " [" << pTestType->getMapCode() << "]" << std::endl;
 						// If we haven't found a match already, use this one
 						if (!pMapType) pMapType = pTestType;
 						break;
-					case gm::EC_POSSIBLY_YES:
+					case gm::MapType::PossiblyYes:
 						std::cout << "File is likely to be a " << pTestType->getFriendlyName()
 							<< " [" << pTestType->getMapCode() << "]" << std::endl;
 						// Take this one as it's better than an uncertain match
 						pMapType = pTestType;
 						break;
-					case gm::EC_DEFINITELY_YES:
+					case gm::MapType::DefinitelyYes:
 						std::cout << "File is definitely a " << pTestType->getFriendlyName()
 							<< " [" << pTestType->getMapCode() << "]" << std::endl;
 						pMapType = pTestType;
 						// Don't bother checking any other formats if we got a 100% match
 						goto finishTesting;
 				}
-				if (cert != gm::EC_DEFINITELY_NO) {
+				if (cert != gm::MapType::DefinitelyNo) {
 					// We got a possible match, see if it requires any suppdata
 					gm::MP_SUPPLIST suppList = pTestType->getRequiredSupps(strFilename);
 					if (suppList.size() > 0) {

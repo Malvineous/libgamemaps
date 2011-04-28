@@ -83,27 +83,27 @@ std::vector<std::string> DDaveMapType::getGameList() const
 	return vcGames;
 }
 
-E_CERTAINTY DDaveMapType::isInstance(iostream_sptr psMap) const
+MapType::Certainty DDaveMapType::isInstance(istream_sptr psMap) const
 	throw (std::ios::failure)
 {
 	psMap->seekg(0, std::ios::end);
 	io::stream_offset lenMap = psMap->tellg();
 
 	// TESTED BY: fmt_map_ddave_isinstance_c01
-	if (lenMap != DD_FILESIZE) return EC_DEFINITELY_NO; // wrong size
+	if (lenMap != DD_FILESIZE) return MapType::DefinitelyNo; // wrong size
 
 	// Read in the layer and make sure all the tile codes are within range
 	uint8_t bg[DD_LAYER_LEN_BG];
 	psMap->seekg(DD_LAYER_OFF_BG, std::ios::beg);
 	psMap->read((char *)bg, DD_LAYER_LEN_BG);
-	if (psMap->gcount() != DD_LAYER_LEN_BG) return EC_DEFINITELY_NO; // read error
+	if (psMap->gcount() != DD_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
 	for (int i = 0; i < DD_LAYER_LEN_BG; i++) {
 		// TESTED BY: fmt_map_ddave_isinstance_c02
-		if (bg[i] > DD_MAX_VALID_TILECODE) return EC_DEFINITELY_NO; // invalid tile
+		if (bg[i] > DD_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
 	}
 
 	// TESTED BY: fmt_map_ddave_isinstance_c00
-	return EC_DEFINITELY_YES;
+	return MapType::DefinitelyYes;
 }
 
 MapPtr DDaveMapType::create(MP_SUPPDATA& suppData) const

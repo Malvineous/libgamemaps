@@ -75,26 +75,26 @@ std::vector<std::string> WackyMapType::getGameList() const
 	return vcGames;
 }
 
-E_CERTAINTY WackyMapType::isInstance(iostream_sptr psMap) const
+MapType::Certainty WackyMapType::isInstance(istream_sptr psMap) const
 	throw (std::ios::failure)
 {
 	psMap->seekg(0, std::ios::end);
 	io::stream_offset lenMap = psMap->tellg();
 
 	// TESTED BY: fmt_map_wacky_isinstance_c01
-	if (lenMap != WW_FILESIZE) return EC_DEFINITELY_NO; // wrong size
+	if (lenMap != WW_FILESIZE) return MapType::DefinitelyNo; // wrong size
 
 	// Read in the layer and make sure all the tile codes are within range
 	uint8_t bg[WW_LAYER_LEN_BG];
 	psMap->seekg(WW_LAYER_OFF_BG, std::ios::beg);
 	psMap->read((char *)bg, WW_LAYER_LEN_BG);
-	if (psMap->gcount() != WW_LAYER_LEN_BG) return EC_DEFINITELY_NO; // read error
+	if (psMap->gcount() != WW_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
 	for (int i = 0; i < WW_LAYER_LEN_BG; i++) {
-		if (bg[i] > WW_MAX_VALID_TILECODE) return EC_DEFINITELY_NO; // invalid tile
+		if (bg[i] > WW_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
 	}
 
 	// TESTED BY: fmt_map_wacky_isinstance_c00
-	return EC_DEFINITELY_YES;
+	return MapType::DefinitelyYes;
 }
 
 MapPtr WackyMapType::create(MP_SUPPDATA& suppData) const
