@@ -43,6 +43,7 @@ class Map2D: virtual public Map {
 			ChangeTileSize    = 0x08, ///< Can the map's grid size be changed?
 			HasPaths          = 0x10, ///< Does the map support paths?
 			FixedPaths        = 0x20, ///< If set, paths cannot be added/removed, only edited
+			HasViewport       = 0x40, ///< Does this map have a viewport?
 		};
 
 		class Layer;
@@ -64,6 +65,14 @@ class Map2D: virtual public Map {
 		/**
 		 * @param caps
 		 *   Map capabilities.  One or more Caps values OR'd together.
+		 *
+		 * @param viewportWidth
+		 *   Width of the viewport in pixels.  Only required if caps includes
+		 *   HasViewport.  See getViewport().
+		 *
+		 * @param viewportHeight
+		 *   Height of the viewport in pixels.  Only required if caps includes
+		 *   HasViewport.  See getViewport().
 		 *
 		 * @param width
 		 *   Global map width, in tiles.  Only required if caps includes
@@ -87,7 +96,8 @@ class Map2D: virtual public Map {
 		 * @param paths
 		 *   Possibly empty vector of map paths.
 		 */
-		Map2D(int caps, int width, int height, int tileWidth, int tileHeight,
+		Map2D(int caps, int viewportWidth, int viewportHeight,
+			int width, int height, int tileWidth, int tileHeight,
 			LayerPtrVector& layers, PathPtrVectorPtr paths)
 			throw ();
 
@@ -100,6 +110,22 @@ class Map2D: virtual public Map {
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
 		virtual int getCaps()
+			throw ();
+
+		/// Retrieve the size of the in-game viewport.
+		/**
+		 * These dimensions indicate how much of the level can be seen by the player
+		 * inside the game.  Given the age of most DOS games, it is typically how
+		 * many tiles can be seen on a 320x200 display (minus the space used for the
+		 * status bar).
+		 *
+		 * @param x
+		 *   Pointer to store viewport width, in pixels.
+		 *
+		 * @param y
+		 *   Pointer to store layer height, in pixels.
+		 */
+		virtual void getViewport(int *x, int *y)
 			throw ();
 
 		/// Retrieve the size of the map.
@@ -189,6 +215,8 @@ class Map2D: virtual public Map {
 
 	protected:
 		int caps;               ///< Value to return in getCaps().
+		int viewportWidth;      ///< Width of viewport in pixels.
+		int viewportHeight;     ///< Height of viewport in pixels.
 		int width;              ///< Width of map as number of tiles.
 		int height;             ///< Height of map as number of tiles.
 		int tileWidth;          ///< Width of tiles in all layers, in pixels.

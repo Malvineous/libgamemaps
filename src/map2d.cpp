@@ -23,10 +23,12 @@
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Map2D(int caps, int width, int height, int tileWidth, int tileHeight,
+Map2D::Map2D(int caps, int viewportWidth, int viewportHeight,
+	int width, int height, int tileWidth, int tileHeight,
 	LayerPtrVector& layers, PathPtrVectorPtr paths)
 	throw () :
 		caps(caps),
+		viewportWidth(viewportWidth), viewportHeight(viewportHeight),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
 		layers(layers),
@@ -43,6 +45,16 @@ int Map2D::getCaps()
 	throw ()
 {
 	return this->caps;
+}
+
+void Map2D::getViewport(int *x, int *y)
+	throw ()
+{
+	assert(this->getCaps() & HasViewport);
+
+	*x = this->viewportWidth;
+	*y = this->viewportHeight;
+	return;
 }
 
 void Map2D::getMapSize(int *x, int *y)

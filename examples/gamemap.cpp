@@ -723,6 +723,7 @@ finishTesting:
 							<< MAP2D_CAP(CanResize)
 							<< MAP2D_CAP(HasGlobalTileSize)
 							<< MAP2D_CAP(ChangeTileSize)
+							<< MAP2D_CAP(HasViewport)
 							<< "\n"
 						;
 					}
@@ -741,6 +742,12 @@ finishTesting:
 							<< (bScript ? "\nmap_units=" : " ")
 							<< ((mapCaps & gm::Map2D::HasGlobalTileSize) ? "tiles" : "pixels")
 							<< "\n";
+					}
+					if (mapCaps & gm::Map2D::HasViewport) {
+						int x, y;
+						map2d->getViewport(&x, &y);
+						std::cout << (bScript ? "viewport_width=" : "Viewport size: ") << x
+							<< (bScript ? "viewport_height=" : "x") << y << "\n";
 					}
 
 					int layerCount = map2d->getLayerCount();
