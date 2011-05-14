@@ -63,8 +63,8 @@ struct FIXTURE_NAME: public default_sample {
 	camoto::iostream_sptr baseStream;
 	gm::MapPtr map;
 	gm::Map2DPtr map2d;
-	gm::MP_SUPPDATA suppData;
-	std::map<gm::E_SUPPTYPE, sstr_ptr> suppBase;
+	camoto::SuppData suppData;
+	std::map<camoto::SuppItem::Type, sstr_ptr> suppBase;
 	gm::MapTypePtr pTestType;
 
 	FIXTURE_NAME() :
@@ -81,8 +81,8 @@ struct FIXTURE_NAME: public default_sample {
 			gm::SuppItem si;
 			si.stream = suppStream;
 			si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1);
-			this->suppData[gm::EST_FAT] = si;
-			this->suppBase[gm::EST_FAT] = suppSS;
+			this->suppData[camoto::SuppItem::FAT] = si;
+			this->suppBase[camoto::SuppItem::FAT] = suppSS;
 		}
 		#endif
 
@@ -113,7 +113,7 @@ struct FIXTURE_NAME: public default_sample {
 		return this->default_sample::is_equal(strExpected, this->baseData->str());
 	}
 
-	boost::test_tools::predicate_result is_supp_equal(gm::E_SUPPTYPE type, const std::string& strExpected)
+	boost::test_tools::predicate_result is_supp_equal(camoto::SuppItem::Type type, const std::string& strExpected)
 	{
 		this->pTestType->write(this->map2d, this->baseStream, this->suppData);
 
@@ -143,7 +143,7 @@ BOOST_FIXTURE_TEST_SUITE(SUITE_NAME, FIXTURE_NAME)
 		BOOST_CHECK_EQUAL(pTestType->isInstance(psBase), r); \
 	}
 
-ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::EC_DEFINITELY_YES);
+ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::MapType::DefinitelyYes);
 
 
 // Define an INVALIDDATA_TEST macro which we use to confirm the reader correctly
@@ -159,7 +159,7 @@ ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::EC_DEFINITELY_YES);
 		gm::SuppItem si; \
 		si.stream = suppStream; \
 		si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1); \
-		suppData[gm::EST_FAT] = si; \
+		suppData[camoto::SuppItem::FAT] = si; \
 	}
 #else
 #	define INVALIDDATA_FATCODE(d)
@@ -187,7 +187,7 @@ ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::EC_DEFINITELY_YES);
 		(*psstrBase) << makeString(d); \
 		camoto::iostream_sptr psBase(psstrBase); \
 		\
-		gm::MP_SUPPDATA suppData; \
+		camoto::SuppData suppData; \
 		INVALIDDATA_FATCODE(f) \
 		\
 		BOOST_CHECK_THROW( \

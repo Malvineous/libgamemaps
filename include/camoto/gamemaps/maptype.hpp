@@ -26,40 +26,13 @@
 #include <map>
 
 #include <camoto/types.hpp>
+#include <camoto/suppitem.hpp>
 #include <camoto/gamemaps/map.hpp>
 
 /// Main namespace
 namespace camoto {
 /// Namespace for this library
 namespace gamemaps {
-
-/// Type of supplemental file.
-enum E_SUPPTYPE {
-	/// Compression dictionary is external
-	EST_DICT,
-};
-
-/// Supplementary item for a map.
-/**
- * This class contains data about a supplementary item required to open a
- * map file.
- *
- * @see MapType::getRequiredSupps()
- */
-struct SuppItem {
-	/// The stream containing the supplemental data.
-	iostream_sptr stream;
-	/// The truncate callback (required)
-	FN_TRUNCATE fnTruncate;
-};
-
-/// A list of required supplemental files and their filenames.  The filenames
-/// may contain a path (especially if the main map file also contains a
-/// path.)
-typedef std::map<E_SUPPTYPE, std::string> MP_SUPPLIST;
-
-/// A list of the supplemental file types mapped to open file streams.
-typedef std::map<E_SUPPTYPE, SuppItem> MP_SUPPDATA;
 
 /// Interface to a particular map format.
 class MapType {
@@ -130,7 +103,7 @@ class MapType {
 		 *
 		 * @return A shared pointer to an instance of the Map class.
 		 */
-		virtual MapPtr create(MP_SUPPDATA& suppData) const
+		virtual MapPtr create(SuppData& suppData) const
 			throw (std::ios::failure) = 0;
 
 		/// Open a map file.
@@ -150,7 +123,7 @@ class MapType {
 		 *   to read the data anyway, to make it possible to "force" a file to be
 		 *   opened by a particular format handler.
 		 */
-		virtual MapPtr open(istream_sptr input, MP_SUPPDATA& suppData) const
+		virtual MapPtr open(istream_sptr input, SuppData& suppData) const
 			throw (std::ios::failure) = 0;
 
 		/// Write a map out to a file in this format.
@@ -168,7 +141,7 @@ class MapType {
 		 *   stream is truncated to this length if necessary.
 		 */
 		virtual unsigned long write(MapPtr map, ostream_sptr output,
-			MP_SUPPDATA& suppData) const
+			SuppData& suppData) const
 			throw (std::ios::failure) = 0;
 
 		/// Get a list of any required supplemental files.
@@ -191,12 +164,12 @@ class MapType {
 		 * @return A (possibly empty) map associating required supplemental file
 		 *         types with their filenames.  For each returned value the file
 		 *         should be opened and placed in a SuppItem instance.  The
-		 *         SuppItem is then added to an \ref MP_SUPPDATA map where it can
+		 *         SuppItem is then added to an \ref SuppData map where it can
 		 *         be passed to newMap() or open().  Note that the filenames
 		 *         returned can have relative paths, and may even have an absolute
 		 *         path, if one was passed in with filenameMap.
 		 */
-		virtual MP_SUPPLIST getRequiredSupps(const std::string& filenameMap) const
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
 			throw ();
 
 };

@@ -114,14 +114,14 @@ MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr XargonMapType::create(MP_SUPPDATA& suppData) const
+MapPtr XargonMapType::create(SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	// TODO: Implement
 	throw std::ios::failure("Not implemented yet!");
 }
 
-MapPtr XargonMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
+MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	// Read the background layer
@@ -226,7 +226,7 @@ MapPtr XargonMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	return map;
 }
 
-unsigned long XargonMapType::write(MapPtr map, ostream_sptr output, MP_SUPPDATA& suppData) const
+unsigned long XargonMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	throw std::ios::failure("Not implemented yet");

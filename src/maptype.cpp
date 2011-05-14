@@ -36,11 +36,11 @@ MapType::~MapType()
 {
 }
 
-MP_SUPPLIST MapType::getRequiredSupps(const std::string& filenameMap) const
+SuppFilenames MapType::getRequiredSupps(const std::string& filenameMap) const
 	throw ()
 {
 	// No supplemental types/empty list
-	return MP_SUPPLIST();
+	return SuppFilenames();
 }
 
 } // namespace gamemaps

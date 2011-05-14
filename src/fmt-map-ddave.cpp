@@ -106,14 +106,14 @@ MapType::Certainty DDaveMapType::isInstance(istream_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr DDaveMapType::create(MP_SUPPDATA& suppData) const
+MapPtr DDaveMapType::create(SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	// TODO: Implement
 	throw std::ios::failure("Not implemented yet!");
 }
 
-MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
+MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	input->seekg(0, std::ios::beg);
@@ -164,7 +164,7 @@ MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	return map;
 }
 
-unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, MP_SUPPDATA& suppData) const
+unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);

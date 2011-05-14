@@ -126,16 +126,16 @@ finishTesting:
 	assert(pGfxType != NULL);
 
 	// See if the format requires any supplemental files
-	gg::MP_SUPPLIST suppList = pGfxType->getRequiredSupps(filename);
-	gg::MP_SUPPDATA suppData;
+	camoto::SuppFilenames suppList = pGfxType->getRequiredSupps(filename);
+	camoto::SuppData suppData;
 	if (suppList.size() > 0) {
-		for (gg::MP_SUPPLIST::iterator i = suppList.begin(); i != suppList.end(); i++) {
+		for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 			try {
 				boost::shared_ptr<std::fstream> suppStream(new std::fstream());
 				suppStream->exceptions(std::ios::badbit | std::ios::failbit);
 				std::cout << "Opening supplemental file " << i->second << std::endl;
 				suppStream->open(i->second.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-				gg::SuppItem si;
+				camoto::SuppItem si;
 				si.stream = suppStream;
 				si.fnTruncate = boost::bind<void>(truncate, i->second.c_str(), _1);
 				suppData[i->first] = si;
@@ -609,12 +609,12 @@ int main(int iArgC, char *cArgV[])
 				}
 				if (cert != gm::MapType::DefinitelyNo) {
 					// We got a possible match, see if it requires any suppdata
-					gm::MP_SUPPLIST suppList = pTestType->getRequiredSupps(strFilename);
+					camoto::SuppFilenames suppList = pTestType->getRequiredSupps(strFilename);
 					if (suppList.size() > 0) {
 						// It has suppdata, see if it's present
 						std::cout << "  * This format requires supplemental files..." << std::endl;
 						bool bSuppOK = true;
-						for (gm::MP_SUPPLIST::iterator i = suppList.begin(); i != suppList.end(); i++) {
+						for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 							try {
 								boost::shared_ptr<std::fstream> suppStream(new std::fstream());
 								suppStream->exceptions(std::ios::badbit | std::ios::failbit);
@@ -669,16 +669,16 @@ finishTesting:
 		}
 
 		// See if the format requires any supplemental files
-		gm::MP_SUPPLIST suppList = pMapType->getRequiredSupps(strFilename);
-		gm::MP_SUPPDATA suppData;
+		camoto::SuppFilenames suppList = pMapType->getRequiredSupps(strFilename);
+		camoto::SuppData suppData;
 		if (suppList.size() > 0) {
-			for (gm::MP_SUPPLIST::iterator i = suppList.begin(); i != suppList.end(); i++) {
+			for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 				try {
 					boost::shared_ptr<std::fstream> suppStream(new std::fstream());
 					suppStream->exceptions(std::ios::badbit | std::ios::failbit);
 					std::cout << "Opening supplemental file " << i->second << std::endl;
 					suppStream->open(i->second.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-					gm::SuppItem si;
+					camoto::SuppItem si;
 					si.stream = suppStream;
 					si.fnTruncate = boost::bind<void>(truncate, i->second.c_str(), _1);
 					suppData[i->first] = si;

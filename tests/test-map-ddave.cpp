@@ -93,7 +93,7 @@ ISINSTANCE_TEST(c01,
 	empty_100x1
 	tile_padding
 	,
-	gm::EC_DEFINITELY_NO
+	gm::MapType::DefinitelyNo
 );
 
 // First tile byte is out of range
@@ -104,5 +104,5 @@ ISINSTANCE_TEST(c02,
 	empty_100x1
 	tile_padding
 	,
-	gm::EC_DEFINITELY_NO
+	gm::MapType::DefinitelyNo
 );

@@ -54,13 +54,13 @@ class XargonMapType: virtual public MapType {
 		virtual Certainty isInstance(istream_sptr psMap) const
 			throw (std::ios::failure);
 
-		virtual MapPtr create(MP_SUPPDATA& suppData) const
+		virtual MapPtr create(SuppData& suppData) const
 			throw (std::ios::failure);
 
-		virtual MapPtr open(istream_sptr input, MP_SUPPDATA& suppData) const
+		virtual MapPtr open(istream_sptr input, SuppData& suppData) const
 			throw (std::ios::failure);
 
-		virtual unsigned long write(MapPtr map, ostream_sptr output, MP_SUPPDATA& suppData) const
+		virtual unsigned long write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 			throw (std::ios::failure);
 
 };

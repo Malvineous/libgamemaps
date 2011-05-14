@@ -97,14 +97,14 @@ MapType::Certainty WackyMapType::isInstance(istream_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr WackyMapType::create(MP_SUPPDATA& suppData) const
+MapPtr WackyMapType::create(SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	// TODO: Implement
 	throw std::ios::failure("Not implemented yet!");
 }
 
-MapPtr WackyMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
+MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	input->seekg(0, std::ios::beg);
@@ -144,7 +144,7 @@ MapPtr WackyMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	return map;
 }
 
-unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, MP_SUPPDATA& suppData) const
+unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 	throw (std::ios::failure)
 {
 	throw std::ios::failure("Not implemented yet");
