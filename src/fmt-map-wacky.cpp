@@ -123,6 +123,7 @@ MapPtr WackyMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 		tiles->push_back(t);
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
+		"Background",
 		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
 		WW_MAP_WIDTH, WW_MAP_HEIGHT,
 		16, 16,

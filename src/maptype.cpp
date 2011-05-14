@@ -31,6 +31,11 @@
 namespace camoto {
 namespace gamemaps {
 
+MapType::~MapType()
+	throw ()
+{
+}
+
 MP_SUPPLIST MapType::getRequiredSupps(const std::string& filenameMap) const
 	throw ()
 {

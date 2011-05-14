@@ -74,6 +74,10 @@ class MapType {
 			DefinitelyYes, ///< This format has a signature and it matched
 		};
 
+		/// No-op virtual destructor.
+		virtual ~MapType()
+			throw ();
+
 		/// Get a short code to identify this file format, e.g. "map-xargon"
 		/**
 		 * This can be useful for command-line arguments.

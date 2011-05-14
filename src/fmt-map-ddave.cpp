@@ -143,6 +143,7 @@ MapPtr DDaveMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 		tiles->push_back(t);
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
+		"Background",
 		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
 		DD_MAP_WIDTH, DD_MAP_HEIGHT,
 		DD_TILE_WIDTH, DD_TILE_HEIGHT,

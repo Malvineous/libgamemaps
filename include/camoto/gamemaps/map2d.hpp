@@ -258,6 +258,9 @@ class Map2D::Layer {
 
 		/// Create a new layer.
 		/**
+		 * @param title
+		 *   User-visible friendly name for the layer.
+		 *
 		 * @param caps
 		 *   Capabilities to return in getCaps().
 		 *
@@ -276,12 +279,19 @@ class Map2D::Layer {
 		 * @param items
 		 *   Vector containing all items in the layer.
 		 */
-		Layer(int caps, int width, int height,
+		Layer(const std::string& title, int caps, int width, int height,
 			int tileWidth, int tileHeight, ItemPtrVectorPtr& items)
 			throw ();
 
 		/// Destructor.
 		virtual ~Layer()
+			throw ();
+
+		/// Get the layer's friendly name.
+		/**
+		 * @return A string containing a name suitable for display to the user.
+		 */
+		virtual const std::string& getTitle()
 			throw ();
 
 		/// Get the capabilities of this tileset format.
@@ -353,6 +363,7 @@ class Map2D::Layer {
 			throw ();
 
 	protected:
+		std::string title;      ///< Layer's friendly name
 		int caps;               ///< Map capabilities
 		int width;              ///< Map width, in tiles
 		int height;             ///< Map height, in tiles

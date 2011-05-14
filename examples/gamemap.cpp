@@ -754,17 +754,18 @@ finishTesting:
 					std::cout << (bScript ? "layercount=" : "Layer count: ")
 						<< layerCount << "\n";
 					for (int i = 0; i < layerCount; i++) {
+						gm::Map2D::LayerPtr layer = map2d->getLayer(i);
 						std::string prefix;
 						if (bScript) {
 							std::stringstream ss;
 							ss << "layer" << i << '_';
 							prefix = ss.str();
-						}
-						else {
+							std::cout << prefix << "name=" << layer->getTitle() << "\n";
+						} else {
 							prefix = "  ";
-							std::cout << "Layer " << i + 1 << ":\n";
+							std::cout << "Layer " << i + 1 << ": \"" << layer->getTitle()
+								<< "\"\n";
 						}
-						gm::Map2D::LayerPtr layer = map2d->getLayer(i);
 						int layerCaps = layer->getCaps();
 						if (bScript) std::cout << prefix << "caps=" << layerCaps << "\n";
 						else std::cout << prefix << "Capabilities:"

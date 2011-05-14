@@ -143,8 +143,9 @@ MapPtr XargonMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 	if (input->tellg() != XR_OFFSET_OBJLAYER) {
 		throw std::ios::failure("Map file has been truncated!  No object layer present.");
 	}
-	
+
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
+		"Background",
 		Map2D::Layer::HasOwnTileSize,
 		0, 0,   // Layer size unused
 		XR_TILE_SIZE, XR_TILE_SIZE,
@@ -180,8 +181,9 @@ MapPtr XargonMapType::open(istream_sptr input, MP_SUPPDATA& suppData) const
 		obj->code = code; // u8 to u16 conversion
 		objects->push_back(objItem);
 	}
-	
+
 	Map2D::LayerPtr objLayer(new Map2D::Layer(
+		"Objects",
 		Map2D::Layer::HasOwnTileSize,
 		0, 0, // Layer size unused
 		1, 1,

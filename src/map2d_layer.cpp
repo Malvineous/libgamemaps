@@ -23,9 +23,10 @@
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Layer::Layer(int caps, int width, int height,
+Map2D::Layer::Layer(const std::string& title, int caps, int width, int height,
 	int tileWidth, int tileHeight, ItemPtrVectorPtr& items)
 	throw () :
+		title(title),
 		caps(caps),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
@@ -36,6 +37,12 @@ Map2D::Layer::Layer(int caps, int width, int height,
 Map2D::Layer::~Layer()
 	throw ()
 {
+}
+
+const std::string& Map2D::Layer::getTitle()
+	throw ()
+{
+	return this->title;
 }
 
 int Map2D::Layer::getCaps()
