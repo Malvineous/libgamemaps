@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 {
 	BOOST_TEST_MESSAGE("Getting map size");
 
-	int width, height;
+	int width = -1, height = -1;
 	if (this->map2d->getCaps() & gm::Map2D::HasGlobalSize) {
 		this->map2d->getMapSize(&width, &height);
 		if (this->map2d->getCaps() & gm::Map2D::HasGlobalTileSize) {
