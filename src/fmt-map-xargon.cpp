@@ -95,7 +95,7 @@ MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 
 	io::stream_offset offStrings = XR_OFFSET_OBJLAYER + 2 +
 		numObjects * XR_OBJ_ENTRY_LEN + XR_LEN_SAVEDATA;
-	if (lenMap < offStrings) return MapType::DefinitelyNo; // too short
+	if (lenMap < offStrings + 2) return MapType::DefinitelyNo; // too short
 	psMap->seekg(offStrings, std::ios::beg);
 
 	int i;
@@ -103,7 +103,7 @@ MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 		uint16_t lenStr;
 		psMap >> u16le(lenStr);
 		offStrings += lenStr + 2 + 1; // +2 for uint16le, +1 for terminating null
-		if (lenMap < offStrings) return MapType::DefinitelyNo; // too short
+		if (lenMap < offStrings + 2) return MapType::DefinitelyNo; // too short
 
 		psMap->seekg(offStrings, std::ios::beg);
 		if (offStrings == lenMap) break; // reached EOF
