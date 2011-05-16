@@ -888,9 +888,9 @@ finishTesting:
 						for (int y = 0; y < layerHeight; y++) {
 							for (int x = 0; x < layerWidth; x++) {
 								for (int i = 0; i < numItems; i++) {
-									if (t == items->end()) t = items->begin();
 									if (((*t)->x == x) && ((*t)->y == y)) break;
 									t++;
+									if (t == items->end()) t = items->begin();
 								}
 								if (((*t)->x != x) || ((*t)->y != y)) {
 									// Grid position with no tile!
