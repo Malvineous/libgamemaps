@@ -2,6 +2,7 @@ check_PROGRAMS = tests
 
 tests_SOURCES = tests.cpp
 tests_SOURCES += test-map-ddave.cpp
+tests_SOURCES += test-map-ccaves.cpp
 #tests_SOURCES += test-map-xargon.cpp
 
 EXTRA_tests_SOURCES = tests.hpp

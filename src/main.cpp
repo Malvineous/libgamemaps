@@ -2,7 +2,7 @@
  * @file   main.cpp
  * @brief  Main entry point for libgamemaps.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include "fmt-map-xargon.hpp"
 #include "fmt-map-ddave.hpp"
 #include "fmt-map-wacky.hpp"
+#include "fmt-map-ccaves.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -42,6 +43,7 @@ Manager::Manager()
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
+	this->vcTypes.push_back(MapTypePtr(new CCavesMapType()));
 }
 
 Manager::~Manager()
