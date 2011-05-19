@@ -140,7 +140,7 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 		t->x = i % DD_MAP_WIDTH;
 		t->y = i / DD_MAP_WIDTH;
 		t->code = bg[i];
-		tiles->push_back(t);
+		if (t->code) tiles->push_back(t); // skip zero tiles (black background)
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
@@ -202,6 +202,7 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 
 	// Write the background layer
 	uint8_t bg[DD_LAYER_LEN_BG];
+	memset(bg, 0x00, DD_LAYER_LEN_BG); // default background tile
 	Map2D::LayerPtr layer = map2d->getLayer(0);
 	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();

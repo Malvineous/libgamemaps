@@ -24,7 +24,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/progress.hpp>
-#include <boost/shared_array.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <exception>
@@ -141,7 +141,7 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 
 	// Read the background layer
 	uint8_t *bg = new uint8_t[lenMap];
-	boost::shared_ptr<uint8_t> sbg(bg);
+	boost::scoped_array<uint8_t> sbg(bg);
 	input->read((char *)bg, lenMap);
 
 	int height = lenMap / (CC_MAP_WIDTH + 1);
@@ -155,7 +155,7 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 			t->x = x;
 			t->y = y;
 			t->code = *bg++;
-			tiles->push_back(t);
+			if (t->code != 0x20) tiles->push_back(t);
 		}
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
@@ -189,15 +189,17 @@ unsigned long CCavesMapType::write(MapPtr map, ostream_sptr output, SuppData& su
 		throw std::ios::failure("Incorrect layer count for this format.");
 
 	unsigned long lenWritten = 0;
-	output->seekp(0, std::ios::beg);
 
 	// Write the background layer
 	int mapWidth, mapHeight;
 	if (!map2d->getCaps() & Map2D::HasGlobalSize)
 		throw std::ios::failure("Cannot write this type of map as this format.");
 	map2d->getMapSize(&mapWidth, &mapHeight);
-	uint8_t *bg = new uint8_t[mapWidth * mapHeight];
-	boost::shared_ptr<uint8_t> sbg(bg);
+	unsigned long lenBG = mapWidth * mapHeight;
+	uint8_t *bg = new uint8_t[lenBG];
+	boost::scoped_array<uint8_t> sbg(bg);
+	// Set the default background tile
+	memset(bg, 0x20, lenBG);
 
 	Map2D::LayerPtr layer = map2d->getLayer(0);
 	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();

@@ -20,7 +20,7 @@
 
 /// 10 empty tiles in a line
 #define empty_10x1 \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20"
 
 /// 40 empty tiles in a line + len (one entire map row)
 #define empty_40x1 \
