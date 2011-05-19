@@ -65,24 +65,6 @@ class XargonMapType: virtual public MapType {
 
 };
 
-struct XargonObject: virtual public Map2D::Layer::Item {
-	// uint8_t code;
-	// uint16_t x
-	// uint16_t y
-	uint16_t spdHoriz;
-	uint16_t spdVert;
-	uint16_t width;
-	uint16_t height;
-	uint16_t subType;
-	uint16_t subState;
-	uint16_t stateCount;
-	uint16_t link;
-	uint16_t flags;
-	uint32_t pointer;
-	uint16_t info;
-	uint16_t zapHold;
-};
-
 } // namespace gamemaps
 } // namespace camoto
 

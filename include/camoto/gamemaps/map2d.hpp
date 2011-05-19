@@ -376,6 +376,8 @@ class Map2D::Layer {
 /// Item within the layer (a tile)
 class Map2D::Layer::Item {
 	public:
+		virtual ~Item() throw ();
+
 		unsigned int x;  ///< Item location in units of tiles
 		unsigned int y;  ///< Item location in units of tiles
 
@@ -387,6 +389,8 @@ class Map2D::Layer::Item {
 /// A text element stored within the layer.
 class Map2D::Layer::Text: virtual public Map2D::Layer::Item {
 	public:
+		virtual ~Text() throw ();
+
 		std::string content;  ///< Actual content of the text element
 };
 

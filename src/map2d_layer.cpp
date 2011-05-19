@@ -97,5 +97,15 @@ const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getAllItems()
 	return this->items;
 }
 
+Map2D::Layer::Item::~Item()
+	throw ()
+{
+}
+
+Map2D::Layer::Text::~Text()
+	throw ()
+{
+}
+
 } // namespace gamemaps
 } // namespace camoto
