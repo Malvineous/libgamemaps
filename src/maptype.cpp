@@ -1,8 +1,8 @@
 /**
- * @file   map.cpp
+ * @file   maptype.cpp
  * @brief  Implementation of base functions in Map class.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
-#include <exception>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
-#include <camoto/gamemaps/map.hpp>
 #include <camoto/gamemaps/maptype.hpp>
-#include <camoto/types.hpp>
 
 namespace camoto {
 namespace gamemaps {
