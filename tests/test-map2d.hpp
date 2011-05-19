@@ -108,15 +108,11 @@ struct FIXTURE_NAME: public default_sample {
 
 	boost::test_tools::predicate_result is_equal(const std::string& strExpected)
 	{
-		this->pTestType->write(this->map2d, this->baseStream, this->suppData);
-
 		return this->default_sample::is_equal(strExpected, this->baseData->str());
 	}
 
 	boost::test_tools::predicate_result is_supp_equal(camoto::SuppItem::Type type, const std::string& strExpected)
 	{
-		this->pTestType->write(this->map2d, this->baseStream, this->suppData);
-
 		return this->default_sample::is_equal(strExpected, this->suppBase[type]->str());
 	}
 
@@ -200,6 +196,7 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 {
 	BOOST_TEST_MESSAGE("Getting map size");
 
+	int layerCount = this->map2d->getLayerCount();
 	int width = -1, height = -1;
 	if (this->map2d->getCaps() & gm::Map2D::HasGlobalSize) {
 		this->map2d->getMapSize(&width, &height);
@@ -210,7 +207,6 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 			height *= y;
 		}
 	} else {
-		int layerCount = this->map2d->getLayerCount();
 		for (int i = 0; i < layerCount; i++) {
 			gm::Map2D::LayerPtr layer = this->map2d->getLayer(i);
 			int layerCaps = layer->getCaps();
@@ -231,36 +227,37 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 
 	BOOST_REQUIRE_EQUAL(width, MAP_WIDTH_PIXELS);
 	BOOST_REQUIRE_EQUAL(height, MAP_HEIGHT_PIXELS);
+	BOOST_REQUIRE_EQUAL(layerCount, MAP_LAYER_COUNT);
 }
 
 BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 {
 	BOOST_TEST_MESSAGE("Reading map codes");
 
-	// Make sure the correct number of layers has been read
-	BOOST_REQUIRE_EQUAL(this->map2d->getLayerCount(), MAP_LAYER_COUNT);
-
-	gm::Map2D::LayerPtr layer = map2d->getLayer(0);
-	const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-
-	bool foundFirstTile = false;
-	for (gm::Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-		i != items->end();
-		i++
-	) {
-		if (((*i)->x == 0) && ((*i)->y == 0)) {
-			BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE);
-			foundFirstTile = true;
-			break;
+	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
+		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
+		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+		bool foundFirstTile = false;
+		for (gm::Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
+			i != items->end();
+			i++
+		) {
+			if (((*i)->x == 0) && ((*i)->y == 0)) {
+				BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE);
+				foundFirstTile = true;
+				break;
+			}
 		}
+		BOOST_REQUIRE_EQUAL(foundFirstTile, true);
+		BOOST_TEST_MESSAGE("Found first tile in this layer");
 	}
-	BOOST_REQUIRE_EQUAL(foundFirstTile, true);
 }
 
 BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 {
 	BOOST_TEST_MESSAGE("Write map codes");
 
+	this->baseData->seekp(0);
 	this->baseData->str("");
 	this->pTestType->write(this->map, this->baseData, this->suppData);
 
