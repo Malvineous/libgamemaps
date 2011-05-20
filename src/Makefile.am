@@ -6,12 +6,14 @@ libgamemaps_la_SOURCES += maptype.cpp
 libgamemaps_la_SOURCES += map2d.cpp
 libgamemaps_la_SOURCES += map2d_layer.cpp
 libgamemaps_la_SOURCES += fmt-map-ccaves.cpp
+libgamemaps_la_SOURCES += fmt-map-cosmo.cpp
 libgamemaps_la_SOURCES += fmt-map-ddave.cpp
 libgamemaps_la_SOURCES += fmt-map-wacky.cpp
 libgamemaps_la_SOURCES += fmt-map-xargon.cpp
 
 EXTRA_libgamemaps_la_SOURCES = fmt-map-ddave.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ccaves.hpp
+EXTRA_libgamemaps_la_SOURCES += fmt-map-cosmo.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-wacky.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-xargon.hpp
 

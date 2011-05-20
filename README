@@ -38,6 +38,7 @@ Some formats (Duke Nukem II) supply filenames of tilesets, while others
 This library is still in the preliminary stages, so only maps from these
 games have been implemented:
 
+  * Cosmo's Cosmic Adventures
   * Crystal Caves
   * Dangerous Dave
   * Wacky Wheels
