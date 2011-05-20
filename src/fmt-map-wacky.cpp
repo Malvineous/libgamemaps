@@ -36,10 +36,15 @@
 
 #define WW_MAP_WIDTH            64
 #define WW_MAP_HEIGHT           64
+#define WW_TILE_WIDTH           16
+#define WW_TILE_HEIGHT          16
 
 #define WW_LAYER_OFF_BG         0
 #define WW_LAYER_LEN_BG         (WW_MAP_WIDTH * WW_MAP_HEIGHT)
 #define WW_FILESIZE             (WW_LAYER_LEN_BG)
+
+/// Map code to write for locations with no tile set.
+#define WW_DEFAULT_BGTILE     0x00
 
 /// This is the largest valid tile code in the background layer.
 #define WW_MAX_VALID_TILECODE 0x6C
@@ -98,8 +103,9 @@ MapType::Certainty WackyMapType::isInstance(istream_sptr psMap) const
 	uint8_t bg[WW_LAYER_LEN_BG];
 	psMap->seekg(WW_LAYER_OFF_BG, std::ios::beg);
 	psMap->read((char *)bg, WW_LAYER_LEN_BG);
-	if (psMap->gcount() != WW_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
+	if (psMap->gcount() != WW_LAYER_LEN_BG) throw std::ios::failure("short read");
 	for (int i = 0; i < WW_LAYER_LEN_BG; i++) {
+		// TESTED BY: fmt_map_wacky_isinstance_c02
 		if (bg[i] > WW_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
 	}
 
@@ -134,9 +140,9 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
-		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
-		WW_MAP_WIDTH, WW_MAP_HEIGHT,
-		16, 16,
+		Map2D::Layer::NoCaps,
+		0, 0,
+		0, 0,
 		tiles,
 		imageFromWWCode
 	));
@@ -145,10 +151,10 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new Map2D(
-		Map2D::NoCaps,
+		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		0, 0,
-		0, 0,
-		0, 0,
+		WW_MAP_WIDTH, WW_MAP_HEIGHT,
+		WW_TILE_WIDTH, WW_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
 
@@ -158,7 +164,32 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 	throw (std::ios::failure)
 {
-	throw std::ios::failure("Not implemented yet");
+	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
+	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (map2d->getLayerCount() != 1)
+		throw std::ios::failure("Incorrect layer count for this format.");
+
+	unsigned long lenWritten = 0;
+
+	// Write the background layer
+	uint8_t bg[WW_LAYER_LEN_BG];
+	memset(bg, WW_DEFAULT_BGTILE, WW_LAYER_LEN_BG); // default background tile
+	Map2D::LayerPtr layer = map2d->getLayer(0);
+	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
+		i != items->end();
+		i++
+	) {
+		if (((*i)->x > WW_MAP_WIDTH) || ((*i)->y > WW_MAP_HEIGHT)) {
+			throw std::ios::failure("Layer has tiles outside map boundary!");
+		}
+		bg[(*i)->y * WW_MAP_WIDTH + (*i)->x] = (*i)->code;
+	}
+
+	output->write((char *)bg, WW_LAYER_LEN_BG);
+	lenWritten += WW_LAYER_LEN_BG;
+
+	return lenWritten;
 }
 
 
