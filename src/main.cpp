@@ -26,6 +26,7 @@
 #include "fmt-map-ddave.hpp"
 #include "fmt-map-ccaves.hpp"
 #include "fmt-map-cosmo.hpp"
+#include "fmt-map-harry.hpp"
 #include "fmt-map-wacky.hpp"
 #include "fmt-map-xargon.hpp"
 
@@ -44,6 +45,7 @@ Manager::Manager()
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CCavesMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
+	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
 }
