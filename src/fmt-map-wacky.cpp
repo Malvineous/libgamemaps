@@ -3,9 +3,9 @@
  * @brief  MapType and Map2D implementation for Wacky Wheels levels.
  *
  * This file format is fully documented on the ModdingWiki:
- *   http://www.shikadi.net/moddingwiki/Wacky_Map_Format
+ *   http://www.shikadi.net/moddingwiki/Wacky_Wheels
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,16 @@
 
 namespace camoto {
 namespace gamemaps {
+
+using namespace camoto::gamegraphics;
+
+/// Convert a map code into an image.
+ImagePtr imageFromWWCode(unsigned int code, VC_TILESET tileset)
+	throw ()
+{
+	// TODO
+	return ImagePtr();
+}
 
 std::string WackyMapType::getMapCode() const
 	throw ()
@@ -127,7 +137,8 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
 		WW_MAP_WIDTH, WW_MAP_HEIGHT,
 		16, 16,
-		tiles
+		tiles,
+		imageFromWWCode
 	));
 
 	Map2D::LayerPtrVector layers;

@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/DDave_Map_Format
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/progress.hpp>
 #include <boost/shared_array.hpp>
-#include <boost/algorithm/string.hpp>
-#include <iostream>
-#include <exception>
-#include <string.h>
-
-#include "fmt-map-ddave.hpp"
+#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include <camoto/debug.hpp>
+#include "fmt-map-ddave.hpp"
 
 #define DD_MAP_WIDTH            100
 #define DD_MAP_HEIGHT           10
@@ -54,6 +46,18 @@
 
 namespace camoto {
 namespace gamemaps {
+
+using namespace camoto::gamegraphics;
+
+/// Convert a map code into an image.
+ImagePtr imageFromDDCode(unsigned int code, VC_TILESET tileset)
+	throw ()
+{
+	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
+	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
+	if (images.size() < code) return ImagePtr(); // out of range
+	return tileset[0]->openImage(images[code]);
+}
 
 std::string DDaveMapType::getMapCode() const
 	throw ()
@@ -147,7 +151,8 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
 		DD_MAP_WIDTH, DD_MAP_HEIGHT,
 		DD_TILE_WIDTH, DD_TILE_HEIGHT,
-		tiles
+		tiles,
+		imageFromDDCode
 	));
 
 	Map2D::LayerPtrVector layers;

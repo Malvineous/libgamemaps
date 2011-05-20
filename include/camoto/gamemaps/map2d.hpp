@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <map>
+#include <camoto/gamegraphics/tileset.hpp>
 #include <camoto/gamemaps/map.hpp>
 
 namespace camoto {
@@ -59,7 +60,6 @@ class Map2D: virtual public Map {
 		typedef std::vector<PathPtr> PathPtrVector;
 		/// Shared pointer to a vector of paths.
 		typedef boost::shared_ptr<PathPtrVector> PathPtrVectorPtr;
-
 
 		/// Create a new 2D map.
 		/**
@@ -247,6 +247,20 @@ class Map2D::Layer {
 		/// Vector of text elements.
 		typedef std::vector<TextPtr> TextPtrVector;
 
+		/// Function pointer to a callback function.
+		/**
+		 * This function pointer is supplied in the constructor and is called to
+		 * convert map codes into images.  The function is defined as:
+		 *
+		 * camoto::gamegraphics::ImagePtr convertMyCodes(unsigned int code) { ... }
+		 *
+		 * Where 'code' is the map code to convert, and the return value is the
+		 * image to use for this map code.  A return value of a NULL pointer will
+		 * result in some sort of unknown/question mark tile being used.
+		 */
+		typedef camoto::gamegraphics::ImagePtr (*FN_IMAGEFROMCODE)
+			(unsigned int, camoto::gamegraphics::VC_TILESET tileset);
+
 		/// Capabilities this layer supports.
 		enum Caps {
 			NoCaps          = 0x00, ///< No caps set
@@ -278,9 +292,13 @@ class Map2D::Layer {
 		 *
 		 * @param items
 		 *   Vector containing all items in the layer.
+		 *
+		 * @param fnImageFromCode
+		 *   Callback function to convert map codes into images.
 		 */
 		Layer(const std::string& title, int caps, int width, int height,
-			int tileWidth, int tileHeight, ItemPtrVectorPtr& items)
+			int tileWidth, int tileHeight, ItemPtrVectorPtr& items,
+			FN_IMAGEFROMCODE fnImageFromCode)
 			throw ();
 
 		/// Destructor.
@@ -362,6 +380,24 @@ class Map2D::Layer {
 		virtual const ItemPtrVectorPtr getAllItems()
 			throw ();
 
+		/// Convert a map code into an image.
+		/**
+		 * @param code
+		 *   Map2D::Layer::Item::code obtained from getAllItems().
+		 *
+		 * @param tileset
+		 *   Vector of Tileset instances used to obtain the Image to return.
+		 *   Which tilesets to actually pass in is beyond the scope of this
+		 *   library, and must be obtained by some caller defined method.
+		 *   Camoto Studio reads this information from XML files distributed
+		 *   with the application, for example.
+		 *
+		 * @return Shared pointer to a camoto::gamegraphics::Image instance.
+		 */
+		virtual camoto::gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET tileset)
+			throw ();
+
 	protected:
 		std::string title;      ///< Layer's friendly name
 		int caps;               ///< Map capabilities
@@ -371,6 +407,7 @@ class Map2D::Layer {
 		int tileHeight;         ///< Tile height, in pixels
 		ItemPtrVectorPtr items; ///< Vector of all items in the layer
 		TextPtrVector strings;  ///< Vector of all text elements in the layer
+		FN_IMAGEFROMCODE fnImageFromCode; ///< Function called in imageFromCode()
 };
 
 /// Item within the layer (a tile)

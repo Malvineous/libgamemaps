@@ -24,14 +24,17 @@ namespace camoto {
 namespace gamemaps {
 
 Map2D::Layer::Layer(const std::string& title, int caps, int width, int height,
-	int tileWidth, int tileHeight, ItemPtrVectorPtr& items)
+	int tileWidth, int tileHeight, ItemPtrVectorPtr& items,
+	FN_IMAGEFROMCODE fnImageFromCode)
 	throw () :
 		title(title),
 		caps(caps),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
-		items(items)
+		items(items),
+		fnImageFromCode(fnImageFromCode)
 {
+	assert(fnImageFromCode);
 }
 
 Map2D::Layer::~Layer()
@@ -95,6 +98,13 @@ const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getAllItems()
 	throw ()
 {
 	return this->items;
+}
+
+camoto::gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
+	camoto::gamegraphics::VC_TILESET tileset)
+	throw ()
+{
+	return this->fnImageFromCode(code, tileset);
 }
 
 Map2D::Layer::Item::~Item()

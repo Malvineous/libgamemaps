@@ -21,15 +21,7 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_CCAVES_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_CCAVES_HPP_
 
-#include <boost/shared_ptr.hpp>
-#include <exception>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
 #include <camoto/gamemaps/maptype.hpp>
-#include <camoto/gamemaps/map2d.hpp>
-#include <camoto/types.hpp>
 
 namespace camoto {
 namespace gamemaps {

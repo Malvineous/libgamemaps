@@ -21,18 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/progress.hpp>
 #include <boost/scoped_array.hpp>
-#include <boost/algorithm/string.hpp>
-#include <iostream>
-#include <exception>
-#include <string.h>
-
-#include "fmt-map-ccaves.hpp"
+#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include <camoto/debug.hpp>
+#include "fmt-map-ccaves.hpp"
 
 #define CC_MAP_WIDTH            40
 #define CC_TILE_WIDTH           16
@@ -52,6 +44,16 @@
 
 namespace camoto {
 namespace gamemaps {
+
+using namespace camoto::gamegraphics;
+
+/// Convert a map code into an image.
+ImagePtr imageFromCCCode(unsigned int code, VC_TILESET tileset)
+	throw ()
+{
+	// TODO
+	return ImagePtr();
+}
 
 std::string CCavesMapType::getMapCode() const
 	throw ()
@@ -163,7 +165,8 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 		Map2D::Layer::NoCaps,
 		0, 0,
 		0, 0,
-		tiles
+		tiles,
+		imageFromCCCode
 	));
 
 	Map2D::LayerPtrVector layers;

@@ -21,18 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/progress.hpp>
 #include <boost/scoped_array.hpp>
-#include <boost/algorithm/string.hpp>
-#include <iostream>
-#include <exception>
-#include <string.h>
-
-#include "fmt-map-xargon.hpp"
+#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include <camoto/debug.hpp>
+#include "fmt-map-xargon.hpp"
 
 #define XR_OBJ_ENTRY_LEN        31
 #define XR_MAP_WIDTH            128
@@ -48,6 +40,8 @@
 
 namespace camoto {
 namespace gamemaps {
+
+using namespace camoto::gamegraphics;
 
 struct XargonObject: virtual public Map2D::Layer::Item {
 	// uint8_t code;
@@ -66,6 +60,20 @@ struct XargonObject: virtual public Map2D::Layer::Item {
 	uint16_t info;
 	uint16_t zapHold;
 };
+
+/// Convert a Xargon background layer map code into an image.
+ImagePtr imageFromTileCode(unsigned int code, VC_TILESET tileset)
+	throw ()
+{
+	return ImagePtr(); // unknown map code
+}
+
+/// Convert a Xargon object layer map code into an image.
+ImagePtr imageFromObjectCode(unsigned int code, VC_TILESET tileset)
+	throw ()
+{
+	return ImagePtr(); // unknown map code
+}
 
 std::string XargonMapType::getMapCode() const
 	throw ()
