@@ -94,6 +94,7 @@ struct FIXTURE_NAME: public default_sample {
 		);
 		BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE);
 
+		// Create an instance of the initialstate data
 		this->map = this->pTestType->open(this->baseStream, this->suppData);
 		this->map2d = boost::dynamic_pointer_cast<gm::Map2D>(this->map);
 		BOOST_REQUIRE_MESSAGE(this->map2d, "Could not create map class");

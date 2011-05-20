@@ -26,9 +26,8 @@ reference, so that a visual representation of the map can be drawn in a user
 interface.  The image references are tied in with the libgamegraphics library,
 so any application wishing to display a game map as it would look in the game
 itself will also need to interact with libgamegraphics to obtain the
-appropriate images.  The image references provided by libgamemaps are indices
-into a tileset, so in theory a set of hard-coded images could also be used
-by an application wishing to avoid a dependency on libgamegraphics.
+appropriate images.  Because of this, the libgamegraphics library is a
+dependency of libgamemaps.
 
 Also note that any user of this library will most likely need additional
 game-specific information (not supplied by the library) such as which tileset

@@ -38,6 +38,9 @@
 #define DD_PAD_LEN              24 // to round DD_LAYER_LEN_BG to nearest power of two
 #define DD_FILESIZE             (DD_LAYER_LEN_PATH + DD_LAYER_LEN_BG + DD_PAD_LEN)
 
+/// Map code to write for locations with no tile set.
+#define DD_DEFAULT_BGTILE     0x00
+
 /// This is the largest valid tile code in the background layer.
 #define DD_MAX_VALID_TILECODE 52
 
@@ -144,7 +147,7 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 		t->x = i % DD_MAP_WIDTH;
 		t->y = i / DD_MAP_WIDTH;
 		t->code = bg[i];
-		if (t->code) tiles->push_back(t); // skip zero tiles (black background)
+		if (t->code != DD_DEFAULT_BGTILE) tiles->push_back(t);
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
@@ -179,8 +182,6 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 
 	unsigned long lenWritten = 0;
 
-	output->seekp(0, std::ios::beg);
-
 	// Write the path
 	uint8_t path[DD_LAYER_LEN_PATH];
 	memset(path, 0, DD_LAYER_LEN_PATH);
@@ -207,7 +208,7 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 
 	// Write the background layer
 	uint8_t bg[DD_LAYER_LEN_BG];
-	memset(bg, 0x00, DD_LAYER_LEN_BG); // default background tile
+	memset(bg, DD_DEFAULT_BGTILE, DD_LAYER_LEN_BG); // default background tile
 	Map2D::LayerPtr layer = map2d->getLayer(0);
 	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
