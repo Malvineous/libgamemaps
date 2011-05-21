@@ -27,10 +27,10 @@
 #include "fmt-map-cosmo.hpp"
 
 /// Width of each tile in pixels
-#define CCA_TILE_WIDTH 16
+#define CCA_TILE_WIDTH 8
 
 /// Height of each tile in pixels
-#define CCA_TILE_HEIGHT 16
+#define CCA_TILE_HEIGHT 8
 
 /// Width of map view during gameplay, in pixels
 #define CCA_VIEWPORT_WIDTH 304
@@ -70,11 +70,21 @@ ImagePtr imageFromCCAActorCode(unsigned int code, VC_TILESET tileset)
 ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET tileset)
 	throw ()
 {
-	// TODO
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (images.size() < code) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
+	if (tileset.size() < 2) return ImagePtr(); // no tileset?!
+	int i = code >> 3; // divide by 8
+	int t = 0;
+	if (i >= 2000) {
+		i -= 2000;
+		i /= 5;
+		t++; // masked tile
+		if (i >= 1000) {
+			// out of range!
+			return ImagePtr();
+		}
+	}
+	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
+	if (images.size() < i) return ImagePtr(); // out of range
+	return tileset[t]->openImage(images[i]);
 }
 
 std::string CosmoMapType::getMapCode() const
@@ -133,6 +143,8 @@ MapType::Certainty CosmoMapType::isInstance(istream_sptr psMap) const
 		// it to be an arbitrary size - missing tiles are just left as blanks
 		return MapType::DefinitelyNo; // file too small
 	}
+
+	// TODO: Read map data and confirm each uint16le is < 56000
 
 	// TESTED BY: fmt_map_cosmo_isinstance_c00
 	return MapType::DefinitelyYes;
@@ -193,12 +205,6 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 		t->x = i % mapWidth;
 		t->y = i / mapWidth;
 		input >> u16le(t->code);
-/*
-		if (code >> 15) { // MSb set
-			t->code = 0; // TODO
-		} else {
-			t->code = code >> 3; // divide by 8
-		}*/
 		// Don't push zero codes (these are transparent/no-tile)
 		if (t->code != 0) tiles->push_back(t);
 		lenMap -= 2;
