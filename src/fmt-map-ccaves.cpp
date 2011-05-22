@@ -34,7 +34,7 @@
 #define CC_MAX_MAP_HEIGHT      100
 
 /// This is the largest valid tile code in the background layer.
-#define CC_MAX_VALID_TILECODE   0xc0
+#define CC_MAX_VALID_TILECODE   0xfb
 
 /// Width of map view during gameplay, in pixels
 #define CC_VIEWPORT_WIDTH       320
