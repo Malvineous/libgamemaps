@@ -83,7 +83,7 @@ ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET tileset)
 		}
 	}
 	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-	if (images.size() < i) return ImagePtr(); // out of range
+	if (i >= images.size()) return ImagePtr(); // out of range
 	return tileset[t]->openImage(images[i]);
 }
 

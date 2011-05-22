@@ -63,7 +63,7 @@ ImagePtr imageFromHHTileCode(unsigned int code, VC_TILESET tileset)
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (images.size() < code) return ImagePtr(); // out of range
+	if (code >= images.size()) return ImagePtr(); // out of range
 	return tileset[0]->openImage(images[code]);
 }
 
