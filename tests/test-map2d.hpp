@@ -52,6 +52,20 @@ namespace gm = camoto::gamemaps;
 // Allow a string constant to be passed around with embedded nulls
 #define makeString(x)  std::string((x), sizeof((x)) - 1)
 
+// Add a new constant as a supplementary data item
+#define ADD_SUPPITEM(suppitem) \
+	{ \
+		boost::shared_ptr<std::stringstream> suppSS(new std::stringstream); \
+		suppSS->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit); \
+		(*suppSS) << makeString(TEST_RESULT(initialstate_ ## suppitem)); \
+		camoto::iostream_sptr suppStream(suppSS); \
+		camoto::SuppItem si; \
+		si.stream = suppStream; \
+		si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1); \
+		this->suppData[camoto::SuppItem::suppitem] = si; \
+		this->suppBase[camoto::SuppItem::suppitem] = suppSS; \
+	}
+
 #include <camoto/gamemaps/map2d.hpp>
 
 struct FIXTURE_NAME: public default_sample {
@@ -72,18 +86,11 @@ struct FIXTURE_NAME: public default_sample {
 		_do((*this->baseData) << makeString(INITIALSTATE_NAME)),
 		baseStream(this->baseData)
 	{
-		#ifdef HAS_FAT
-		{
-			boost::shared_ptr<std::stringstream> suppSS(new std::stringstream);
-			suppSS->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
-			(*suppSS) << makeString(TEST_RESULT(FAT_initialstate));
-			camoto::iostream_sptr suppStream(suppSS);
-			gm::SuppItem si;
-			si.stream = suppStream;
-			si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1);
-			this->suppData[camoto::SuppItem::FAT] = si;
-			this->suppBase[camoto::SuppItem::FAT] = suppSS;
-		}
+		#ifdef MAP_HAS_SUPPDATA_LAYER1
+			ADD_SUPPITEM(Layer1);
+		#endif
+		#ifdef MAP_HAS_SUPPDATA_LAYER2
+			ADD_SUPPITEM(Layer2);
 		#endif
 
 		BOOST_REQUIRE_NO_THROW(
@@ -254,6 +261,10 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 	}
 }
 
+#define ERASE_SUPPITEM(suppitem) \
+	this->suppBase[camoto::SuppItem::suppitem]->seekp(0); \
+	this->suppBase[camoto::SuppItem::suppitem]->str("");
+
 BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 {
 	BOOST_TEST_MESSAGE("Write map codes");
@@ -261,6 +272,13 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 	this->baseData->seekp(0);
 	this->baseData->str("");
 	this->pTestType->write(this->map, this->baseData, this->suppData);
+
+	#ifdef MAP_HAS_SUPPDATA_LAYER1
+		ERASE_SUPPITEM(Layer1)
+	#endif
+	#ifdef MAP_HAS_SUPPDATA_LAYER2
+		ERASE_SUPPITEM(Layer2)
+	#endif
 
 	BOOST_CHECK_MESSAGE(
 		is_equal(makeString(INITIALSTATE_NAME)),
