@@ -49,6 +49,9 @@
 /// This is the largest valid tile code in the background layer.
 #define WW_MAX_VALID_TILECODE 0x6C
 
+/// After this many tiles, go to the next tileset.
+#define WW_TILES_PER_TILESET    54
+
 namespace camoto {
 namespace gamemaps {
 
@@ -58,8 +61,12 @@ using namespace camoto::gamegraphics;
 ImagePtr imageFromWWCode(unsigned int code, VC_TILESET tileset)
 	throw ()
 {
-	// TODO
-	return ImagePtr();
+	int t = code / WW_TILES_PER_TILESET;
+	code = code % WW_TILES_PER_TILESET;
+	if (tileset.size() < t) return ImagePtr();
+	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
+	if (code >= images.size()) return ImagePtr(); // out of range
+	return tileset[t]->openImage(images[code]);
 }
 
 std::string WackyMapType::getMapCode() const
