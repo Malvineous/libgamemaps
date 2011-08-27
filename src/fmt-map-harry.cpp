@@ -33,10 +33,10 @@
 #define HH_TILE_HEIGHT 16
 
 /// Width of map view during gameplay, in pixels
-#define HH_VIEWPORT_WIDTH 20 // TODO
+#define HH_VIEWPORT_WIDTH 288
 
 /// Height of map view during gameplay, in pixels
-#define HH_VIEWPORT_HEIGHT 50 // TODO
+#define HH_VIEWPORT_HEIGHT 144
 
 /// Number of bytes for each actor struct
 #define HH_ACTOR_LEN  128
