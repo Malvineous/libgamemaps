@@ -23,6 +23,7 @@
 #include <camoto/debug.hpp>
 
 // Include all the file formats for the Manager to load
+#include "fmt-map-bash.hpp"
 #include "fmt-map-ddave.hpp"
 #include "fmt-map-ccaves.hpp"
 #include "fmt-map-ccomic.hpp"
@@ -43,6 +44,7 @@ ManagerPtr getManager()
 Manager::Manager()
 	throw ()
 {
+	this->vcTypes.push_back(MapTypePtr(new BashMapType()));
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CCavesMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CComicMapType()));

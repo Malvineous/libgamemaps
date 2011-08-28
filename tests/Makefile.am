@@ -1,6 +1,7 @@
 check_PROGRAMS = tests
 
 tests_SOURCES = tests.cpp
+tests_SOURCES += test-map-bash.cpp
 tests_SOURCES += test-map-ccaves.cpp
 tests_SOURCES += test-map-ccomic.cpp
 tests_SOURCES += test-map-cosmo.cpp
