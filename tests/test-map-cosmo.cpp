@@ -78,8 +78,8 @@
 	empty_16x1 empty_16x1 empty_16x1 \
 	empty_64x511
 
-#define MAP_WIDTH_PIXELS  (64*16)
-#define MAP_HEIGHT_PIXELS (512*16)
+#define MAP_WIDTH_PIXELS  (64*8)
+#define MAP_HEIGHT_PIXELS (512*8)
 #define MAP_LAYER_COUNT   2
 #define MAP_FIRST_CODE    0x01 // 0x00 is empty tile and thus skipped
 
