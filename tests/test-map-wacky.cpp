@@ -44,7 +44,7 @@
 #define MAP_WIDTH_PIXELS  (64*16)
 #define MAP_HEIGHT_PIXELS (64*16)
 #define MAP_LAYER_COUNT   1
-#define MAP_FIRST_CODE    0x20
+#define MAP_FIRST_CODE_L1 0x20
 
 #define MAP_CLASS fmt_map_wacky
 #define MAP_TYPE  "map-wacky"

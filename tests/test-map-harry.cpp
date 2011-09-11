@@ -51,7 +51,9 @@
 #define MAP_WIDTH_PIXELS  (4*16)
 #define MAP_HEIGHT_PIXELS (4*16)
 #define MAP_LAYER_COUNT   3
-#define MAP_FIRST_CODE    0x01 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_L1 0x01 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_L2 0x01 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_L3 0x01 // 0x00 is empty tile and thus skipped
 
 #define MAP_CLASS fmt_map_harry
 #define MAP_TYPE  "map-harry"

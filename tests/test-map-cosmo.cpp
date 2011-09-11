@@ -81,7 +81,8 @@
 #define MAP_WIDTH_PIXELS  (64*8)
 #define MAP_HEIGHT_PIXELS (512*8)
 #define MAP_LAYER_COUNT   2
-#define MAP_FIRST_CODE    0x01 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_L1 0x01 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_L2 0x01
 
 #define MAP_CLASS fmt_map_cosmo
 #define MAP_TYPE  "map-cosmo"

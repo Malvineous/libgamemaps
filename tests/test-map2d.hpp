@@ -251,7 +251,17 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 			i++
 		) {
 			if (((*i)->x == 0) && ((*i)->y == 0)) {
-				BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE);
+				switch (l) {
+#ifdef MAP_FIRST_CODE_L1
+					case 0: BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L1); break;
+#endif
+#ifdef MAP_FIRST_CODE_L2
+					case 1: BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L2); break;
+#endif
+#ifdef MAP_FIRST_CODE_L3
+					case 2: BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L3); break;
+#endif
+				}
 				foundFirstTile = true;
 				break;
 			}

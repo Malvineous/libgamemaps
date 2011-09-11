@@ -29,7 +29,7 @@
 #define MAP_WIDTH_PIXELS  (3*16)
 #define MAP_HEIGHT_PIXELS (5*16)
 #define MAP_LAYER_COUNT   1
-#define MAP_FIRST_CODE    0x02
+#define MAP_FIRST_CODE_L1 0x02
 
 #define MAP_CLASS fmt_map_ccomic
 #define MAP_TYPE  "map-ccomic"
