@@ -281,19 +281,27 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 
 	this->baseData->seekp(0);
 	this->baseData->str("");
-	this->pTestType->write(this->map, this->baseData, this->suppData);
 
-	#ifdef MAP_HAS_SUPPDATA_LAYER1
-		ERASE_SUPPITEM(Layer1)
-	#endif
-	#ifdef MAP_HAS_SUPPDATA_LAYER2
-		ERASE_SUPPITEM(Layer2)
-	#endif
+#ifdef MAP_HAS_SUPPDATA_LAYER1
+	ERASE_SUPPITEM(Layer1);
+#endif
+#ifdef MAP_HAS_SUPPDATA_LAYER2
+	ERASE_SUPPITEM(Layer2);
+#endif
+
+	this->pTestType->write(this->map, this->baseData, this->suppData);
 
 	BOOST_CHECK_MESSAGE(
 		is_equal(makeString(INITIALSTATE_NAME)),
 		"Error writing map to a file - data is different to original"
 	);
+
+#ifdef MAP_HAS_SUPPDATA_LAYER1
+	BOOST_CHECK_MESSAGE(
+		is_supp_equal(camoto::SuppItem::Layer1, makeString(TEST_RESULT(initialstate_Layer1))),
+		"Error writing map to a file - data is different to original in supp::layer1"
+	);
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

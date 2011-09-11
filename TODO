@@ -2,3 +2,4 @@ Outstanding tasks
 -----------------
 
  - Implement conversion of Cosmo actor codes into images
+ - Figure out how to specify DDave starting points (currently hardcoded for level 3)

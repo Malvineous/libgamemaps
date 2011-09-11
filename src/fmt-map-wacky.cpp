@@ -21,18 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/progress.hpp>
-#include <boost/shared_array.hpp>
-#include <boost/algorithm/string.hpp>
-#include <iostream>
-#include <exception>
-#include <string.h>
-
-#include "fmt-map-wacky.hpp"
+#include <math.h>
 #include <camoto/iostream_helpers.hpp>
-#include <camoto/debug.hpp>
+#include "fmt-map-wacky.hpp"
 
 #define WW_MAP_WIDTH            64
 #define WW_MAP_HEIGHT           64
@@ -157,13 +148,48 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 
+	// Read the computer player paths
+	istream_sptr rd = suppData[SuppItem::Layer1].stream;
+	assert(rd);
+	uint16_t numPoints;
+	rd >> u16le(numPoints);
+
+	Map2D::PathPtrVectorPtr paths(new Map2D::PathPtrVector());
+	Map2D::PathPtr pathptr(new Map2D::Path());
+	int startX, startY;
+	rd
+		>> u16le(startX)
+		>> u16le(startY)
+	;
+	startX /= 2;
+	startY /= 2;
+	pathptr->start.push_back(Map2D::Path::point(startX, startY));
+	for (int i = 0; i < numPoints; i++) {
+		uint16_t nextX, nextY;
+		if (i > 0) rd->seekg(4, std::ios::cur);
+		rd
+			>> u16le(nextX)
+			>> u16le(nextY)
+		;
+		rd->seekg(6, std::ios::cur);
+		nextX /= 2;
+		nextY /= 2;
+		pathptr->points.push_back(Map2D::Path::point(nextX - startX, nextY - startY));
+	}
+	pathptr->fixed = false;
+	pathptr->forceClosed = false;
+	paths->push_back(pathptr);
+
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
+		Map2D::HasGlobalSize
+		| Map2D::HasGlobalTileSize
+		| Map2D::HasPaths
+		| Map2D::FixedPathCount,
 		0, 0,
 		WW_MAP_WIDTH, WW_MAP_HEIGHT,
 		WW_TILE_WIDTH, WW_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
+		layers, paths
 	));
 
 	return map;
@@ -176,6 +202,16 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
 		throw std::ios::failure("Incorrect layer count for this format.");
+
+	Map2D::PathPtrVectorPtr paths = map2d->getPaths();
+	if (paths->size() != 1) throw std::ios::failure("Incorrect path count for this format.");
+
+	Map2D::PathPtr path = paths->at(0);
+	if (path->start.size() != 1) throw std::ios::failure("Path has no starting point!");
+
+	if (suppData.find(SuppItem::Layer1) == suppData.end()) {
+		throw std::ios::failure("No SuppItem::Layer1 specified (need *.rd file)");
+	}
 
 	unsigned long lenWritten = 0;
 
@@ -197,7 +233,45 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	output->write((char *)bg, WW_LAYER_LEN_BG);
 	lenWritten += WW_LAYER_LEN_BG;
 
+	ostream_sptr rd = suppData[SuppItem::Layer1].stream;
+
+	int firstX = path->start[0].first * 2;
+	int firstY = path->start[0].second * 2;
+	int nextX = firstX;
+	int nextY = firstY;
+	uint16_t count = path->points.size();
+	rd << u16le(count);
+	for (Map2D::Path::point_vector::const_iterator i = path->points.begin();
+		i != path->points.end(); i++
+	) {
+		int lastX = nextX;
+		int lastY = nextY;
+		rd
+			<< u16le(lastX)
+			<< u16le(lastY)
+		;
+		nextX = firstX + i->first * 2;
+		nextY = firstY + i->second * 2;
+		int dist = sqrt(pow(nextX - lastX, 2) + pow(nextY - lastY, 2));
+		rd
+			<< u16le(nextX)
+			<< u16le(nextY)
+			<< u32le(0) // TODO: unknown
+			<< u16le(dist)
+		;
+	}
+
 	return lenWritten;
+}
+
+SuppFilenames WackyMapType::getRequiredSupps(
+	const std::string& filenameMap) const
+	throw ()
+{
+	SuppFilenames supps;
+	std::string baseName = filenameMap.substr(0, filenameMap.length() - 1);
+	supps[SuppItem::Layer1] = baseName + "rd";
+	return supps;
 }
 
 

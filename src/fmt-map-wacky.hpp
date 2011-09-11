@@ -63,6 +63,9 @@ class WackyMapType: virtual public MapType {
 		virtual unsigned long write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 			throw (std::ios::failure);
 
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
+			throw ();
+
 };
 
 } // namespace gamemaps

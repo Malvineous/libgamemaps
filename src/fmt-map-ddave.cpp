@@ -128,12 +128,25 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 	// Read the path
 	uint8_t pathdata[DD_LAYER_LEN_PATH];
 	input->read((char *)pathdata, DD_LAYER_LEN_PATH);
+	Map2D::PathPtrVectorPtr paths(new Map2D::PathPtrVector());
 	Map2D::PathPtr pathptr(new Map2D::Path());
+	pathptr->fixed = true;
+	pathptr->forceClosed = false;
+	int nextX = 0, nextY = 0;
 	for (int i = 0; i < DD_LAYER_LEN_PATH; i += 2) {
 		if ((pathdata[i] == DD_PATH_END) && (pathdata[i+1] == DD_PATH_END)) break; // end of path
-		pathptr->points.push_back(Map2D::Path::point(pathdata[i], pathdata[i+1]));
+		nextX += (int8_t)pathdata[i];
+		nextY += (int8_t)pathdata[i + 1];
+		pathptr->points.push_back(Map2D::Path::point(nextX, nextY));
 	}
-	Map2D::PathPtrVectorPtr paths(new Map2D::PathPtrVector());
+	// Hard-code the starting point and copies of each path
+	int level = 3;
+	switch (level) {
+		case 3:
+			pathptr->start.push_back(Map2D::Path::point(44 * DD_TILE_WIDTH, 4 * DD_TILE_HEIGHT));
+			pathptr->start.push_back(Map2D::Path::point(59 * DD_TILE_WIDTH, 4 * DD_TILE_HEIGHT));
+			break;
+	}
 	paths->push_back(pathptr);
 
 	// Read the background layer
@@ -163,7 +176,7 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPaths,
+		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPathCount,
 		20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
 		0, 0,
 		0, 0,
@@ -190,13 +203,19 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	if (paths->size() != 1) throw std::ios::failure("Incorrect path count for this format.");
 	Map2D::PathPtr first_path = paths->at(0);
 	int pathpos = 0;
+	int lastX = 0, lastY = 0;
 	for (Map2D::Path::point_vector::const_iterator i = first_path->points.begin();
 		i != first_path->points.end();
 		i++
 	) {
 		if (pathpos > 256) throw std::ios::failure("Path too long (max 128 segments)");
-		path[pathpos++] = (uint8_t)((int8_t)(i->first));
-		path[pathpos++] = (uint8_t)((int8_t)(i->second));
+		// Convert from relative to (0,0), to relative to previous point
+		// Have to cast these to int8_t first so they're 8-bit but the sign is kept
+		// intact (-1 still is -1) then to uint8_t so -1 becomes 255.
+		path[pathpos++] = (uint8_t)((int8_t)(i->first - lastX));
+		path[pathpos++] = (uint8_t)((int8_t)(i->second - lastY));
+		lastX = i->first;
+		lastY = i->second;
 	}
 	// Add terminator if there's enough room.
 	// TODO: Test to see if this is correct, or if a terminator is always required

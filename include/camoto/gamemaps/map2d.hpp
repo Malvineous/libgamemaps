@@ -37,14 +37,14 @@ class Map2D: virtual public Map {
 
 		/// Capabilities this layer supports.
 		enum Caps {
-			NoCaps            = 0x00, ///< No caps set
-			HasGlobalSize     = 0x01, ///< Does the map have one size for all layers?
-			CanResize         = 0x02, ///< Can the map be resized as a whole?
-			HasGlobalTileSize = 0x04, ///< Does the map have one tile size for all layers?
-			ChangeTileSize    = 0x08, ///< Can the map's grid size be changed?
-			HasPaths          = 0x10, ///< Does the map support paths?
-			FixedPaths        = 0x20, ///< If set, paths cannot be added/removed, only edited
-			HasViewport       = 0x40, ///< Does this map have a viewport?
+			NoCaps            = 0x0000, ///< No caps set
+			HasGlobalSize     = 0x0001, ///< Does the map have one size for all layers?
+			CanResize         = 0x0002, ///< Can the map be resized as a whole?
+			HasGlobalTileSize = 0x0004, ///< Does the map have one tile size for all layers?
+			ChangeTileSize    = 0x0008, ///< Can the map's grid size be changed?
+			HasViewport       = 0x0010, ///< Does this map have a viewport?
+			HasPaths          = 0x0020, ///< Does the map support paths?
+			FixedPathCount    = 0x0040, ///< If set, paths cannot be added/removed, only edited
 		};
 
 		class Layer;
@@ -488,7 +488,37 @@ class Map2D::Path {
 		typedef std::pair<int, int> point;
 		typedef std::vector<point> point_vector;
 
+		/// Starting point(s) of this path.
+		/**
+		 * This vector contains one or more starting points for this path.  If
+		 * multiple starting points are given, the same path is duplicated at
+		 * each point (i.e. changing one path will also modify the others.)
+		 */
+		point_vector start;
+
+		/// Are the start points fixed (true) or can they be changed (false)?
+		bool fixed;
+
+		/// The points in this path.
+		/**
+		 * This vector contains a number of points, which when joined by lines
+		 * represent the path.  The coordinates are relative to (0,0), which is
+		 * transposed to one of the starting points.  An implicit point is placed
+		 * at (0,0) which will appear at the exact coordinates of the starting
+		 * point.  If the path is a closed loop, the last point should NOT be (0,0)
+		 * but rather forceClosed should be set to true.
+		 */
 		point_vector points;
+
+		/// Is this path required to be a closed loop?
+		/**
+		 * If this is set to true, the last point in the points vector will be
+		 * immediately followed by the point from the start vector, i.e. the
+		 * path is a closed loop (rather than a line with different points at
+		 * the start and the end.)  This is intended to be a hint to a GUI to
+		 * ensure the path is drawn as a closed loop and cannot be opened.
+		 */
+		bool forceClosed;
 };
 
 } // namespace gamemaps

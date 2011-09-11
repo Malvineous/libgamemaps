@@ -41,10 +41,18 @@
 	empty_16x1 empty_16x1 empty_16x1 \
 	empty_64x63
 
+#define testdata_initialstate_Layer1 \
+	"\x03\x00" \
+	"\x10\x00" "\x20\x00" "\x20\x00" "\x30\x00" "\x00\x00\x00\x00" "\x16\x00" \
+	"\x20\x00" "\x30\x00" "\x30\x00" "\x40\x00" "\x00\x00\x00\x00" "\x16\x00" \
+	"\x30\x00" "\x40\x00" "\x00\x00" "\x10\x00" "\x00\x00\x00\x00" "\x43\x00"
+
 #define MAP_WIDTH_PIXELS  (64*16)
 #define MAP_HEIGHT_PIXELS (64*16)
 #define MAP_LAYER_COUNT   1
 #define MAP_FIRST_CODE_L1 0x20
+
+#define MAP_HAS_SUPPDATA_LAYER1
 
 #define MAP_CLASS fmt_map_wacky
 #define MAP_TYPE  "map-wacky"
