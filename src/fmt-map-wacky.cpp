@@ -187,7 +187,7 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 		| Map2D::HasPaths
 		| Map2D::FixedPathCount,
 		0, 0,
-		WW_MAP_WIDTH, WW_MAP_HEIGHT,
+		WW_MAP_WIDTH * WW_TILE_WIDTH, WW_MAP_HEIGHT * WW_TILE_HEIGHT,
 		WW_TILE_WIDTH, WW_TILE_HEIGHT,
 		layers, paths
 	));

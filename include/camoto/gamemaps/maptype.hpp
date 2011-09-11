@@ -89,7 +89,7 @@ class MapType {
 		 * @param psMap
 		 *   A C++ iostream of the file to test.
 		 *
-		 * @return A single confidence value from \ref E_CERTAINTY.
+		 * @return A single confidence value from \ref MapType::Certainty.
 		 */
 		virtual Certainty isInstance(istream_sptr psMap) const
 			throw (std::ios::failure) = 0;

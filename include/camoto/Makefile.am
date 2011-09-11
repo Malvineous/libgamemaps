@@ -4,3 +4,4 @@ nobase_library_include_HEADERS += gamemaps/manager.hpp
 nobase_library_include_HEADERS += gamemaps/map.hpp
 nobase_library_include_HEADERS += gamemaps/maptype.hpp
 nobase_library_include_HEADERS += gamemaps/map2d.hpp
+nobase_library_include_HEADERS += gamemaps/util.hpp

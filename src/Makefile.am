@@ -5,6 +5,7 @@ libgamemaps_la_SOURCES += map.cpp
 libgamemaps_la_SOURCES += maptype.cpp
 libgamemaps_la_SOURCES += map2d.cpp
 libgamemaps_la_SOURCES += map2d_layer.cpp
+libgamemaps_la_SOURCES += util.cpp
 libgamemaps_la_SOURCES += fmt-map-bash.cpp
 libgamemaps_la_SOURCES += fmt-map-ccaves.cpp
 libgamemaps_la_SOURCES += fmt-map-ccomic.cpp

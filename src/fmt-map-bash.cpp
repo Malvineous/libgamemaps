@@ -204,7 +204,7 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
-		mapWidth, mapHeight,
+		mapWidth * MB_TILE_WIDTH, mapHeight * MB_TILE_HEIGHT,
 		MB_TILE_WIDTH, MB_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));

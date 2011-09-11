@@ -180,13 +180,6 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	int outWidth, outHeight; // in pixels
 	if (mapCaps & gm::Map2D::HasGlobalSize) {
 		map->getMapSize(&outWidth, &outHeight);
-		// Convert to pixels if not already
-		if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-			int x, y;
-			map->getTileSize(&x, &y);
-			outWidth *= x;
-			outHeight *= y;
-		}
 	} else {
 		outWidth = outHeight = 0;
 		int layerCount = map->getLayerCount();
@@ -262,55 +255,17 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	int layerCount = map->getLayerCount();
 	for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
 		gm::Map2D::LayerPtr layer = map->getLayer(layerIndex);
-		int layerCaps = layer->getCaps();
 
 		// Figure out the layer size (in tiles) and the tile size
 		int layerWidth, layerHeight;
-		if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
-			layer->getLayerSize(&layerWidth, &layerHeight);
-		} else {
-			// Layer doesn't have own size, use map
-			if (mapCaps & gm::Map2D::HasGlobalSize) {
-				map->getMapSize(&layerHeight, &layerHeight);
-				if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-					// The layer is the same size as the map, but it has a
-					// different tile size.
-
-					if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-						// The map also has a tile size, so multiply it out to get
-						// dimensions in pixels (which they are if the map doesn't
-						// have a global tile size.)
-						int mtx, mty;
-						map->getTileSize(&mtx, &mty);
-						layerHeight *= mtx;
-						layerWidth *= mty;
-					}
-
-					// Convert the global map size (in pixels) to this layer's
-					// size (in tiles)
-					int tileWidth, tileHeight;
-					layer->getTileSize(&tileWidth, &tileHeight);
-					layerWidth /= tileWidth;
-					layerHeight /= tileHeight;
-				} // else layer size is same as map size
-			} else {
-				std::cout << "Warning: Layer " << layerIndex + 1 << " has no dimensions, and "
-					"neither does the map!  Skipping layer." << std::endl;
-				continue;
-			}
-		}
-
 		int tileWidth, tileHeight;
-		if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-			layer->getTileSize(&tileWidth, &tileHeight);
-		} else if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-			// The layer doesn't have its own tile size, so use the map's.
-			map->getTileSize(&tileWidth, &tileHeight);
-		} else {
-			// Neither the map nor the layer have a tile size, use the default.
-			tileWidth = tileHeight = 1;
+		if (!getLayerDims(map, layer, &layerWidth, &layerHeight, &tileWidth,
+			&tileHeight)
+		) {
+			std::cout << "Warning: Layer " << layerIndex + 1 << " has no dimensions, and "
+				"neither does the map!  Skipping layer." << std::endl;
+			continue;
 		}
-		assert((tileWidth != 0) && (tileHeight != 0));
 
 		// Prepare tileset
 		std::vector<CachedTile> cache;
@@ -938,33 +893,20 @@ finishTesting:
 						continue;
 					}
 
-					int mapCaps = map2d->getCaps();
 					gm::Map2D::LayerPtr layer = map2d->getLayer(targetLayer - 1);
-					int layerCaps = layer->getCaps();
 
 					// Figure out the layer size
 					int layerWidth, layerHeight;
-					if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
-						layer->getLayerSize(&layerWidth, &layerHeight);
-					} else if (mapCaps & gm::Map2D::HasGlobalSize) {
-						map2d->getMapSize(&layerWidth, &layerHeight);
-						// If this layer has a tile size divide it out by the map size
-						if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-							// But if the map itself has a different size, multiply it out
-							// to a pixel width/height first.
-							if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-								int mtx, mty;
-								map2d->getTileSize(&mtx, &mty);
-								layerWidth *= mtx;
-								layerHeight *= mty;
-							}
-							// Convert the map's pixel size down into a tile size for this layer
-							int tx, ty;
-							layer->getTileSize(&tx, &ty);
-							layerWidth /= tx;
-							layerHeight /= ty;
-						}
+					int tileWidth, tileHeight;
+					if (!getLayerDims(map2d, layer, &layerWidth, &layerHeight, &tileWidth,
+							&tileHeight)
+					) {
+						std::cout << "ERROR: Layer has no dimensions, and neither does "
+							"the map!" << std::endl;
+						iRet = RET_SHOWSTOPPER;
+						continue;
 					}
+					std::cout << layerWidth << "," << layerHeight << std::endl;
 
 					const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 					gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();

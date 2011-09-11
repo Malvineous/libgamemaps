@@ -83,5 +83,6 @@ homepage <http://www.shikadi.net/camoto>.
 #include <camoto/gamemaps/maptype.hpp>
 #include <camoto/gamemaps/manager.hpp>
 #include <camoto/gamemaps/map2d.hpp>
+#include <camoto/gamemaps/util.hpp>
 
 #endif // _CAMOTO_GAMEMAPS_HPP_

@@ -78,11 +78,11 @@ class Map2D: virtual public Map {
 		 *   HasViewport.  See getViewport().
 		 *
 		 * @param width
-		 *   Global map width, in tiles.  Only required if caps includes
+		 *   Global map width, in pixels.  Only required if caps includes
 		 *   HasGlobalSize.
 		 *
 		 * @param height
-		 *   Global map height, in tiles.  Only required if caps includes
+		 *   Global map height, in pixels.  Only required if caps includes
 		 *   HasGlobalSize.
 		 *
 		 * @param tileWidth

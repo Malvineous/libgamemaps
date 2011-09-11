@@ -226,7 +226,7 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
-		mapWidth, 32768 / mapWidth,
+		mapWidth * CCA_TILE_WIDTH, 32768 / mapWidth * CCA_TILE_HEIGHT,
 		CCA_TILE_WIDTH, CCA_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));

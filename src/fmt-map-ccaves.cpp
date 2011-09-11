@@ -176,7 +176,7 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		CC_VIEWPORT_WIDTH, CC_VIEWPORT_HEIGHT,
-		CC_MAP_WIDTH, height,
+		CC_MAP_WIDTH * CC_TILE_WIDTH, height * CC_TILE_HEIGHT,
 		CC_TILE_WIDTH, CC_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));

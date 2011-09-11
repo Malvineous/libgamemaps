@@ -164,9 +164,9 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
-		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
-		DD_MAP_WIDTH, DD_MAP_HEIGHT,
-		DD_TILE_WIDTH, DD_TILE_HEIGHT,
+		Map2D::Layer::NoCaps,
+		0, 0,
+		0, 0,
 		tiles,
 		imageFromDDCode, NULL
 	));
@@ -176,10 +176,11 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPathCount,
+		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize | Map2D::HasViewport
+			| Map2D::HasPaths | Map2D::FixedPathCount,
 		20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
-		0, 0,
-		0, 0,
+		DD_MAP_WIDTH * DD_TILE_WIDTH, DD_MAP_HEIGHT * DD_TILE_HEIGHT,
+		DD_TILE_WIDTH, DD_TILE_HEIGHT,
 		layers, paths
 	));
 

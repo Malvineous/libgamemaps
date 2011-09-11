@@ -150,9 +150,9 @@ MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
-		Map2D::Layer::HasOwnSize | Map2D::Layer::HasOwnTileSize,
-		width, height,
-		CC_TILE_WIDTH, CC_TILE_HEIGHT,
+		Map2D::Layer::NoCaps,
+		0, 0,
+		0, 0,
 		tiles,
 		imageFromCComicCode, NULL
 	));
@@ -162,10 +162,10 @@ MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport,
+		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize | Map2D::HasViewport,
 		193, 160, // viewport size
-		0, 0,
-		0, 0,
+		width * CC_TILE_WIDTH, height * CC_TILE_HEIGHT,
+		CC_TILE_WIDTH, CC_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
 
