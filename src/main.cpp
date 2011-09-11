@@ -30,6 +30,7 @@
 #include "fmt-map-cosmo.hpp"
 #include "fmt-map-harry.hpp"
 #include "fmt-map-wacky.hpp"
+#include "fmt-map-wordresc.hpp"
 #include "fmt-map-xargon.hpp"
 
 namespace camoto {
@@ -51,6 +52,7 @@ Manager::Manager()
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
+	this->vcTypes.push_back(MapTypePtr(new WordRescueMapType()));
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
 }
 
