@@ -250,7 +250,7 @@ class Map2D::Layer {
 		/// Vector of text elements.
 		typedef std::vector<TextPtr> TextPtrVector;
 
-		/// Function pointer to a callback function.
+		/// Function pointer to a callback for mapping tile codes to images.
 		/**
 		 * This function pointer is supplied in the constructor and is called to
 		 * convert map codes into images.  The function is defined as:
@@ -262,7 +262,25 @@ class Map2D::Layer {
 		 * result in some sort of unknown/question mark tile being used.
 		 */
 		typedef camoto::gamegraphics::ImagePtr (*FN_IMAGEFROMCODE)
-			(unsigned int, camoto::gamegraphics::VC_TILESET tileset);
+			(unsigned int code, camoto::gamegraphics::VC_TILESET tileset);
+
+		/// Function pointer to a callback for checking where tiles can be placed.
+		/**
+		 * This function pointer is supplied in the constructor and is called to
+		 * check whether a tile can be placed at the given location.  The function
+		 * is defined as:
+		 *
+		 * bool isTilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
+		 *   unsigned int *maxCodes) { ... }
+		 *
+		 * Where 'code' is the tile code, x and y are the proposed coordinates (in
+		 * tile units as per this layer's current tile size) and maxCodes can be
+		 * set to limit the number of times this code is used (zero means no limit.)
+		 * Return false to prevent the tile from being placed at the given location,
+		 * or true to allow it.  See also tilePermittedAt().
+		 */
+		typedef bool (*FN_TILEPERMITTEDAT) (unsigned int code, unsigned int x,
+			unsigned int y, unsigned int *maxCodes);
 
 		/// Capabilities this layer supports.
 		enum Caps {
@@ -298,10 +316,15 @@ class Map2D::Layer {
 		 *
 		 * @param fnImageFromCode
 		 *   Callback function to convert map codes into images.
+		 *
+		 * @param fnTilePermittedAt
+		 *   Callback function to allow or prevent tiles from being placed at
+		 *   certain locations or more than a limited number of times.  Can be
+		 *   NULL if no restrictions are required.
 		 */
 		Layer(const std::string& title, int caps, int width, int height,
 			int tileWidth, int tileHeight, ItemPtrVectorPtr& items,
-			FN_IMAGEFROMCODE fnImageFromCode)
+			FN_IMAGEFROMCODE fnImageFromCode, FN_TILEPERMITTEDAT fnTilePermittedAt)
 			throw ();
 
 		/// Destructor.
@@ -401,6 +424,30 @@ class Map2D::Layer {
 			camoto::gamegraphics::VC_TILESET tileset)
 			throw ();
 
+		/// Is the given tile permitted at the specified location?
+		/**
+		 * @param code
+		 *   Map2D::Layer::Item::code obtained from getAllItems().
+		 *
+		 * @param x
+		 *   Proposed X coordinate, in tiles.
+		 *
+		 * @param y
+		 *   Proposed Y coordinate, in tiles.
+		 *
+		 * @param maxCount
+		 *   On return, set to the maximum number of instances of this tile code
+		 *   permitted in this level.  For example if this value is 1, the tile
+		 *   code must be unique in the level (e.g. it might be the level starting
+		 *   point.)  A value of zero means unlimited.
+		 *
+		 * @return true if the tile is permitted at the current position (instance
+		 *  limits notwithstanding) or false if the tile cannot be placed here.
+		 */
+		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
+			unsigned int y, unsigned int *maxCount)
+			throw ();
+
 	protected:
 		std::string title;      ///< Layer's friendly name
 		int caps;               ///< Map capabilities
@@ -410,7 +457,8 @@ class Map2D::Layer {
 		int tileHeight;         ///< Tile height, in pixels
 		ItemPtrVectorPtr items; ///< Vector of all items in the layer
 		TextPtrVector strings;  ///< Vector of all text elements in the layer
-		FN_IMAGEFROMCODE fnImageFromCode; ///< Function called in imageFromCode()
+		FN_IMAGEFROMCODE fnImageFromCode;      ///< Callback for imageFromCode()
+		FN_TILEPERMITTEDAT fnTilePermittedAt;  ///< Callback for tilePermittedAt()
 };
 
 /// Item within the layer (a tile)

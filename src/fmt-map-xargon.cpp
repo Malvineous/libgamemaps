@@ -184,7 +184,7 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,   // Layer size unused
 		XR_TILE_SIZE, XR_TILE_SIZE,
 		tiles,
-		imageFromTileCode
+		imageFromTileCode, NULL
 	));
 
 	// Read the object layer
@@ -228,7 +228,7 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0, // Layer size unused
 		1, 1,
 		objects,
-		imageFromObjectCode
+		imageFromObjectCode, NULL
 	));
 
 	// Make sure we read in all the objects correctly

@@ -155,7 +155,7 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 		DD_MAP_WIDTH, DD_MAP_HEIGHT,
 		DD_TILE_WIDTH, DD_TILE_HEIGHT,
 		tiles,
-		imageFromDDCode
+		imageFromDDCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

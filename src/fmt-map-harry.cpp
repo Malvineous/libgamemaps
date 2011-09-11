@@ -216,7 +216,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		actors,
-		imageFromHHActorCode
+		imageFromHHActorCode, NULL
 	));
 
 	uint16_t mapWidth, mapHeight;
@@ -243,7 +243,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		bgtiles,
-		imageFromHHTileCode
+		imageFromHHTileCode, NULL
 	));
 
 	// Read the foreground layer
@@ -266,7 +266,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		fgtiles,
-		imageFromHHTileCode
+		imageFromHHTileCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

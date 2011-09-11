@@ -39,14 +39,16 @@
 #define WR_CODE_GRUZZLE  1
 #define WR_CODE_SLIME    2
 #define WR_CODE_BOOK     3
-#define WR_CODE_LETTER   4
-#define WR_CODE_LETTER1  4 // same as WR_CODE_LETTER
-#define WR_CODE_LETTER2  5
-#define WR_CODE_LETTER3  6
-#define WR_CODE_LETTER4  7
-#define WR_CODE_LETTER5  8
-#define WR_CODE_LETTER6  9
-#define WR_CODE_LETTER7  10
+#define WR_CODE_ENTRANCE 4
+#define WR_CODE_EXIT     5
+#define WR_CODE_LETTER   6
+#define WR_CODE_LETTER1  6 // same as WR_CODE_LETTER
+#define WR_CODE_LETTER2  7
+#define WR_CODE_LETTER3  8
+#define WR_CODE_LETTER4  9
+#define WR_CODE_LETTER5  10
+#define WR_CODE_LETTER6  11
+#define WR_CODE_LETTER7  12
 
 /// Fixed number of letters in each map (to spell a word)
 #define WR_NUM_LETTERS   7
@@ -82,9 +84,11 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET tileset)
 {
 	int t;
 	switch (code) {
-		case WR_CODE_GRUZZLE: t = 1; code = 25; break; // TODO: Use correct image
-		case WR_CODE_SLIME:   t = 0; code = 238; break;
-		case WR_CODE_BOOK:    t = 0; code = 239; break;
+		case WR_CODE_GRUZZLE:  t = 1; code = 25; break; // TODO: Use correct image
+		case WR_CODE_SLIME:    t = 0; code = 238; break;
+		case WR_CODE_BOOK:     t = 0; code = 239; break;
+		case WR_CODE_ENTRANCE: t = 0; code = 1; break; // TODO: Use correct image
+		case WR_CODE_EXIT:     t = 0; code = 2; break; // TODO: Use correct image
 		case WR_CODE_LETTER1:
 		case WR_CODE_LETTER2:
 		case WR_CODE_LETTER3:
@@ -102,6 +106,18 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET tileset)
 	if (code >= images.size()) return ImagePtr(); // out of range
 	return tileset[t]->openImage(images[code]);
 }
+
+bool WR_0_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
+	unsigned int *maxCodes)
+{
+	if ((code == WR_CODE_ENTRANCE) || (code == WR_CODE_EXIT)) {
+		*maxCodes = 1; // only one level entrance/exit permitted
+	} else {
+		*maxCodes = 0; // unlimited
+	}
+	return true; // anything can be placed anywhere
+}
+
 
 std::string WordRescueMapType::getMapCode() const
 	throw ()
@@ -321,6 +337,22 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr items(new Map2D::Layer::ItemPtrVector());
 
+	// Add the map entrance and exit as special items
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->x = startX / 2;
+		t->y = startY / 2;
+		t->code = WR_CODE_ENTRANCE;
+		items->push_back(t);
+	}
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->x = endX / 2;
+		t->y = endY / 2;
+		t->code = WR_CODE_EXIT;
+		items->push_back(t);
+	}
+
 	uint16_t gruzzleCount;
 	input >> u16le(gruzzleCount);
 	items->reserve(items->size() + gruzzleCount);
@@ -388,7 +420,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		items,
-		imageFromWRItemCode
+		imageFromWRItemCode, WR_0_TilePermittedAt
 	));
 
 	// Read the background layer
@@ -416,7 +448,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		tiles,
-		imageFromWRCode
+		imageFromWRCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;
@@ -503,28 +535,16 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 		default: backdrop = 0; break;
 	}
 
-	uint16_t startX = 0;
-	uint16_t startY = 0;
-	uint16_t endX = 0;
-	uint16_t endY = 0;
-	output
-		<< u16le(mapWidth)
-		<< u16le(mapHeight)
-		<< u16le(bgColour)
-		<< u16le(tileset)
-		<< u16le(backdrop)
-		<< u16le(startX)
-		<< u16le(startY)
-		<< u16le(endX)
-		<< u16le(endY)
-	;
-	lenWritten += 18;
-
 	typedef std::pair<uint16_t, uint16_t> point;
 	std::vector<point> itemLocations[INDEX_SIZE];
 
 	// Prefill the letter vector with the fixed number of letters
 	for (int i = 0; i < WR_NUM_LETTERS; i++) itemLocations[INDEX_LETTER].push_back(point(0, 0));
+
+	uint16_t startX = 0;
+	uint16_t startY = 0;
+	uint16_t endX = 0;
+	uint16_t endY = 0;
 
 	Map2D::LayerPtr layer = map2d->getLayer(1);
 	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
@@ -546,8 +566,29 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 			case WR_CODE_LETTER5: itemLocations[INDEX_LETTER][4] = point((*i)->x, (*i)->y); break;
 			case WR_CODE_LETTER6: itemLocations[INDEX_LETTER][5] = point((*i)->x, (*i)->y); break;
 			case WR_CODE_LETTER7: itemLocations[INDEX_LETTER][6] = point((*i)->x, (*i)->y); break;
+			case WR_CODE_ENTRANCE:
+				startX = (*i)->x * 2;
+				startY = (*i)->y * 2;
+				break;
+			case WR_CODE_EXIT:
+				endX = (*i)->x * 2;
+				endY = (*i)->y * 2;
+				break;
 		}
 	}
+
+	output
+		<< u16le(mapWidth)
+		<< u16le(mapHeight)
+		<< u16le(bgColour)
+		<< u16le(tileset)
+		<< u16le(backdrop)
+		<< u16le(startX)
+		<< u16le(startY)
+		<< u16le(endX)
+		<< u16le(endY)
+	;
+	lenWritten += 18;
 
 	// Write out all the gruzzles, slime buckets and book positions
 	for (int i = 0; i < INDEX_SIZE; i++) {

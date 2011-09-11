@@ -161,7 +161,7 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		bgtiles,
-		imageFromMBBGCode
+		imageFromMBBGCode, NULL
 	));
 
 	// Read the foreground layer
@@ -193,7 +193,7 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		fgtiles,
-		imageFromMBFGCode
+		imageFromMBFGCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

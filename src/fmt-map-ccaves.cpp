@@ -166,7 +166,7 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		tiles,
-		imageFromCCCode
+		imageFromCCCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

@@ -154,7 +154,7 @@ MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
 		width, height,
 		CC_TILE_WIDTH, CC_TILE_HEIGHT,
 		tiles,
-		imageFromCComicCode
+		imageFromCComicCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

@@ -193,7 +193,7 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		actors,
-		imageFromCCAActorCode
+		imageFromCCAActorCode, NULL
 	));
 
 	// Read the background layer
@@ -215,7 +215,7 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		tiles,
-		imageFromCCATileCode
+		imageFromCCATileCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

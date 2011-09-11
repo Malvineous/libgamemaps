@@ -151,7 +151,7 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		tiles,
-		imageFromWWCode
+		imageFromWWCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;

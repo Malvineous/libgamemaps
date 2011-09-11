@@ -25,14 +25,15 @@ namespace gamemaps {
 
 Map2D::Layer::Layer(const std::string& title, int caps, int width, int height,
 	int tileWidth, int tileHeight, ItemPtrVectorPtr& items,
-	FN_IMAGEFROMCODE fnImageFromCode)
+	FN_IMAGEFROMCODE fnImageFromCode, FN_TILEPERMITTEDAT fnTilePermittedAt)
 	throw () :
 		title(title),
 		caps(caps),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
 		items(items),
-		fnImageFromCode(fnImageFromCode)
+		fnImageFromCode(fnImageFromCode),
+		fnTilePermittedAt(fnTilePermittedAt) // may be NULL
 {
 	assert(fnImageFromCode);
 }
@@ -105,6 +106,20 @@ camoto::gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
 	throw ()
 {
 	return this->fnImageFromCode(code, tileset);
+}
+
+bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
+	unsigned int y, unsigned int *maxCount)
+	throw ()
+{
+	assert(maxCount);
+	if (this->fnTilePermittedAt) {
+		return this->fnTilePermittedAt(code, x, y, maxCount);
+	}
+
+	// Defaults
+	*maxCount = 0; // unlimited
+	return true; // permitted here
 }
 
 Map2D::Layer::Item::~Item()
