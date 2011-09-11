@@ -24,13 +24,24 @@
 #include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/gamemaps/map2d.hpp>
+#include <camoto/util.hpp>
 #include "fmt-map-wordresc.hpp"
 
-#define WR_TILE_WIDTH           16
-#define WR_TILE_HEIGHT          16
+/// Width of tiles in background layer
+#define WR_BGTILE_WIDTH           16
+/// Height of tiles in background layer
+#define WR_BGTILE_HEIGHT          16
+
+/// Width of tiles in attribute layer
+#define WR_ATTILE_WIDTH           8
+/// Height of tiles in attribute layer
+#define WR_ATTILE_HEIGHT          8
 
 /// Map code to write for locations with no tile set.
 #define WR_DEFAULT_BGTILE       0xFF
+
+/// Map code to write for locations with no tile set.
+#define WR_DEFAULT_ATTILE       0x20
 
 /// This is the largest valid tile code in the background layer.
 #define WR_MAX_VALID_TILECODE   240
@@ -444,23 +455,54 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
-		Map2D::Layer::NoCaps,
+		Map2D::Layer::HasOwnTileSize,
 		0, 0,
-		0, 0,
+		WR_BGTILE_WIDTH, WR_BGTILE_HEIGHT,
 		tiles,
+		imageFromWRCode, NULL
+	));
+
+	// Read the attribute layer
+	Map2D::Layer::ItemPtrVectorPtr atItems(new Map2D::Layer::ItemPtrVector());
+	uint16_t atWidth = mapWidth * 2;
+	uint16_t atHeight = mapHeight * 2;
+	atItems->reserve(atWidth * atHeight);
+	for (int i = 0; i < atWidth * atHeight; ) {
+		uint8_t num, code;
+		input >> u8(num) >> u8(code);
+		if (code == WR_DEFAULT_ATTILE) {
+			i += num;
+		} else {
+			while (num-- > 0) {
+				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+				t->x = i % atWidth;
+				t->y = i / atWidth;
+				t->code = code;
+				atItems->push_back(t);
+				i++;
+			}
+		}
+	}
+	Map2D::LayerPtr atLayer(new Map2D::Layer(
+		"Attributes",
+		Map2D::Layer::HasOwnTileSize,
+		0, 0,
+		WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
+		atItems,
 		imageFromWRCode, NULL
 	));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
+	layers.push_back(atLayer);
 	layers.push_back(itemLayer);
 
 	Map2DPtr map(new Map2D(
 		attributes,
-		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
+		Map2D::HasGlobalSize,
 		288, 152, // viewport
-		mapWidth, mapHeight,
-		WR_TILE_WIDTH, WR_TILE_HEIGHT,
+		mapWidth * WR_BGTILE_WIDTH, mapHeight * WR_BGTILE_HEIGHT,
+		0, 0,
 		layers, Map2D::PathPtrVectorPtr()
 	));
 
