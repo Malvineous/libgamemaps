@@ -162,6 +162,7 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPaths,
 		20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
 		0, 0,

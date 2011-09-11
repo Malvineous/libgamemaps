@@ -201,6 +201,7 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,

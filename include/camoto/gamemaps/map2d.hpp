@@ -63,6 +63,9 @@ class Map2D: virtual public Map {
 
 		/// Create a new 2D map.
 		/**
+		 * @param attributes
+		 *   List of attributes that apply to this map.
+		 *
 		 * @param caps
 		 *   Map capabilities.  One or more Caps values OR'd together.
 		 *
@@ -96,8 +99,8 @@ class Map2D: virtual public Map {
 		 * @param paths
 		 *   Possibly empty vector of map paths.
 		 */
-		Map2D(int caps, int viewportWidth, int viewportHeight,
-			int width, int height, int tileWidth, int tileHeight,
+		Map2D(AttributePtrVectorPtr attributes, int caps, int viewportWidth,
+			int viewportHeight, int width, int height, int tileWidth, int tileHeight,
 			LayerPtrVector& layers, PathPtrVectorPtr paths)
 			throw ();
 

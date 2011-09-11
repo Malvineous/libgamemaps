@@ -23,10 +23,11 @@
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Map2D(int caps, int viewportWidth, int viewportHeight,
-	int width, int height, int tileWidth, int tileHeight,
+Map2D::Map2D(AttributePtrVectorPtr attributes, int caps, int viewportWidth,
+	int viewportHeight, int width, int height, int tileWidth, int tileHeight,
 	LayerPtrVector& layers, PathPtrVectorPtr paths)
 	throw () :
+		Map(attributes),
 		caps(caps),
 		viewportWidth(viewportWidth), viewportHeight(viewportHeight),
 		width(width), height(height),

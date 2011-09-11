@@ -707,6 +707,90 @@ finishTesting:
 		// Run through the actions on the command line
 		for (std::vector<po::option>::iterator i = pa.options.begin(); i != pa.options.end(); i++) {
 			if (i->string_key.compare("info") == 0) {
+				std::cout << (bScript ? "attribute_count=" : "Number of attributes: ");
+				gm::Map::AttributePtrVectorPtr attributes = pMap->getAttributes();
+				std::cout << attributes->size() << "\n";
+				int attrNum = 0;
+				for (gm::Map::AttributePtrVector::const_iterator i = attributes->begin();
+					i != attributes->end(); i++
+				) {
+					if (bScript) std::cout << "attribute" << attrNum << "_name=";
+					else std::cout << "Attribute " << attrNum+1 << ": ";
+					std::cout << (*i)->name << "\n";
+
+					if (bScript) std::cout << "attribute" << attrNum << "_desc=";
+					else std::cout << "  Description: ";
+					std::cout << (*i)->desc << "\n";
+
+					if (bScript) std::cout << "attribute" << attrNum << "_type=";
+					else std::cout << "  Type: ";
+					switch ((*i)->type) {
+
+						case gm::Map::Attribute::Integer: {
+							std::cout << (bScript ? "int" : "Integer value") << "\n";
+							gm::Map::IntAttribute *a =
+								dynamic_cast<gm::Map::IntAttribute *>(i->get());
+							assert(a);
+
+							if (bScript) std::cout << "attribute" << attrNum << "_value=";
+							else std::cout << "  Current value: ";
+							std::cout << a->value << "\n";
+
+							if (bScript) {
+								std::cout << "attribute" << attrNum << "_min=" << a->minValue
+									<< "\nattribute" << attrNum << "_max=" << a->maxValue;
+							} else {
+								std::cout << "  Range: ";
+								if ((a->minValue == 0) && (a->maxValue == 0)) {
+									std::cout << "[unlimited]";
+								} else {
+									std::cout << a->minValue << " to " << a->maxValue;
+								}
+							}
+							std::cout << "\n";
+							break;
+						}
+
+						case gm::Map::Attribute::Enum: {
+							std::cout << (bScript ? "enum" : "Item from list") << "\n";
+							gm::Map::EnumAttribute *a =
+								dynamic_cast<gm::Map::EnumAttribute *>(i->get());
+							assert(a);
+
+							if (bScript) std::cout << "attribute" << attrNum << "_value=";
+							else std::cout << "  Current value: ";
+							if (a->value > a->values.size()) {
+								std::cout << (bScript ? "error" : "[out of range]");
+							} else {
+								if (bScript) std::cout << a->value;
+								else std::cout << "[" << a->value << "] " << a->values[a->value];
+							}
+							std::cout << "\n";
+
+							if (bScript) std::cout << "attribute" << attrNum
+								<< "_choice_count=" << a->values.size() << "\n";
+
+							int option = 0;
+							for (std::vector<std::string>::const_iterator i = a->values.begin();
+								i != a->values.end(); i++
+							) {
+								if (bScript) {
+									std::cout << "attribute" << attrNum << "_choice" << option
+										<< "=";
+								} else {
+									std::cout << "  Allowed value " << option << ": ";
+								}
+								std::cout << *i << "\n";
+								option++;
+							}
+							break;
+						}
+						default:
+							std::cout << (bScript ? "unknown" : "Unknown type (fix this!)");
+							break;
+					}
+					attrNum++;
+				}
 				std::cout << (bScript ? "map_type=" : "Map type: ");
 				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {

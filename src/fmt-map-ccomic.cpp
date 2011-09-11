@@ -161,6 +161,7 @@ MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPaths,
 		193, 160, // viewport size
 		0, 0,

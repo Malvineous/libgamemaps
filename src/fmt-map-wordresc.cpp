@@ -241,6 +241,84 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 		>> u16le(endY)
 	;
 
+	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+	Map::EnumAttribute *attrBGColour = new Map::EnumAttribute();
+	Map::AttributePtr ptr(attrBGColour);
+	attrBGColour->type = Map::Attribute::Enum;
+	attrBGColour->name = "Background colour";
+	attrBGColour->desc = "Colour to draw where there are no tiles.  Only used if backdrop "
+		"is not set.";
+	attrBGColour->value = bgColour;
+	attrBGColour->values.push_back("EGA 0 - Black");
+	attrBGColour->values.push_back("EGA 1 - Dark blue");
+	attrBGColour->values.push_back("EGA 2 - Dark green");
+	attrBGColour->values.push_back("EGA 3 - Dark cyan");
+	attrBGColour->values.push_back("EGA 4 - Dark red");
+	attrBGColour->values.push_back("EGA 5 - Dark magenta");
+	attrBGColour->values.push_back("EGA 6 - Brown");
+	attrBGColour->values.push_back("EGA 7 - Light grey");
+	attrBGColour->values.push_back("EGA 8 - Dark grey");
+	attrBGColour->values.push_back("EGA 9 - Light blue");
+	attrBGColour->values.push_back("EGA 10 - Light green");
+	attrBGColour->values.push_back("EGA 11 - Light cyan");
+	attrBGColour->values.push_back("EGA 12 - Light red");
+	attrBGColour->values.push_back("EGA 13 - Light magenta");
+	attrBGColour->values.push_back("EGA 14 - Yellow");
+	attrBGColour->values.push_back("EGA 15 - White");
+	attributes->push_back(ptr);
+
+	Map::EnumAttribute *attrTileset = new Map::EnumAttribute();
+	ptr.reset(attrTileset);
+	attrTileset->type = Map::Attribute::Enum;
+	attrTileset->name = "Tileset";
+	attrTileset->desc = "Tileset to use for this map";
+	switch (tileset) {
+		case 1: attrTileset->value = 0; break;
+		case 2: attrTileset->value = 1; break;
+		case 3: attrTileset->value = 2; break;
+		case 5: attrTileset->value = 3; break;
+		case 4: attrTileset->value = 4; break;
+
+		case 6: attrTileset->value = 5; break;
+		case 7: attrTileset->value = 6; break;
+		case 8: attrTileset->value = 7; break;
+		default: attrTileset->value = 0; break;
+	}
+	attrTileset->values.push_back("Desert");
+	attrTileset->values.push_back("Castle");
+	attrTileset->values.push_back("Suburban");
+	attrTileset->values.push_back("Industrial");
+	attrTileset->values.push_back("Spooky (episode 3 only)");
+	attrTileset->values.push_back("Custom (back5.wr)");
+	attrTileset->values.push_back("Custom (back6.wr)");
+	attrTileset->values.push_back("Custom (back7.wr)");
+	attributes->push_back(ptr);
+
+	Map::EnumAttribute *attrBackdrop = new Map::EnumAttribute();
+	ptr.reset(attrBackdrop);
+	attrBackdrop->type = Map::Attribute::Enum;
+	attrBackdrop->name = "Backdrop";
+	attrBackdrop->desc = "Image to show behind map (overrides background colour)";
+	switch (backdrop) {
+		case 0: attrBackdrop->value = 0; break;
+		case 3: attrBackdrop->value = 1; break;
+		case 4: attrBackdrop->value = 2; break;
+		case 2: attrBackdrop->value = 3; break;
+
+		case 5: attrBackdrop->value = 4; break;
+		case 6: attrBackdrop->value = 5; break;
+		case 7: attrBackdrop->value = 6; break;
+		default: attrBackdrop->value = 0; break;
+	}
+	attrBackdrop->values.push_back("None (use background colour)");
+	attrBackdrop->values.push_back("Desert");
+	attrBackdrop->values.push_back("Mountain");
+	attrBackdrop->values.push_back("Cave (episodes 2-3 only)");
+	attrBackdrop->values.push_back("Custom (drop5.wr)");
+	attrBackdrop->values.push_back("Custom (drop6.wr)");
+	attrBackdrop->values.push_back("Custom (drop7.wr)");
+	attributes->push_back(ptr);
+
 	Map2D::Layer::ItemPtrVectorPtr items(new Map2D::Layer::ItemPtrVector());
 
 	uint16_t gruzzleCount;
@@ -346,6 +424,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(itemLayer);
 
 	Map2DPtr map(new Map2D(
+		attributes,
 		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		288, 152, // viewport
 		mapWidth, mapHeight,
@@ -371,9 +450,59 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 
 	unsigned long lenWritten = 0;
 
-	uint16_t bgColour = 0;
-	uint16_t tileset = 0;
-	uint16_t backdrop = 0;
+	Map::AttributePtrVectorPtr attributes = map->getAttributes();
+	if (attributes->size() != 3) {
+		throw std::ios::failure("Cannot write map as there are an incorrect number "
+			"of attributes set.");
+	}
+
+	Map::EnumAttribute *attrBG =
+		dynamic_cast<Map::EnumAttribute *>(attributes->at(0).get());
+	if (!attrBG) {
+		throw std::ios::failure("Cannot write map as there an attribute of the "
+			"wrong type (bg != enum)");
+	}
+	uint16_t bgColour = attrBG->value;
+
+	Map::EnumAttribute *attrTileset =
+		dynamic_cast<Map::EnumAttribute *>(attributes->at(1).get());
+	if (!attrTileset) {
+		throw std::ios::failure("Cannot write map as there an attribute of the "
+			"wrong type (tileset != enum)");
+	}
+	uint16_t tileset;
+	switch (attrTileset->value) {
+		case 0: tileset = 1; break;
+		case 1: tileset = 2; break;
+		case 2: tileset = 3; break;
+		case 3: tileset = 5; break;
+		case 4: tileset = 4; break;
+
+		case 5: tileset = 6; break;
+		case 6: tileset = 7; break;
+		case 7: tileset = 8; break;
+		default: tileset = 1; break;
+	}
+
+	Map::EnumAttribute *attrBackdrop =
+		dynamic_cast<Map::EnumAttribute *>(attributes->at(2).get());
+	if (!attrBackdrop) {
+		throw std::ios::failure("Cannot write map as there an attribute of the "
+			"wrong type (backdrop != enum)");
+	}
+	uint16_t backdrop;
+	switch (attrBackdrop->value) {
+		case 0: backdrop = 0; break;
+		case 1: backdrop = 3; break;
+		case 2: backdrop = 4; break;
+		case 3: backdrop = 2; break;
+
+		case 4: backdrop = 5; break;
+		case 5: backdrop = 6; break;
+		case 6: backdrop = 7; break;
+		default: backdrop = 0; break;
+	}
+
 	uint16_t startX = 0;
 	uint16_t startY = 0;
 	uint16_t endX = 0;
@@ -484,6 +613,14 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 			lastCode = tiles[i];
 			lastCount = 1;
 		}
+	}
+	// Write out the last tile
+	if (lastCount > 0) {
+		output
+			<< u8(lastCount)
+			<< u8(lastCode)
+		;
+		lenWritten += 2;
 	}
 
 	return lenWritten;

@@ -42,47 +42,65 @@ class EInvalidFormat: public std::exception {
 /**
  * This class represents a map file.  Its functions are used to edit the map.
  *
- * @note Multithreading: Only call one function in this class at a time.  Many
- *       of the functions seek around the underlying stream and thus will break
- *       if two or more functions are executing at the same time.
+ * @note Multithreading: Only call one function in this class at a time.
  */
 class Map: virtual public Metadata {
 
 	public:
 
-		/// Truncate callback
-		/**
-		 * This function is called with a single unsigned long parameter when
-		 * the underlying map file needs to be shrunk or enlarged to the given
-		 * size.  It must be set to a valid function before flush() is called.
-		 *
-		 * The function signature is:
-		 * @code
-		 * void fnTruncate(unsigned long newLength);
-		 * @endcode
-		 *
-		 * This example uses boost::bind to package up a call to the Linux
-		 * truncate() function (which requires both a filename and size) such that
-		 * the filename is supplied in advance and not required when flush() makes
-		 * the call.
-		 *
-		 * @code
-		 * Map *pMap = ...
-		 * pMap->fnTruncate = boost::bind<void>(truncate, "map.dat", _1);
-		 * pMap->flush();  // calls truncate("map.dat", 123)
-		 * @endcode
-		 *
-		 * Unfortunately since there is no cross-platform method for changing a
-		 * file's size from an open file handle, this is a necessary evil to avoid
-		 * passing the map filename around all over the place.
-		 */
-		//FN_TRUNCATE fnTruncate;
+		/// Attribute attached to this map.
+		struct Attribute {
+			enum Type {
+				Integer,         ///< Implements IntAttribute
+				Enum,            ///< Implements EnumAttribute
+			};
+			Type type;         ///< What type this attribute is
+			std::string name;  ///< Short name of this attribute
+			std::string desc;  ///< Description of this attribute
 
-		Map()
+			virtual ~Attribute() throw ();
+		};
+
+		/// Shared pointer to an Attribute.
+		typedef boost::shared_ptr<Attribute> AttributePtr;
+
+		/// Vector of Attribute shared pointers.
+		typedef std::vector<AttributePtr> AttributePtrVector;
+
+		/// Shared pointer to Attribute vector.
+		typedef boost::shared_ptr<AttributePtrVector> AttributePtrVectorPtr;
+
+		/// Attribute that can be a number, within a given range.
+		struct IntAttribute: public Attribute {
+			int value;
+
+			int minValue;
+			int maxValue;
+
+			virtual ~IntAttribute() throw ();
+		};
+
+		/// Attribute that can be a single value from a list of permitted values.
+		struct EnumAttribute: public Attribute {
+			int value;
+
+			std::vector<std::string> values;
+
+			virtual ~EnumAttribute() throw ();
+		};
+
+
+		Map(AttributePtrVectorPtr attributes)
 			throw ();
 
 		virtual ~Map()
 			throw ();
+
+		virtual AttributePtrVectorPtr getAttributes()
+			throw ();
+
+	protected:
+		AttributePtrVectorPtr attributes;
 
 };
 

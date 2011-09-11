@@ -260,6 +260,7 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(objLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize,
 		20 * XR_TILE_SIZE, 10 * XR_TILE_SIZE, // viewport size
 		XR_MAP_WIDTH * XR_TILE_SIZE, XR_MAP_HEIGHT * XR_TILE_SIZE,

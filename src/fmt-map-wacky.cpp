@@ -158,6 +158,7 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		0, 0,
 		WW_MAP_WIDTH, WW_MAP_HEIGHT,

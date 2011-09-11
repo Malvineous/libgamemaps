@@ -275,6 +275,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(actorLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		HH_VIEWPORT_WIDTH, HH_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,

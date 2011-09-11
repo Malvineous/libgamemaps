@@ -173,6 +173,7 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new Map2D(
+		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
 		CC_VIEWPORT_WIDTH, CC_VIEWPORT_HEIGHT,
 		CC_MAP_WIDTH, height,
