@@ -38,13 +38,11 @@ class Map2D: virtual public Map {
 		/// Capabilities this layer supports.
 		enum Caps {
 			NoCaps            = 0x0000, ///< No caps set
-			HasGlobalSize     = 0x0001, ///< Does the map have one size for all layers?
-			CanResize         = 0x0002, ///< Can the map be resized as a whole?
-			HasGlobalTileSize = 0x0004, ///< Does the map have one tile size for all layers?
-			ChangeTileSize    = 0x0008, ///< Can the map's grid size be changed?
-			HasViewport       = 0x0010, ///< Does this map have a viewport?
-			HasPaths          = 0x0020, ///< Does the map support paths?
-			FixedPathCount    = 0x0040, ///< If set, paths cannot be added/removed, only edited
+			CanResize         = 0x0001, ///< Can the map be resized as a whole?
+			ChangeTileSize    = 0x0002, ///< Can the map's grid size be changed?
+			HasViewport       = 0x0004, ///< Does this map have a viewport?
+			HasPaths          = 0x0008, ///< Does the map support paths?
+			FixedPathCount    = 0x0010, ///< If set, paths cannot be added/removed, only edited
 		};
 
 		class Layer;
@@ -78,26 +76,43 @@ class Map2D: virtual public Map {
 		 *   HasViewport.  See getViewport().
 		 *
 		 * @param width
-		 *   Global map width, in pixels.  Only required if caps includes
-		 *   HasGlobalSize.
+		 *   Global map width, in number of tiles.  Width of each tile is
+		 *   specified by tileWidth.  Applies to all layers unless a layer's caps
+		 *   includes HasOwnSize.
 		 *
 		 * @param height
-		 *   Global map height, in pixels.  Only required if caps includes
-		 *   HasGlobalSize.
+		 *   Global map height, in number of tiles.  Height of each tile is
+		 *   specified by tileHeight.  Applies to all layers unless a layer's caps
+		 *   includes HasOwnSize.
 		 *
 		 * @param tileWidth
-		 *   Tile width in pixels for all layers.  Only required if caps includes
-		 *   HasGlobalTileSize.
+		 *   Default tile width in pixels.  Applies to all layers unless a layer's
+		 *   caps includes HasOwnTileSize.  This is also the smallest amount a
+		 *   level can be resized by.  Must be > 0, use 1 if there are no tiles.
 		 *
 		 * @param tileHeight
-		 *   Tile height in pixels for all layers.  Only required if caps includes
-		 *   HasGlobalTileSize.
+		 *   Default tile height in pixels.  Applies to all layers unless a layer's
+		 *   caps includes HasOwnTileSize.  This is also the smallest amount a
+		 *   level can be resized by.  Must be > 0, use 1 if there are no tiles.
 		 *
 		 * @param layers
 		 *   Vector of map layers.
 		 *
 		 * @param paths
 		 *   Possibly empty vector of map paths.
+		 *
+		 * @note tileWidth and tileHeight should specify the smallest multiple of
+		 *   the underlying tile size, in the event a map uses different tile sizes
+		 *   between layers.  This way the level will be resized by a multiple of
+		 *   this value, preventing the level from ever being a size where there is
+		 *   only room for half a tile.
+		 *
+		 * @note A layer can specify a different tile size but the same total
+		 *   dimensions.  In this case the pixel width is the same as the map, but
+		 *   more tiles will fit in the area.  To find the size in units of tiles,
+		 *   the map size will have to be multipled by the map tile size to get the
+		 *   map size in pixels, then divided by the layer's different tile size to
+		 *   reveal the dimensions of the layer in a number of tiles.
 		 */
 		Map2D(AttributePtrVectorPtr attributes, int caps, int viewportWidth,
 			int viewportHeight, int width, int height, int tileWidth, int tileHeight,
@@ -321,6 +336,9 @@ class Map2D::Layer {
 		 *   Callback function to allow or prevent tiles from being placed at
 		 *   certain locations or more than a limited number of times.  Can be
 		 *   NULL if no restrictions are required.
+		 *
+		 * @see Map2D::Map2D() for more details on how the layer and tile
+		 *   dimensions are handled.
 		 */
 		Layer(const std::string& title, int caps, int width, int height,
 			int tileWidth, int tileHeight, ItemPtrVectorPtr& items,

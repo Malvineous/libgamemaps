@@ -276,9 +276,9 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
+		Map2D::HasViewport,
 		HH_VIEWPORT_WIDTH, HH_VIEWPORT_HEIGHT,
-		mapWidth * HH_TILE_WIDTH, mapHeight * HH_TILE_HEIGHT,
+		mapWidth, mapHeight,
 		HH_TILE_WIDTH, HH_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
@@ -295,8 +295,6 @@ unsigned long HarryMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		throw std::ios::failure("Incorrect layer count for this format.");
 
 	int mapWidth, mapHeight;
-	if (!map2d->getCaps() & Map2D::HasGlobalSize)
-		throw std::ios::failure("Cannot write this type of map as this format.");
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	unsigned long lenWritten = 0;

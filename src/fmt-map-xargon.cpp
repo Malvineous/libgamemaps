@@ -33,7 +33,8 @@
 #define XR_LEN_SAVEDATA         97
 
 /// Tile dimensions in background layer
-#define XR_TILE_SIZE 16
+#define XR_TILE_WIDTH   16
+#define XR_TILE_HEIGHT  16
 
 /// Maximum number of strings in the stringdata section
 #define XR_SAFETY_MAX_STRINGS   512
@@ -180,9 +181,9 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
-		Map2D::Layer::HasOwnTileSize,
+		Map2D::Layer::NoCaps,
 		0, 0,   // Layer size unused
-		XR_TILE_SIZE, XR_TILE_SIZE,
+		0, 0,
 		tiles,
 		imageFromTileCode, NULL
 	));
@@ -261,10 +262,10 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasGlobalSize,
-		20 * XR_TILE_SIZE, 10 * XR_TILE_SIZE, // viewport size
-		XR_MAP_WIDTH * XR_TILE_SIZE, XR_MAP_HEIGHT * XR_TILE_SIZE,
-		0, 0,
+		Map2D::HasViewport,
+		20 * XR_TILE_WIDTH, 10 * XR_TILE_HEIGHT, // viewport size
+		XR_MAP_WIDTH, XR_MAP_HEIGHT,
+		XR_TILE_WIDTH, XR_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
 

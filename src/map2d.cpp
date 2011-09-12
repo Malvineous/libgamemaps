@@ -19,6 +19,7 @@
  */
 
 #include <camoto/gamemaps/map2d.hpp>
+#include <cassert>
 
 namespace camoto {
 namespace gamemaps {
@@ -35,6 +36,10 @@ Map2D::Map2D(AttributePtrVectorPtr attributes, int caps, int viewportWidth,
 		layers(layers),
 		paths(paths)
 {
+	assert(width > 0);
+	assert(height > 0);
+	assert(tileWidth > 0);
+	assert(tileHeight > 0);
 }
 
 Map2D::~Map2D()
@@ -61,8 +66,6 @@ void Map2D::getViewport(int *x, int *y)
 void Map2D::getMapSize(int *x, int *y)
 	throw ()
 {
-	assert(this->getCaps() & HasGlobalSize);
-
 	*x = this->width;
 	*y = this->height;
 	return;
@@ -81,8 +84,6 @@ void Map2D::setMapSize(int x, int y)
 void Map2D::getTileSize(int *x, int *y)
 	throw ()
 {
-	assert(this->getCaps() & HasGlobalTileSize);
-
 	*x = this->tileWidth;
 	*y = this->tileHeight;
 	return;

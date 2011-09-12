@@ -23,34 +23,38 @@
 namespace camoto {
 namespace gamemaps {
 
-bool getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
+void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
 	int *layerHeight, int *tileWidth, int *tileHeight)
 {
 	int mapCaps = map->getCaps();
 	int layerCaps = layer->getCaps();
 	if (layerCaps & Map2D::Layer::HasOwnTileSize) {
 		layer->getTileSize(tileWidth, tileHeight);
-	} else if (mapCaps & Map2D::HasGlobalTileSize) {
+	} else {
 		// The layer doesn't have its own tile size, so use the map's.
 		map->getTileSize(tileWidth, tileHeight);
-	} else {
-		// Neither the map nor the layer have a tile size, use the default.
-		*tileWidth = *tileHeight = 1;
 	}
 	assert((*tileWidth != 0) && (*tileHeight != 0));
 
 	if (layerCaps & Map2D::Layer::HasOwnSize) {
 		layer->getLayerSize(layerWidth, layerHeight);
-	} else if (mapCaps & Map2D::HasGlobalSize) {
+	} else {
 		// Layer doesn't have own size, use map
 		map->getMapSize(layerWidth, layerHeight);
-		// The values are in pixels, so we need to convert them to tiles
-		*layerWidth /= *tileWidth;
-		*layerHeight /= *tileHeight;
-	} else {
-		return false;
+		// The values are in global tiles, but we might have to convert them to
+		// layer tiles.
+		if (layerCaps & Map2D::Layer::HasOwnTileSize) {
+			int globalTileWidth, globalTileHeight;
+			map->getTileSize(&globalTileWidth, &globalTileHeight);
+			// Convert from global tiles to pixels
+			*layerWidth *= globalTileWidth;
+			*layerHeight *= globalTileHeight;
+			// Convert from pixels to layer tiles
+			*layerWidth /= *tileWidth;
+			*layerHeight /= *tileHeight;
+		}
 	}
-	return true;
+	return;
 }
 
 } // namespace gamemaps

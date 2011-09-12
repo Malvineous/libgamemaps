@@ -205,33 +205,13 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 	BOOST_TEST_MESSAGE("Getting map size");
 
 	int layerCount = this->map2d->getLayerCount();
-	int width = -1, height = -1;
-	if (this->map2d->getCaps() & gm::Map2D::HasGlobalSize) {
-		this->map2d->getMapSize(&width, &height);
-		if (this->map2d->getCaps() & gm::Map2D::HasGlobalTileSize) {
-			int x, y;
-			this->map2d->getTileSize(&x, &y);
-			width *= x;
-			height *= y;
-		}
-	} else {
-		for (int i = 0; i < layerCount; i++) {
-			gm::Map2D::LayerPtr layer = this->map2d->getLayer(i);
-			int layerCaps = layer->getCaps();
-			int lwidth, lheight;
-			if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
-				layer->getLayerSize(&lwidth, &lheight);
-			}
-			if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-				int x, y;
-				layer->getTileSize(&x, &y);
-				lwidth *= x;
-				lheight *= y;
-			}
-			if (lwidth > width) width = lwidth;
-			if (lheight > height) height = lheight;
-		}
-	}
+	int width, height;
+	this->map2d->getMapSize(&width, &height);
+
+	int x, y;
+	this->map2d->getTileSize(&x, &y);
+	width *= x;
+	height *= y;
 
 	BOOST_REQUIRE_EQUAL(width, MAP_WIDTH_PIXELS);
 	BOOST_REQUIRE_EQUAL(height, MAP_HEIGHT_PIXELS);

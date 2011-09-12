@@ -174,9 +174,9 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
+		Map2D::HasViewport,
 		CC_VIEWPORT_WIDTH, CC_VIEWPORT_HEIGHT,
-		CC_MAP_WIDTH * CC_TILE_WIDTH, height * CC_TILE_HEIGHT,
+		CC_MAP_WIDTH, height,
 		CC_TILE_WIDTH, CC_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
@@ -194,11 +194,10 @@ unsigned long CCavesMapType::write(MapPtr map, ostream_sptr output, SuppData& su
 
 	unsigned long lenWritten = 0;
 
-	// Write the background layer
 	int mapWidth, mapHeight;
-	if (!map2d->getCaps() & Map2D::HasGlobalSize)
-		throw std::ios::failure("Cannot write this type of map as this format.");
 	map2d->getMapSize(&mapWidth, &mapHeight);
+
+	// Write the background layer
 	unsigned long lenBG = mapWidth * mapHeight;
 	uint8_t *bg = new uint8_t[lenBG];
 	boost::scoped_array<uint8_t> sbg(bg);

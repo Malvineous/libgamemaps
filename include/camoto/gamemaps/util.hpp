@@ -42,10 +42,8 @@ namespace gamemaps {
  *
  * @param tileHeight
  *   Stores layer height on return, in pixels.
- *
- * @return true if all values obtained successfully, false on error.
  */
-bool getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
+void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
 	int *layerHeight, int *tileWidth, int *tileHeight);
 
 } // namespace gamemaps

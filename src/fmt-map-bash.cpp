@@ -202,9 +202,9 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
+		Map2D::HasViewport,
 		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
-		mapWidth * MB_TILE_WIDTH, mapHeight * MB_TILE_HEIGHT,
+		mapWidth, mapHeight,
 		MB_TILE_WIDTH, MB_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
@@ -223,8 +223,6 @@ unsigned long BashMapType::write(MapPtr map, ostream_sptr output, SuppData& supp
 	unsigned long lenWritten = 0;
 
 	int mapWidth, mapHeight;
-	if (!map2d->getCaps() & Map2D::HasGlobalSize)
-		throw std::ios::failure("Cannot write this type of map as this format.");
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	ostream_sptr bg = suppData[SuppItem::Layer1].stream;

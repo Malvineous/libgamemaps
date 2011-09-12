@@ -224,9 +224,9 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasViewport | Map2D::HasGlobalSize | Map2D::HasGlobalTileSize,
+		Map2D::HasViewport,
 		CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
-		mapWidth * CCA_TILE_WIDTH, 32768 / mapWidth * CCA_TILE_HEIGHT,
+		mapWidth, 32768 / mapWidth,
 		CCA_TILE_WIDTH, CCA_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
@@ -245,8 +245,6 @@ unsigned long CosmoMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	unsigned long lenWritten = 0;
 
 	int mapWidth, mapHeight;
-	if (!map2d->getCaps() & Map2D::HasGlobalSize)
-		throw std::ios::failure("Cannot write this type of map as this format.");
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	uint16_t flags = 0;

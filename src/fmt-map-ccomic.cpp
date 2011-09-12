@@ -162,9 +162,9 @@ MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		Map::AttributePtrVectorPtr(),
-		Map2D::HasGlobalSize | Map2D::HasGlobalTileSize | Map2D::HasViewport,
+		Map2D::HasViewport,
 		193, 160, // viewport size
-		width * CC_TILE_WIDTH, height * CC_TILE_HEIGHT,
+		width, height,
 		CC_TILE_WIDTH, CC_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
@@ -180,15 +180,16 @@ unsigned long CComicMapType::write(MapPtr map, ostream_sptr output, SuppData& su
 	if (map2d->getLayerCount() != 1)
 		throw std::ios::failure("Incorrect layer count for this format.");
 
+	int mapWidth, mapHeight;
+	map2d->getMapSize(&mapWidth, &mapHeight);
+
 	unsigned long lenWritten = 0;
 
 	Map2D::LayerPtr layer = map2d->getLayer(0);
-	int width, height;
-	layer->getLayerSize(&width, &height);
 
 	// Write the background layer
-	output << u16le(width) << u16le(height);
-	int mapLen = width * height;
+	output << u16le(mapWidth) << u16le(mapHeight);
+	int mapLen = mapWidth * mapHeight;
 
 	uint8_t *bg = new uint8_t[mapLen];
 	memset(bg, CC_DEFAULT_BGTILE, mapLen); // default background tile
@@ -197,11 +198,11 @@ unsigned long CComicMapType::write(MapPtr map, ostream_sptr output, SuppData& su
 		i != items->end();
 		i++
 	) {
-		if (((*i)->x > width) || ((*i)->y > height)) {
+		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
 			delete[] bg;
 			throw std::ios::failure("Layer has tiles outside map boundary!");
 		}
-		bg[(*i)->y * width + (*i)->x] = (*i)->code;
+		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
 
 	output->write((char *)bg, mapLen);

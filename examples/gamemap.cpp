@@ -178,34 +178,11 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 {
 	int mapCaps = map->getCaps();
 	int outWidth, outHeight; // in pixels
-	if (mapCaps & gm::Map2D::HasGlobalSize) {
-		map->getMapSize(&outWidth, &outHeight);
-	} else {
-		outWidth = outHeight = 0;
-		int layerCount = map->getLayerCount();
-		for (int i = 0; i < layerCount; i++) {
-			gm::Map2D::LayerPtr layer = map->getLayer(i);
-			int layerCaps = layer->getCaps();
-			if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
-				int layerX, layerY;
-				layer->getLayerSize(&layerX, &layerY);
-				// Convert to pixels if not already
-				if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-					int x, y;
-					layer->getTileSize(&x, &y);
-					layerX *= x;
-					layerY *= y;
-				} else if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-					int x, y;
-					map->getTileSize(&x, &y);
-					layerX *= x;
-					layerY *= y;
-				} // else no grids at all, already in pixels
-				if (layerX > outWidth) outWidth = layerX;
-				if (layerY > outHeight) outHeight = layerY;
-			}
-		}
-	}
+	int globalTileWidth, globalTileHeight;
+	map->getTileSize(&globalTileWidth, &globalTileHeight);
+	map->getMapSize(&outWidth, &outHeight);
+	outWidth *= globalTileWidth;
+	outHeight *= globalTileHeight;
 
 	png::image<png::index_pixel> png(outWidth, outHeight);
 
@@ -257,15 +234,8 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 		gm::Map2D::LayerPtr layer = map->getLayer(layerIndex);
 
 		// Figure out the layer size (in tiles) and the tile size
-		int layerWidth, layerHeight;
-		int tileWidth, tileHeight;
-		if (!getLayerDims(map, layer, &layerWidth, &layerHeight, &tileWidth,
-			&tileHeight)
-		) {
-			std::cout << "Warning: Layer " << layerIndex + 1 << " has no dimensions, and "
-				"neither does the map!  Skipping layer." << std::endl;
-			continue;
-		}
+		int layerWidth, layerHeight, tileWidth, tileHeight;
+		getLayerDims(map, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
 
 		// Prepare tileset
 		std::vector<CachedTile> cache;
@@ -759,35 +729,31 @@ finishTesting:
 						std::cout << "map_caps=" << mapCaps << "\n";
 					} else {
 						std::cout << "Map capabilities:"
-							<< MAP2D_CAP(HasGlobalSize)
 							<< MAP2D_CAP(CanResize)
-							<< MAP2D_CAP(HasGlobalTileSize)
 							<< MAP2D_CAP(ChangeTileSize)
 							<< MAP2D_CAP(HasViewport)
 							<< "\n"
 						;
 					}
-					if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-						int x, y;
-						map2d->getTileSize(&x, &y);
-						std::cout << (bScript ? "tile_width=" : "Tile size: ") << x
-							<< (bScript ? "tile_height=" : "x") << y << "\n";
-					}
-					if (mapCaps & gm::Map2D::HasGlobalSize) {
-						int x, y;
-						map2d->getMapSize(&x, &y);
-						std::cout
-							<< (bScript ? "map_width=" : "Map size: ") << x
-							<< (bScript ? "\nmap_height=" : "x") << y
-							<< (bScript ? "\nmap_units=" : " ")
-							<< ((mapCaps & gm::Map2D::HasGlobalTileSize) ? "tiles" : "pixels")
-							<< "\n";
-					}
+					int mapTileWidth, mapTileHeight;
+					map2d->getTileSize(&mapTileWidth, &mapTileHeight);
+					std::cout << (bScript ? "tile_width=" : "Tile size: ") << mapTileWidth
+						<< (bScript ? "\ntile_height=" : "x") << mapTileHeight << "\n";
+
+					int mapWidth, mapHeight;
+					map2d->getMapSize(&mapWidth, &mapHeight);
+					std::cout
+						<< (bScript ? "map_width=" : "Map size: ") << mapWidth
+						<< (bScript ? "\nmap_height=" : "x") << mapHeight
+						<< (bScript ? "" : " tiles")
+						<< "\n";
+
 					if (mapCaps & gm::Map2D::HasViewport) {
 						int x, y;
 						map2d->getViewport(&x, &y);
 						std::cout << (bScript ? "viewport_width=" : "Viewport size: ") << x
-							<< (bScript ? "viewport_height=" : "x") << y << "\n";
+							<< (bScript ? "\nviewport_height=" : "x") << y
+							<< (bScript ? "" : " pixels") << "\n";
 					}
 
 					int layerCount = map2d->getLayerCount();
@@ -815,60 +781,46 @@ finishTesting:
 							<< MAP2D_LAYER_CAP(ChangeTileSize)
 							<< "\n"
 						;
+
+						int layerTileWidth, layerTileHeight;
+						bool layerTileSame;
 						if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-							int x, y;
-							layer->getTileSize(&x, &y);
-							std::cout << prefix << (bScript ? "tile_width=" : "Tile size: ") << x;
-							if (bScript) std::cout << "\n" << prefix << "tile_height=";
-							else std::cout << "x";
-							std::cout << y << "\n";
-						}
-						if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
-							int x, y;
-							layer->getLayerSize(&x, &y);
-							std::cout << prefix << (bScript ? "width=" : "Layer size: ") << x;
-							if (bScript) std::cout << "\n" << prefix << "height=";
-							else std::cout << "x";
-							std::cout << y << "\n";
+							layer->getTileSize(&layerTileWidth, &layerTileHeight);
+							layerTileSame = false;
 						} else {
-							// Layer doesn't have own size, use map
-							if (mapCaps & gm::Map2D::HasGlobalSize) {
-								int x, y;
-								map2d->getMapSize(&x, &y);
-								if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-									// The layer is the same size as the map, but it has a
-									// different tile size.
-
-									if (mapCaps & gm::Map2D::HasGlobalTileSize) {
-										// The map also has a tile size, so multiply it out to get
-										// dimensions in pixels (which they are if the map doesn't
-										// have a global tile size.)
-										int mtx, mty;
-										map2d->getTileSize(&mtx, &mty);
-										x *= mtx;
-										y *= mty;
-									}
-
-									// Convert the global map size (in pixels) to this layer's
-									// size (in tiles)
-									int tx, ty;
-									layer->getTileSize(&tx, &ty);
-									std::cout << prefix << (bScript ? "width=" : "Layer size: ") << x / tx;
-									if (bScript) std::cout << "\n" << prefix << "height=";
-									else std::cout << "x";
-									std::cout << y / ty << "\n";
-								} else {
-									if (bScript) std::cout << prefix << "width=map_width\n"
-										<< prefix << "height=map_height\n";
-									else std::cout << prefix << "Layer size: Same as map\n";
-								}
-							} else {
-								// Both map and layer size have no dimensions!
-								if (bScript) std::cout << prefix << "width=-1\n"
-									<< prefix << "height=-1\n";
-								else std::cout << prefix << "Layer size: Empty\n";
-							}
+							layerTileWidth = mapTileWidth;
+							layerTileHeight = mapTileHeight;
+							layerTileSame = true;
 						}
+						std::cout << prefix << (bScript ? "tile_width=" : "Tile size: ") << layerTileWidth;
+						if (bScript) std::cout << "\n" << prefix << "tile_height=";
+						else std::cout << "x";
+						std::cout << layerTileHeight;
+						if (layerTileSame && (!bScript)) {
+							std::cout << " (same as map)";
+						}
+						std::cout << "\n";
+
+						int layerWidth, layerHeight;
+						bool layerSame;
+						if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
+							layer->getLayerSize(&layerWidth, &layerHeight);
+							layerSame = false;
+						} else {
+							// Convert from map tilesize to layer tilesize, leaving final
+							// pixel dimensions unchanged
+							layerWidth = mapWidth * mapTileWidth / layerTileWidth;
+							layerHeight = mapHeight * mapTileHeight / layerTileHeight;
+							layerSame = true;
+						}
+						std::cout << prefix << (bScript ? "width=" : "Layer size: ") << layerWidth;
+						if (bScript) std::cout << "\n" << prefix << "height=";
+						else std::cout << "x";
+						std::cout << layerHeight;
+						if (layerTileSame && (!bScript)) {
+							std::cout << " (same as map)";
+						}
+						std::cout << "\n";
 					}
 
 				} else {
@@ -896,16 +848,8 @@ finishTesting:
 					gm::Map2D::LayerPtr layer = map2d->getLayer(targetLayer - 1);
 
 					// Figure out the layer size
-					int layerWidth, layerHeight;
-					int tileWidth, tileHeight;
-					if (!getLayerDims(map2d, layer, &layerWidth, &layerHeight, &tileWidth,
-							&tileHeight)
-					) {
-						std::cout << "ERROR: Layer has no dimensions, and neither does "
-							"the map!" << std::endl;
-						iRet = RET_SHOWSTOPPER;
-						continue;
-					}
+					int layerWidth, layerHeight, tileWidth, tileHeight;
+					getLayerDims(map2d, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
 					std::cout << layerWidth << "," << layerHeight << std::endl;
 
 					const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();

@@ -455,9 +455,9 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 	}
 	Map2D::LayerPtr bgLayer(new Map2D::Layer(
 		"Background",
-		Map2D::Layer::HasOwnTileSize,
+		Map2D::Layer::NoCaps,
 		0, 0,
-		WR_BGTILE_WIDTH, WR_BGTILE_HEIGHT,
+		0, 0,
 		tiles,
 		imageFromWRCode, NULL
 	));
@@ -499,10 +499,10 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 
 	Map2DPtr map(new Map2D(
 		attributes,
-		Map2D::HasGlobalSize,
+		Map2D::HasViewport,
 		288, 152, // viewport
-		mapWidth * WR_BGTILE_WIDTH, mapHeight * WR_BGTILE_HEIGHT,
-		0, 0,
+		mapWidth, mapHeight,
+		WR_BGTILE_WIDTH, WR_BGTILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
 	));
 
@@ -518,8 +518,6 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 		throw std::ios::failure("Incorrect layer count for this format.");
 
 	int mapWidth, mapHeight;
-	if (!map2d->getCaps() & Map2D::HasGlobalSize)
-		throw std::ios::failure("Cannot write this type of map as this format.");
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	unsigned long lenWritten = 0;
