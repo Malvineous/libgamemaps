@@ -129,6 +129,49 @@ bool WR_0_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
 	return true; // anything can be placed anywhere
 }
 
+/// Write the given data to the stream, RLE encoded
+int rleWrite(ostream_sptr output, uint8_t *data, int len)
+{
+	int lenWritten = 0;
+
+	// RLE encode the data
+	uint8_t lastCount = 0;
+	uint8_t lastCode = data[0];
+	for (int i = 0; i < len; i++) {
+		if (data[i] == lastCode) {
+			if (lastCount == 0xFF) {
+				output
+					<< u8(lastCount)
+					<< u8(lastCode)
+				;
+				lenWritten += 2;
+				lastCount = 1;
+			} else {
+				lastCount++;
+			}
+		} else {
+			output
+				<< u8(lastCount)
+				<< u8(lastCode)
+			;
+			lenWritten += 2;
+			lastCode = data[i];
+			lastCount = 1;
+		}
+	}
+	// Write out the last tile
+	if (lastCount > 0) {
+		output
+			<< u8(lastCount)
+			<< u8(lastCode)
+		;
+		lenWritten += 2;
+	}
+
+	return lenWritten;
+}
+
+
 
 std::string WordRescueMapType::getMapCode() const
 	throw ()
@@ -514,7 +557,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 2)
+	if (map2d->getLayerCount() != 3)
 		throw std::ios::failure("Incorrect layer count for this format.");
 
 	int mapWidth, mapHeight;
@@ -586,15 +629,12 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 	uint16_t endX = 0;
 	uint16_t endY = 0;
 
-	Map2D::LayerPtr layer = map2d->getLayer(1);
+	Map2D::LayerPtr layer = map2d->getLayer(2);
 	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
 		i != items->end();
 		i++
 	) {
-		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-			throw std::ios::failure("Layer has tiles outside map boundary!");
-		}
 		switch ((*i)->code) {
 			case WR_CODE_GRUZZLE: itemLocations[INDEX_GRUZZLE].push_back(point((*i)->x, (*i)->y)); break;
 			case WR_CODE_SLIME:   itemLocations[INDEX_SLIME].push_back(point((*i)->x, (*i)->y)); break;
@@ -665,44 +705,34 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 		i++
 	) {
 		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-			throw std::ios::failure("Layer has tiles outside map boundary!");
+			throw std::ios::failure(createString("Layer has tiles outside map "
+				"boundary at (" << (*i)->x << "," << (*i)->y << ")"));
 		}
 		tiles[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
 
-	// RLE encode the data
-	uint8_t lastCount = 0;
-	uint8_t lastCode = tiles[0];
-	for (int i = 0; i < lenTiles; i++) {
-		if (tiles[i] == lastCode) {
-			if (lastCount == 0xFF) {
-				output
-					<< u8(lastCount)
-					<< u8(lastCode)
-				;
-				lenWritten += 2;
-				lastCount = 1;
-			} else {
-				lastCount++;
-			}
-		} else {
-			output
-				<< u8(lastCount)
-				<< u8(lastCode)
-			;
-			lenWritten += 2;
-			lastCode = tiles[i];
-			lastCount = 1;
+	lenWritten += rleWrite(output, tiles, lenTiles);
+
+	// Write the attribute layer
+	unsigned long lenAttr = mapWidth * mapHeight * 4;
+	uint8_t *attr = new uint8_t[lenAttr];
+	boost::scoped_array<uint8_t> sattr(attr);
+	// Set the default attribute tile
+	memset(attr, WR_DEFAULT_ATTILE, lenAttr);
+	layer = map2d->getLayer(1);
+	const Map2D::Layer::ItemPtrVectorPtr atitems = layer->getAllItems();
+	for (Map2D::Layer::ItemPtrVector::const_iterator i = atitems->begin();
+		i != atitems->end();
+		i++
+	) {
+		if (((*i)->x > mapWidth * 2) || ((*i)->y > mapHeight * 2)) {
+			throw std::ios::failure(createString("Layer has tiles outside map "
+				"boundary at (" << (*i)->x << "," << (*i)->y << ")"));
 		}
+		attr[(*i)->y * mapWidth * 2 + (*i)->x] = (*i)->code;
 	}
-	// Write out the last tile
-	if (lastCount > 0) {
-		output
-			<< u8(lastCount)
-			<< u8(lastCode)
-		;
-		lenWritten += 2;
-	}
+
+	lenWritten += rleWrite(output, attr, lenAttr);
 
 	return lenWritten;
 }

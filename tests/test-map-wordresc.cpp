@@ -46,13 +46,20 @@
 	"\x01\x12\x01\x11\x01\x10" \
 	"\x03\x22" \
 	"\x03\xFF" \
-	"\x02\x42\x01\x40"
+	"\x02\x42\x01\x40" \
+	"\x0a\x73" /* attribute layer */ \
+	"\x01\x74\x01\x00\x01\x01\x01\x02\x01\x03\x01\x04\x01\x05\x01\x06\x01\x20\x02\x73" \
+	"\x09\x20" \
+	"\x01\x73\x08\x74\x02\x73" \
+	"\x08\x74\x01\x73" \
+	"\x0a\x20"
 
 #define MAP_WIDTH_PIXELS  (3*16)
 #define MAP_HEIGHT_PIXELS (5*16)
-#define MAP_LAYER_COUNT   2
+#define MAP_LAYER_COUNT   3
 #define MAP_FIRST_CODE_L1 0x02
-#define MAP_FIRST_CODE_L2 0x06
+#define MAP_FIRST_CODE_L2 0x73
+#define MAP_FIRST_CODE_L3 0x06
 
 #define MAP_CLASS fmt_map_wordresc
 #define MAP_TYPE  "map-wordresc"
