@@ -176,8 +176,32 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, std::ios::beg);
 
+	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+
 	// Skip signature and flags
-	input->seekg(0x12 + 11, std::ios::cur);
+	input->seekg(0x12 + 4, std::ios::cur);
+
+	uint16_t startX, startY;
+	input
+		>> u16le(startX)
+		>> u16le(startY)
+	;
+
+	input->seekg(2, std::ios::cur);
+
+	uint8_t mapFlags;
+	input >> u8(mapFlags);
+
+	Map::EnumAttribute *attrParallax = new Map::EnumAttribute();
+	Map::AttributePtr ptr(attrParallax);
+	attrParallax->type = Map::Attribute::Enum;
+	attrParallax->name = "Background";
+	attrParallax->desc = "How to position the background layer as the player "
+		"moves (parallax is only visible in-game).";
+	attrParallax->value = mapFlags == 0 ? 0 : 1;
+	attrParallax->values.push_back("Fixed");
+	attrParallax->values.push_back("Parallax");
+	attributes->push_back(ptr);
 
 	// TODO: Load palette
 	input->seekg(768, std::ios::cur);
@@ -275,7 +299,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(actorLayer);
 
 	Map2DPtr map(new Map2D(
-		Map::AttributePtrVectorPtr(),
+		attributes,
 		Map2D::HasViewport,
 		HH_VIEWPORT_WIDTH, HH_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,
@@ -294,13 +318,27 @@ unsigned long HarryMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	if (map2d->getLayerCount() != 3)
 		throw std::ios::failure("Incorrect layer count for this format.");
 
+	Map::AttributePtrVectorPtr attributes = map->getAttributes();
+	if (attributes->size() != 1) {
+		throw std::ios::failure("Cannot write map as there is an incorrect number "
+			"of attributes set.");
+	}
+
 	int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	unsigned long lenWritten = 0;
 
+	Map::EnumAttribute *attrParallax =
+		dynamic_cast<Map::EnumAttribute *>(attributes->at(0).get());
+	if (!attrParallax) {
+		throw std::ios::failure("Cannot write map as there is an attribute of the "
+			"wrong type (parallax != enum)");
+	}
+	uint8_t mapFlags = attrParallax->value;
+
 	uint16_t startX = 0, startY = 0;
-	uint8_t mapFlags = 0;
+
 	output
 		<< nullPadded("\x11SubZero Game File", 0x12)
 		<< u32le(0)

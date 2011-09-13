@@ -29,7 +29,7 @@
 
 #define testdata_initialstate \
 	"\x11SubZero Game File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00" \
-	"\x00" \
+	"\x01" \
 	empty_256 empty_256 empty_256 \
 	empty_256 \
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
