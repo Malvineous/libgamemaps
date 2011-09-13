@@ -26,6 +26,7 @@
 #include <camoto/gamemaps.hpp>
 #include <camoto/util.hpp>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "png++/png.hpp"
 
@@ -850,7 +851,6 @@ finishTesting:
 					// Figure out the layer size
 					int layerWidth, layerHeight, tileWidth, tileHeight;
 					getLayerDims(map2d, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
-					std::cout << layerWidth << "," << layerHeight << std::endl;
 
 					const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 					gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
@@ -865,9 +865,10 @@ finishTesting:
 								}
 								if (((*t)->x != x) || ((*t)->y != y)) {
 									// Grid position with no tile!
-									std::cout << ' ';
+									std::cout << "     ";
 								} else {
-									std::cout << (char)(' ' + ((*t)->code % (126-32)));
+									std::cout << std::hex << std::setw(4)
+										<< (unsigned int)(*t)->code << ' ';
 								}
 							}
 							std::cout << "\n";
