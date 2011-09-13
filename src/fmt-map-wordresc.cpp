@@ -567,14 +567,14 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 
 	Map::AttributePtrVectorPtr attributes = map->getAttributes();
 	if (attributes->size() != 3) {
-		throw std::ios::failure("Cannot write map as there are an incorrect number "
+		throw std::ios::failure("Cannot write map as there is an incorrect number "
 			"of attributes set.");
 	}
 
 	Map::EnumAttribute *attrBG =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(0).get());
 	if (!attrBG) {
-		throw std::ios::failure("Cannot write map as there an attribute of the "
+		throw std::ios::failure("Cannot write map as there is an attribute of the "
 			"wrong type (bg != enum)");
 	}
 	uint16_t bgColour = attrBG->value;
@@ -582,7 +582,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 	Map::EnumAttribute *attrTileset =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(1).get());
 	if (!attrTileset) {
-		throw std::ios::failure("Cannot write map as there an attribute of the "
+		throw std::ios::failure("Cannot write map as there is an attribute of the "
 			"wrong type (tileset != enum)");
 	}
 	uint16_t tileset;
@@ -602,7 +602,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 	Map::EnumAttribute *attrBackdrop =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(2).get());
 	if (!attrBackdrop) {
-		throw std::ios::failure("Cannot write map as there an attribute of the "
+		throw std::ios::failure("Cannot write map as there is an attribute of the "
 			"wrong type (backdrop != enum)");
 	}
 	uint16_t backdrop;
