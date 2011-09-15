@@ -23,12 +23,13 @@
 
 #include <math.h>
 #include <camoto/iostream_helpers.hpp>
+#include <camoto/util.hpp>
 #include "fmt-map-wacky.hpp"
 
 #define WW_MAP_WIDTH            64
 #define WW_MAP_HEIGHT           64
-#define WW_TILE_WIDTH           16
-#define WW_TILE_HEIGHT          16
+#define WW_TILE_WIDTH           32
+#define WW_TILE_HEIGHT          32
 
 #define WW_LAYER_OFF_BG         0
 #define WW_LAYER_LEN_BG         (WW_MAP_WIDTH * WW_MAP_HEIGHT)
@@ -42,6 +43,9 @@
 
 /// After this many tiles, go to the next tileset.
 #define WW_TILES_PER_TILESET    54
+
+/// Angle value equivalent to 0
+#define WW_ANGLE_MAX          1920
 
 namespace camoto {
 namespace gamemaps {
@@ -161,8 +165,6 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 		>> u16le(startX)
 		>> u16le(startY)
 	;
-	startX /= 2;
-	startY /= 2;
 	pathptr->start.push_back(Map2D::Path::point(startX, startY));
 	for (int i = 0; i < numPoints; i++) {
 		uint16_t nextX, nextY;
@@ -172,8 +174,6 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 			>> u16le(nextY)
 		;
 		rd->seekg(6, std::ios::cur);
-		nextX /= 2;
-		nextY /= 2;
 		pathptr->points.push_back(Map2D::Path::point(nextX - startX, nextY - startY));
 	}
 	pathptr->fixed = false;
@@ -195,6 +195,8 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
 	throw (std::ios::failure)
 {
+	assert(suppData[SuppItem::Layer1].fnTruncate);
+
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
@@ -231,9 +233,10 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	lenWritten += WW_LAYER_LEN_BG;
 
 	ostream_sptr rd = suppData[SuppItem::Layer1].stream;
+	rd->seekp(0, std::ios::beg);
 
-	int firstX = path->start[0].first * 2;
-	int firstY = path->start[0].second * 2;
+	int firstX = path->start[0].first;
+	int firstY = path->start[0].second;
 	int nextX = firstX;
 	int nextY = firstY;
 	uint16_t count = path->points.size();
@@ -247,16 +250,25 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 			<< u16le(lastX)
 			<< u16le(lastY)
 		;
-		nextX = firstX + i->first * 2;
-		nextY = firstY + i->second * 2;
-		int dist = sqrt(pow(nextX - lastX, 2) + pow(nextY - lastY, 2));
+		nextX = firstX + i->first;
+		nextY = firstY + i->second;
+		int deltaX = nextX - lastX;
+		int deltaY = nextY - lastY;
+		int angle = WW_ANGLE_MAX + atan2(deltaY, deltaX) * (WW_ANGLE_MAX/2) / M_PI;
+		angle %= WW_ANGLE_MAX;
+		int image = (angle / 240 + 6) % 8;
+		int dist = sqrt(deltaX*deltaX + deltaY*deltaY);
 		rd
 			<< u16le(nextX)
 			<< u16le(nextY)
-			<< u32le(0) // TODO: unknown
+			<< u16le(angle)
+			<< u16le(image)
 			<< u16le(dist)
 		;
 	}
+
+	camoto::flush(rd);
+	suppData[SuppItem::Layer1].fnTruncate(2 + count * 14);
 
 	return lenWritten;
 }
