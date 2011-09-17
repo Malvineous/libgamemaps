@@ -256,7 +256,7 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		int deltaY = nextY - lastY;
 		int angle = WW_ANGLE_MAX + atan2(deltaY, deltaX) * (WW_ANGLE_MAX/2) / M_PI;
 		angle %= WW_ANGLE_MAX;
-		int image = (angle / 240 + 6) % 8;
+		int image = (int)(angle / 240.0 + 6.5) % 8;
 		int dist = sqrt(deltaX*deltaX + deltaY*deltaY);
 		rd
 			<< u16le(nextX)
