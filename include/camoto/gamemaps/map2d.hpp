@@ -528,6 +528,14 @@ class Map2D::Path {
 		 */
 		point_vector points;
 
+		/// Maximum size of points vector.
+		/**
+		 * Some paths only have a fixed amount of space, so this value limits the
+		 * the number of points that can exist in a path.  If it is set to zero
+		 * then there is no specific limit.
+		 */
+		unsigned int maxPoints;
+
 		/// Is this path required to be a closed loop?
 		/**
 		 * If this is set to true, the last point in the points vector will be

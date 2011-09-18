@@ -132,6 +132,7 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 	Map2D::PathPtr pathptr(new Map2D::Path());
 	pathptr->fixed = true;
 	pathptr->forceClosed = false;
+	pathptr->maxPoints = 128;
 	int nextX = 0, nextY = 0;
 	for (int i = 0; i < DD_LAYER_LEN_PATH; i += 2) {
 		if ((pathdata[i] == DD_PATH_END) && (pathdata[i+1] == DD_PATH_END)) break; // end of path
@@ -204,19 +205,37 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	Map2D::PathPtr first_path = paths->at(0);
 	int pathpos = 0;
 	int lastX = 0, lastY = 0;
+	int8_t x, y;
 	for (Map2D::Path::point_vector::const_iterator i = first_path->points.begin();
 		i != first_path->points.end();
 		i++
 	) {
 		if (pathpos > 256) throw std::ios::failure("Path too long (max 128 segments)");
+
 		// Convert from relative to (0,0), to relative to previous point
 		// Have to cast these to int8_t first so they're 8-bit but the sign is kept
 		// intact (-1 still is -1) then to uint8_t so -1 becomes 255.
-		path[pathpos++] = (uint8_t)((int8_t)(i->first - lastX));
-		path[pathpos++] = (uint8_t)((int8_t)(i->second - lastY));
+		x = i->first - lastX;
+		y = i->second - lastY;
 		lastX = i->first;
 		lastY = i->second;
+
+		if (((uint8_t)x == DD_PATH_END) && ((uint8_t)y == DD_PATH_END)) {
+			// Can't write these magic values, so tweak the data slightly
+			lastY++;
+			y++;
+			// This should work fine unless this is the last point in the path, but
+			// the condition below will catch that.
+		}
+		path[pathpos++] = (uint8_t)x;
+		path[pathpos++] = (uint8_t)y;
 	}
+	if (((uint8_t)x == DD_PATH_END) && ((uint8_t)y == DD_PATH_END)) {
+		throw std::ios::failure("The last point in the path happens to have a "
+			"special magic offset that cannot be saved in a Dangerous Dave map.  "
+			"Please move the last or second last point by at least one pixel.");
+	}
+
 	// Add terminator if there's enough room.
 	// TODO: Test to see if this is correct, or if a terminator is always required
 	if (pathpos < 256) {

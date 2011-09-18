@@ -178,6 +178,7 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	}
 	pathptr->fixed = false;
 	pathptr->forceClosed = false;
+	pathptr->maxPoints = 0; // no limit
 	paths->push_back(pathptr);
 
 	Map2DPtr map(new Map2D(
