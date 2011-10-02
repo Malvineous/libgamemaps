@@ -50,7 +50,7 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 /// Convert an actor code into an image.
-ImagePtr imageFromHHActorCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromHHActorCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	// TODO
@@ -58,7 +58,7 @@ ImagePtr imageFromHHActorCode(unsigned int code, VC_TILESET tileset)
 }
 
 /// Convert a map tile code into an image.
-ImagePtr imageFromHHTileCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromHHTileCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!

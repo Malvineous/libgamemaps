@@ -48,7 +48,7 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 /// Convert a map code into an image.
-ImagePtr imageFromCCCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromCCCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	// TODO

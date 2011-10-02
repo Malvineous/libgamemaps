@@ -48,7 +48,7 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 /// Convert a map code into an image (foreground layer)
-ImagePtr imageFromMBFGCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromMBFGCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 3) return ImagePtr(); // no tileset?!
@@ -60,7 +60,7 @@ ImagePtr imageFromMBFGCode(unsigned int code, VC_TILESET tileset)
 }
 
 /// Convert a map code into an image (background layer)
-ImagePtr imageFromMBBGCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromMBBGCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!

@@ -102,7 +102,7 @@ const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getAllItems()
 }
 
 camoto::gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
-	camoto::gamegraphics::VC_TILESET tileset)
+	camoto::gamegraphics::VC_TILESET& tileset)
 	throw ()
 {
 	return this->fnImageFromCode(code, tileset);

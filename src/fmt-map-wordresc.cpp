@@ -80,7 +80,7 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 /// Convert a map code into an image.
-ImagePtr imageFromWRCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromWRCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() <= 0) return ImagePtr();
@@ -90,7 +90,7 @@ ImagePtr imageFromWRCode(unsigned int code, VC_TILESET tileset)
 }
 
 /// Convert an internal item code (WR_CODE_*) into an image.
-ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	int t;

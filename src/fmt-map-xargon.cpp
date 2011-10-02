@@ -63,14 +63,14 @@ struct XargonObject: virtual public Map2D::Layer::Item {
 };
 
 /// Convert a Xargon background layer map code into an image.
-ImagePtr imageFromTileCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromTileCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	return ImagePtr(); // unknown map code
 }
 
 /// Convert a Xargon object layer map code into an image.
-ImagePtr imageFromObjectCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromObjectCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	return ImagePtr(); // unknown map code

@@ -277,7 +277,7 @@ class Map2D::Layer {
 		 * result in some sort of unknown/question mark tile being used.
 		 */
 		typedef camoto::gamegraphics::ImagePtr (*FN_IMAGEFROMCODE)
-			(unsigned int code, camoto::gamegraphics::VC_TILESET tileset);
+			(unsigned int code, camoto::gamegraphics::VC_TILESET& tileset);
 
 		/// Function pointer to a callback for checking where tiles can be placed.
 		/**
@@ -439,7 +439,7 @@ class Map2D::Layer {
 		 * @return Shared pointer to a camoto::gamegraphics::Image instance.
 		 */
 		virtual camoto::gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET tileset)
+			camoto::gamegraphics::VC_TILESET& tileset)
 			throw ();
 
 		/// Is the given tile permitted at the specified location?

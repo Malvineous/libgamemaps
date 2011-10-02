@@ -53,7 +53,7 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 /// Convert a map code into an image.
-ImagePtr imageFromWWCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromWWCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	int t = code / WW_TILES_PER_TILESET;

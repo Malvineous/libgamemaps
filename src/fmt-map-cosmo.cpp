@@ -56,7 +56,7 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 /// Convert an actor code into an image.
-ImagePtr imageFromCCAActorCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromCCAActorCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	// TODO
@@ -67,7 +67,7 @@ ImagePtr imageFromCCAActorCode(unsigned int code, VC_TILESET tileset)
 }
 
 /// Convert a map tile code into an image.
-ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET tileset)
+ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 2) return ImagePtr(); // no tileset?!
