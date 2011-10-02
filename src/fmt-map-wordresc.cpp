@@ -95,11 +95,11 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 {
 	int t;
 	switch (code) {
-		case WR_CODE_GRUZZLE:  t = 1; code = 25; break; // TODO: Use correct image
+		case WR_CODE_GRUZZLE:  t = 1; code = 15; break;
 		case WR_CODE_SLIME:    t = 0; code = 238; break;
 		case WR_CODE_BOOK:     t = 0; code = 239; break;
-		case WR_CODE_ENTRANCE: t = 0; code = 1; break; // TODO: Use correct image
-		case WR_CODE_EXIT:     t = 0; code = 2; break; // TODO: Use correct image
+		case WR_CODE_ENTRANCE: t = 1; code = 1; break;
+		case WR_CODE_EXIT:     t = 1; code = 3; break;
 		case WR_CODE_LETTER1:
 		case WR_CODE_LETTER2:
 		case WR_CODE_LETTER3:
@@ -107,7 +107,8 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 		case WR_CODE_LETTER5:
 		case WR_CODE_LETTER6:
 		case WR_CODE_LETTER7:
-			t = 1;  // TODO: Use correct image
+			t = 1;
+			code += 31;
 			code -= WR_CODE_LETTER;
 			break;
 		default: return ImagePtr();
@@ -118,7 +119,31 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 	return tileset[t]->openImage(images[code]);
 }
 
-bool WR_0_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
+/// Convert an attribute code into an image.
+ImagePtr imageFromWRAtCode(unsigned int code, VC_TILESET& tileset)
+	throw ()
+{
+	int t;
+	switch (code) {
+		case 0x0000: t = 1; code = 0; break; // first question mark box
+		case 0x0001: t = 1; code = 0; break;
+		case 0x0002: t = 1; code = 0; break;
+		case 0x0003: t = 1; code = 0; break;
+		case 0x0004: t = 1; code = 0; break;
+		case 0x0005: t = 1; code = 0; break;
+		case 0x0006: t = 1; code = 0; break; // last question mark box
+		case 0x0073: t = 0; code = 50; break; // solid
+		case 0x0074: t = 0; code = 91; break; // jump up through/climb
+		case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
+		default: return ImagePtr();
+	}
+	if (tileset.size() <= t) return ImagePtr();
+	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
+	if (code >= images.size()) return ImagePtr(); // out of range
+	return tileset[t]->openImage(images[code]);
+}
+
+bool WR_Item_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
 	unsigned int *maxCodes)
 {
 	if ((code == WR_CODE_ENTRANCE) || (code == WR_CODE_EXIT)) {
@@ -127,6 +152,13 @@ bool WR_0_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
 		*maxCodes = 0; // unlimited
 	}
 	return true; // anything can be placed anywhere
+}
+
+bool WR_At_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
+	unsigned int *maxCodes)
+{
+	if (x == 0) return false; // can't place tiles in this column
+	return true; // otherwise unrestricted
 }
 
 /// Write the given data to the stream, RLE encoded
@@ -474,7 +506,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		0, 0,
 		items,
-		imageFromWRItemCode, WR_0_TilePermittedAt
+		imageFromWRItemCode, WR_Item_TilePermittedAt
 	));
 
 	// Read the background layer
@@ -518,7 +550,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 		} else {
 			while (num-- > 0) {
 				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-				t->x = i % atWidth;
+				t->x = i % atWidth + 1;
 				t->y = i / atWidth;
 				t->code = code;
 				atItems->push_back(t);
@@ -532,7 +564,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 		0, 0,
 		WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
 		atItems,
-		imageFromWRCode, NULL
+		imageFromWRAtCode, WR_At_TilePermittedAt
 	));
 
 	Map2D::LayerPtrVector layers;
@@ -725,11 +757,14 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 		i != atitems->end();
 		i++
 	) {
-		if (((*i)->x > mapWidth * 2) || ((*i)->y > mapHeight * 2)) {
+		int xpos = (*i)->x;
+		if (xpos < 1) continue; // skip first column, just in case
+		xpos--;
+		if ((xpos > mapWidth * 2) || ((*i)->y > mapHeight * 2)) {
 			throw std::ios::failure(createString("Layer has tiles outside map "
-				"boundary at (" << (*i)->x << "," << (*i)->y << ")"));
+				"boundary at (" << xpos << "," << (*i)->y << ")"));
 		}
-		attr[(*i)->y * mapWidth * 2 + (*i)->x] = (*i)->code;
+		attr[(*i)->y * mapWidth * 2 + xpos] = (*i)->code;
 	}
 
 	lenWritten += rleWrite(output, attr, lenAttr);
