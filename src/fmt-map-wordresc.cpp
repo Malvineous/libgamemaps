@@ -776,6 +776,10 @@ SuppFilenames WordRescueMapType::getRequiredSupps(
 	throw ()
 {
 	SuppFilenames supps;
+	/// Add wr1.d0 (to wr1.d14) layer file
+	std::string baseName = filenameMap.substr(0, filenameMap.find_last_of('.'))
+		+ ".d" + filenameMap.substr(filenameMap.find_last_of('s') + 1);
+	supps[SuppItem::Layer1] = baseName;
 	return supps;
 }
 
