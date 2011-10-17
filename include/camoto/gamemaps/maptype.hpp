@@ -3,7 +3,7 @@
  * @brief  MapType class, used to identify and open an instance of a
  *         particular map format.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@
 #include <vector>
 #include <map>
 
-#include <camoto/types.hpp>
+#include <camoto/stream.hpp>
+#include <stdint.h>
 #include <camoto/suppitem.hpp>
 #include <camoto/gamemaps/map.hpp>
 
@@ -91,8 +92,8 @@ class MapType {
 		 *
 		 * @return A single confidence value from \ref MapType::Certainty.
 		 */
-		virtual Certainty isInstance(istream_sptr psMap) const
-			throw (std::ios::failure) = 0;
+		virtual Certainty isInstance(stream::input_sptr psMap) const
+			throw (stream::error) = 0;
 
 		/// Create a blank map in this format.
 		/**
@@ -104,7 +105,7 @@ class MapType {
 		 * @return A shared pointer to an instance of the Map class.
 		 */
 		virtual MapPtr create(SuppData& suppData) const
-			throw (std::ios::failure) = 0;
+			throw (stream::error) = 0;
 
 		/// Open a map file.
 		/**
@@ -123,8 +124,8 @@ class MapType {
 		 *   to read the data anyway, to make it possible to "force" a file to be
 		 *   opened by a particular format handler.
 		 */
-		virtual MapPtr open(istream_sptr input, SuppData& suppData) const
-			throw (std::ios::failure) = 0;
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
+			throw (stream::error) = 0;
 
 		/// Write a map out to a file in this format.
 		/**
@@ -140,9 +141,9 @@ class MapType {
 		 * @return The amount of data written.  The caller should ensure the output
 		 *   stream is truncated to this length if necessary.
 		 */
-		virtual unsigned long write(MapPtr map, ostream_sptr output,
+		virtual unsigned long write(MapPtr map, stream::output_sptr output,
 			SuppData& suppData) const
-			throw (std::ios::failure) = 0;
+			throw (stream::error) = 0;
 
 		/// Get a list of any required supplemental files.
 		/**

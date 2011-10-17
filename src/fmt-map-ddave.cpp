@@ -90,20 +90,19 @@ std::vector<std::string> DDaveMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty DDaveMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty DDaveMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
 	// TESTED BY: fmt_map_ddave_isinstance_c01
 	if (lenMap != DD_FILESIZE) return MapType::DefinitelyNo; // wrong size
 
 	// Read in the layer and make sure all the tile codes are within range
 	uint8_t bg[DD_LAYER_LEN_BG];
-	psMap->seekg(DD_LAYER_OFF_BG, std::ios::beg);
-	psMap->read((char *)bg, DD_LAYER_LEN_BG);
-	if (psMap->gcount() != DD_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
+	psMap->seekg(DD_LAYER_OFF_BG, stream::start);
+	stream::len r = psMap->try_read(bg, DD_LAYER_LEN_BG);
+	if (r != DD_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
 	for (int i = 0; i < DD_LAYER_LEN_BG; i++) {
 		// TESTED BY: fmt_map_ddave_isinstance_c02
 		if (bg[i] > DD_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
@@ -114,16 +113,16 @@ MapType::Certainty DDaveMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr DDaveMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 
 	// Read the path
 	uint8_t pathdata[DD_LAYER_LEN_PATH];
@@ -187,13 +186,13 @@ MapPtr DDaveMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned long lenWritten = 0;
 
@@ -201,7 +200,7 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	uint8_t path[DD_LAYER_LEN_PATH];
 	memset(path, 0, DD_LAYER_LEN_PATH);
 	Map2D::PathPtrVectorPtr paths = map2d->getPaths();
-	if (paths->size() != 1) throw std::ios::failure("Incorrect path count for this format.");
+	if (paths->size() != 1) throw stream::error("Incorrect path count for this format.");
 	Map2D::PathPtr first_path = paths->at(0);
 	int pathpos = 0;
 	int lastX = 0, lastY = 0;
@@ -210,7 +209,7 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		i != first_path->points.end();
 		i++
 	) {
-		if (pathpos > 256) throw std::ios::failure("Path too long (max 128 segments)");
+		if (pathpos > 256) throw stream::error("Path too long (max 128 segments)");
 
 		// Convert from relative to (0,0), to relative to previous point
 		// Have to cast these to int8_t first so they're 8-bit but the sign is kept
@@ -231,7 +230,7 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		path[pathpos++] = (uint8_t)y;
 	}
 	if (((uint8_t)x == DD_PATH_END) && ((uint8_t)y == DD_PATH_END)) {
-		throw std::ios::failure("The last point in the path happens to have a "
+		throw stream::error("The last point in the path happens to have a "
 			"special magic offset that cannot be saved in a Dangerous Dave map.  "
 			"Please move the last or second last point by at least one pixel.");
 	}
@@ -255,7 +254,7 @@ unsigned long DDaveMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		i++
 	) {
 		if (((*i)->x > DD_MAP_WIDTH) || ((*i)->y > DD_MAP_HEIGHT)) {
-			throw std::ios::failure("Layer has tiles outside map boundary!");
+			throw stream::error("Layer has tiles outside map boundary!");
 		}
 		bg[(*i)->y * DD_MAP_WIDTH + (*i)->x] = (*i)->code;
 	}

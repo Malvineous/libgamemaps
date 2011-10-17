@@ -2,7 +2,7 @@
  * @file   fmt-map-ddave.hpp
  * @brief  MapType and Map2D implementation for DDave maps.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,17 +43,17 @@ class DDaveMapType: virtual public MapType {
 		virtual std::vector<std::string> getGameList() const
 			throw ();
 
-		virtual Certainty isInstance(istream_sptr psMap) const
-			throw (std::ios::failure);
+		virtual Certainty isInstance(stream::input_sptr psMap) const
+			throw (stream::error);
 
 		virtual MapPtr create(SuppData& suppData) const
-			throw (std::ios::failure);
+			throw (stream::error);
 
-		virtual MapPtr open(istream_sptr input, SuppData& suppData) const
-			throw (std::ios::failure);
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
+			throw (stream::error);
 
-		virtual unsigned long write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-			throw (std::ios::failure);
+		virtual unsigned long write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+			throw (stream::error);
 
 };
 

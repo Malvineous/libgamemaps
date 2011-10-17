@@ -115,17 +115,16 @@ std::vector<std::string> CosmoMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty CosmoMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
 	// TESTED BY: fmt_map_cosmo_isinstance_c01/c01a
 	if (lenMap < 6 + CCA_LAYER_LEN_BG) return MapType::DefinitelyNo; // too short
 
 	uint16_t mapWidth;
-	psMap->seekg(2, std::ios::beg);
+	psMap->seekg(2, stream::start);
 	psMap >> u16le(mapWidth);
 
 	// TESTED BY: fmt_map_cosmo_isinstance_c02
@@ -151,18 +150,17 @@ MapType::Certainty CosmoMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr CosmoMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::end);
-	io::stream_offset lenMap = input->tellg();
-	input->seekg(0, std::ios::beg);
+	stream::pos lenMap = input->size();
+	input->seekg(0, stream::start);
 
 	uint16_t flags, mapWidth, numActorInts;
 	input
@@ -174,7 +172,7 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 
 	// Read in the actor layer
 	int numActors = numActorInts / 3;
-	if (lenMap < numActors * 6) throw std::ios::failure("Map file has been truncated!");
+	if (lenMap < numActors * 6) throw stream::error("Map file has been truncated!");
 	Map2D::Layer::ItemPtrVectorPtr actors(new Map2D::Layer::ItemPtrVector());
 	actors->reserve(numActors);
 	for (int i = 0; i < numActors; i++) {
@@ -234,13 +232,13 @@ MapPtr CosmoMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long CosmoMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 2)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned long lenWritten = 0;
 

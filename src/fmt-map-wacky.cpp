@@ -33,7 +33,7 @@
 
 #define WW_LAYER_OFF_BG         0
 #define WW_LAYER_LEN_BG         (WW_MAP_WIDTH * WW_MAP_HEIGHT)
-#define WW_FILESIZE             (WW_LAYER_LEN_BG)
+#define WW_FILESIZE             (WW_LAYER_OFF_BG + WW_LAYER_LEN_BG)
 
 /// Map code to write for locations with no tile set.
 #define WW_DEFAULT_BGTILE     0x00
@@ -92,20 +92,21 @@ std::vector<std::string> WackyMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty WackyMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty WackyMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
 	// TESTED BY: fmt_map_wacky_isinstance_c01
 	if (lenMap != WW_FILESIZE) return MapType::DefinitelyNo; // wrong size
 
 	// Read in the layer and make sure all the tile codes are within range
 	uint8_t bg[WW_LAYER_LEN_BG];
-	psMap->seekg(WW_LAYER_OFF_BG, std::ios::beg);
-	psMap->read((char *)bg, WW_LAYER_LEN_BG);
-	if (psMap->gcount() != WW_LAYER_LEN_BG) throw std::ios::failure("short read");
+	psMap->seekg(WW_LAYER_OFF_BG, stream::start);
+	// This will throw an exception on a short read which is ok, because we
+	// wouldn't be here if the file was too small anyway (isinstance_c01)
+	psMap->read(bg, WW_LAYER_LEN_BG);
+
 	for (int i = 0; i < WW_LAYER_LEN_BG; i++) {
 		// TESTED BY: fmt_map_wacky_isinstance_c02
 		if (bg[i] > WW_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
@@ -116,16 +117,16 @@ MapType::Certainty WackyMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr WackyMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
-	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	/// @todo Implement WackyMapType::create()
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 
 	// Read the background layer
 	uint8_t bg[WW_LAYER_LEN_BG];
@@ -153,8 +154,9 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	// Read the computer player paths
-	istream_sptr rd = suppData[SuppItem::Layer1].stream;
+	stream::input_sptr rd = suppData[SuppItem::Layer1];
 	assert(rd);
+	rd->seekg(0, stream::start);
 	uint16_t numPoints;
 	rd >> u16le(numPoints);
 
@@ -168,12 +170,12 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	pathptr->start.push_back(Map2D::Path::point(startX, startY));
 	for (int i = 0; i < numPoints; i++) {
 		uint16_t nextX, nextY;
-		if (i > 0) rd->seekg(4, std::ios::cur);
+		if (i > 0) rd->seekg(4, stream::cur);
 		rd
 			>> u16le(nextX)
 			>> u16le(nextY)
 		;
-		rd->seekg(6, std::ios::cur);
+		rd->seekg(6, stream::cur);
 		pathptr->points.push_back(Map2D::Path::point(nextX - startX, nextY - startY));
 	}
 	pathptr->fixed = false;
@@ -193,24 +195,22 @@ MapPtr WackyMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
-	assert(suppData[SuppItem::Layer1].fnTruncate);
-
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	Map2D::PathPtrVectorPtr paths = map2d->getPaths();
-	if (paths->size() != 1) throw std::ios::failure("Incorrect path count for this format.");
+	if (paths->size() != 1) throw stream::error("Incorrect path count for this format.");
 
 	Map2D::PathPtr path = paths->at(0);
-	if (path->start.size() != 1) throw std::ios::failure("Path has no starting point!");
+	if (path->start.size() != 1) throw stream::error("Path has no starting point!");
 
 	if (suppData.find(SuppItem::Layer1) == suppData.end()) {
-		throw std::ios::failure("No SuppItem::Layer1 specified (need *.rd file)");
+		throw stream::error("No SuppItem::Layer1 specified (need *.rd file)");
 	}
 
 	unsigned long lenWritten = 0;
@@ -225,7 +225,7 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		i++
 	) {
 		if (((*i)->x > WW_MAP_WIDTH) || ((*i)->y > WW_MAP_HEIGHT)) {
-			throw std::ios::failure("Layer has tiles outside map boundary!");
+			throw stream::error("Layer has tiles outside map boundary!");
 		}
 		bg[(*i)->y * WW_MAP_WIDTH + (*i)->x] = (*i)->code;
 	}
@@ -233,8 +233,8 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	output->write((char *)bg, WW_LAYER_LEN_BG);
 	lenWritten += WW_LAYER_LEN_BG;
 
-	ostream_sptr rd = suppData[SuppItem::Layer1].stream;
-	rd->seekp(0, std::ios::beg);
+	stream::output_sptr rd = suppData[SuppItem::Layer1];
+	rd->seekp(0, stream::start);
 
 	int firstX = path->start[0].first;
 	int firstY = path->start[0].second;
@@ -268,8 +268,7 @@ unsigned long WackyMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 		;
 	}
 
-	camoto::flush(rd);
-	suppData[SuppItem::Layer1].fnTruncate(2 + count * 14);
+	rd->truncate(2 + count * 14); // implicit flush
 
 	return lenWritten;
 }

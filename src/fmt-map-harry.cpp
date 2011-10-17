@@ -96,15 +96,14 @@ std::vector<std::string> HarryMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty HarryMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 	// TESTED BY: fmt_map_harry_isinstance_c01
 	if (lenMap < 29 + 768 + 256 + 10 + 2 + 4) return MapType::DefinitelyNo; // too short
 
-	psMap->seekg(0, std::ios::beg);
+	psMap->seekg(0, stream::start);
 
 	// Check the signature
 	char sig[0x12];
@@ -114,7 +113,7 @@ MapType::Certainty HarryMapType::isInstance(istream_sptr psMap) const
 	lenMap -= 0x12;
 
 	// Skip flags
-	psMap->seekg(11, std::ios::cur);
+	psMap->seekg(11, stream::cur);
 	lenMap -= 11;
 
 	// Check palette is within range
@@ -136,7 +135,7 @@ MapType::Certainty HarryMapType::isInstance(istream_sptr psMap) const
 	lenMap -= 256;
 
 	// Skip unknown block
-	psMap->seekg(10, std::ios::cur);
+	psMap->seekg(10, stream::cur);
 	lenMap -= 10;
 
 	// isinstance_c01 should have prevented this
@@ -149,7 +148,7 @@ MapType::Certainty HarryMapType::isInstance(istream_sptr psMap) const
 	// TESTED BY: fmt_map_harry_isinstance_c05
 	if (lenMap < numActors * HH_ACTOR_LEN + 4) return MapType::DefinitelyNo;
 
-	psMap->seekg(numActors * HH_ACTOR_LEN, std::ios::cur);
+	psMap->seekg(numActors * HH_ACTOR_LEN, stream::cur);
 	lenMap -= numActors * HH_ACTOR_LEN;
 
 	assert(lenMap >= 4);
@@ -165,21 +164,21 @@ MapType::Certainty HarryMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr HarryMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 
 	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
 
 	// Skip signature and flags
-	input->seekg(0x12 + 4, std::ios::cur);
+	input->seekg(0x12 + 4, stream::cur);
 
 	uint16_t startX, startY;
 	input
@@ -187,7 +186,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 		>> u16le(startY)
 	;
 
-	input->seekg(2, std::ios::cur);
+	input->seekg(2, stream::cur);
 
 	uint8_t mapFlags;
 	input >> u8(mapFlags);
@@ -204,13 +203,13 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 	attributes->push_back(ptr);
 
 	// TODO: Load palette
-	input->seekg(768, std::ios::cur);
+	input->seekg(768, stream::cur);
 
 	// TODO: Load tile flags
-	input->seekg(256, std::ios::cur);
+	input->seekg(256, stream::cur);
 
 	// Skip unknown block
-	input->seekg(10, std::ios::cur);
+	input->seekg(10, stream::cur);
 
 	uint8_t code;
 
@@ -232,7 +231,7 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 		// ENDTEMP
 		t->code = code;
 		actors->push_back(t);
-		input->seekg(128-1-2-2, std::ios::cur);
+		input->seekg(128-1-2-2, stream::cur);
 	}
 	Map2D::LayerPtr actorLayer(new Map2D::Layer(
 		"Actors",
@@ -310,17 +309,17 @@ MapPtr HarryMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long HarryMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 3)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	Map::AttributePtrVectorPtr attributes = map->getAttributes();
 	if (attributes->size() != 1) {
-		throw std::ios::failure("Cannot write map as there is an incorrect number "
+		throw stream::error("Cannot write map as there is an incorrect number "
 			"of attributes set.");
 	}
 
@@ -332,7 +331,7 @@ unsigned long HarryMapType::write(MapPtr map, ostream_sptr output, SuppData& sup
 	Map::EnumAttribute *attrParallax =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(0).get());
 	if (!attrParallax) {
-		throw std::ios::failure("Cannot write map as there is an attribute of the "
+		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (parallax != enum)");
 	}
 	uint8_t mapFlags = attrParallax->value;

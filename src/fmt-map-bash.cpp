@@ -98,30 +98,29 @@ std::vector<std::string> BashMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty BashMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
 	return MapType::Unsure;
 }
 
 MapPtr BashMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	istream_sptr bg = suppData[SuppItem::Layer1].stream;
-	istream_sptr fg = suppData[SuppItem::Layer2].stream;
+	stream::input_sptr bg = suppData[SuppItem::Layer1];
+	stream::input_sptr fg = suppData[SuppItem::Layer2];
 	assert(bg);
 	assert(fg);
 
-	bg->seekg(0, std::ios::end);
-	io::stream_offset lenBG = bg->tellg();
-	bg->seekg(0, std::ios::beg);
+	stream::pos lenBG = bg->size();
+	bg->seekg(0, stream::start);
 
 	// Read the background layer
 	uint16_t unknown, mapWidth, mapPixelWidth, mapPixelHeight;
@@ -133,7 +132,7 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 	;
 	lenBG -= 8;
 
-	if (lenBG < 2) throw std::ios::failure("Background layer file too short");
+	if (lenBG < 2) throw stream::error("Background layer file too short");
 
 	mapWidth >>= 1; // convert from # of bytes to # of ints (tiles)
 	int mapHeight = mapPixelHeight / MB_TILE_HEIGHT;
@@ -165,9 +164,8 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 	));
 
 	// Read the foreground layer
-	fg->seekg(0, std::ios::end);
-	io::stream_offset lenFG = fg->tellg();
-	fg->seekg(2, std::ios::beg); // skip width field
+	stream::pos lenFG = fg->size();
+	fg->seekg(2, stream::start); // skip width field
 	lenFG -= 2;
 
 	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
@@ -212,21 +210,21 @@ MapPtr BashMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long BashMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long BashMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 2)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned long lenWritten = 0;
 
 	int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
-	ostream_sptr bg = suppData[SuppItem::Layer1].stream;
-	ostream_sptr fg = suppData[SuppItem::Layer2].stream;
+	stream::output_sptr bg = suppData[SuppItem::Layer1];
+	stream::output_sptr fg = suppData[SuppItem::Layer2];
 	assert(bg);
 	assert(fg);
 
@@ -242,7 +240,7 @@ unsigned long BashMapType::write(MapPtr map, ostream_sptr output, SuppData& supp
 			i++
 		) {
 			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-				throw std::ios::failure("Layer has tiles outside map boundary!");
+				throw stream::error("Layer has tiles outside map boundary!");
 			}
 			bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}
@@ -274,7 +272,7 @@ unsigned long BashMapType::write(MapPtr map, ostream_sptr output, SuppData& supp
 			i++
 		) {
 			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-				throw std::ios::failure("Layer has tiles outside map boundary!");
+				throw stream::error("Layer has tiles outside map boundary!");
 			}
 			fgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}

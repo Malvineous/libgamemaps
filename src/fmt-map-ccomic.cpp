@@ -78,17 +78,16 @@ std::vector<std::string> CComicMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty CComicMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
 	// Make sure there's enough data to read the map dimensions
 	// TESTED BY: fmt_map_ccomic_isinstance_c01
 	if (lenMap < 4) return MapType::DefinitelyNo;
 
-	psMap->seekg(0, std::ios::beg);
+	psMap->seekg(0, stream::start);
 	int width, height;
 	psMap >> u16le(width) >> u16le(height);
 
@@ -99,8 +98,8 @@ MapType::Certainty CComicMapType::isInstance(istream_sptr psMap) const
 
 	// Read in the map and make sure all the tile codes are within range
 	uint8_t *bg = new uint8_t[mapLen];
-	psMap->read((char *)bg, mapLen);
-	if (psMap->gcount() != mapLen) return MapType::DefinitelyNo; // read error
+	stream::len r = psMap->try_read(bg, mapLen);
+	if (r != mapLen) return MapType::DefinitelyNo; // read error
 	for (int i = 0; i < mapLen; i++) {
 		// Make sure each tile is within range
 		// TESTED BY: fmt_map_ccomic_isinstance_c03
@@ -116,16 +115,16 @@ MapType::Certainty CComicMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr CComicMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 	int width, height;
 	input >> u16le(width) >> u16le(height);
 	int mapLen = width * height;
@@ -172,13 +171,13 @@ MapPtr CComicMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long CComicMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long CComicMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
@@ -200,7 +199,7 @@ unsigned long CComicMapType::write(MapPtr map, ostream_sptr output, SuppData& su
 	) {
 		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
 			delete[] bg;
-			throw std::ios::failure("Layer has tiles outside map boundary!");
+			throw stream::error("Layer has tiles outside map boundary!");
 		}
 		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}

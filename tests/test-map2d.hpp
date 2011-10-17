@@ -2,7 +2,7 @@
  * @file   test-map2d.hpp
  * @brief  Generic test code for Map2D class descendents.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,11 @@
 #include <boost/algorithm/string.hpp> // for case-insensitive string compare
 #include <boost/iostreams/copy.hpp>
 #include <boost/bind.hpp>
+#include <camoto/stream_string.hpp>
 #include <camoto/gamemaps.hpp>
-#include <iostream>
-#include <iomanip>
+//#include <iomanip>
 
 #include "tests.hpp"
-
-// Local headers that will not be installed
-#include <camoto/segmented_stream.hpp>
 
 using namespace camoto;
 namespace gm = camoto::gamemaps;
@@ -49,43 +46,46 @@ namespace gm = camoto::gamemaps;
 #define EMPTY_SUITE_NAME   TEST_VAR(suite_empty)
 #define INITIALSTATE_NAME  TEST_RESULT(initialstate)
 
-// Allow a string constant to be passed around with embedded nulls
-#define makeString(x)  std::string((x), sizeof((x)) - 1)
+#ifndef MAP_FIRST_CODE_X_L1
+/// Coordinates of first file.  Normally (0,0) but can be changed for maps
+/// where (0,0) is not a valid location.
+#define MAP_FIRST_CODE_X_L1 0
+#define MAP_FIRST_CODE_Y_L1 0
+#endif
+
+#ifndef MAP_FIRST_CODE_X_L2
+#define MAP_FIRST_CODE_X_L2 0
+#define MAP_FIRST_CODE_Y_L2 0
+#endif
+
+#ifndef MAP_FIRST_CODE_X_L3
+#define MAP_FIRST_CODE_X_L3 0
+#define MAP_FIRST_CODE_Y_L3 0
+#endif
 
 // Add a new constant as a supplementary data item
 #define ADD_SUPPITEM(suppitem) \
 	{ \
-		boost::shared_ptr<std::stringstream> suppSS(new std::stringstream); \
-		suppSS->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit); \
-		(*suppSS) << makeString(TEST_RESULT(initialstate_ ## suppitem)); \
-		camoto::iostream_sptr suppStream(suppSS); \
-		camoto::SuppItem si; \
-		si.stream = suppStream; \
-		si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1); \
-		this->suppData[camoto::SuppItem::suppitem] = si; \
-		this->suppBase[camoto::SuppItem::suppitem] = suppSS; \
+		stream::string_sptr suppSS(new stream::string()); \
+		suppSS << makeString(TEST_RESULT(initialstate_ ## suppitem)); \
+		this->suppData[camoto::SuppItem::suppitem] = suppSS; \
 	}
 
 #include <camoto/gamemaps/map2d.hpp>
 
 struct FIXTURE_NAME: public default_sample {
 
-	typedef boost::shared_ptr<std::stringstream> sstr_ptr;
-
-	sstr_ptr baseData;
-	void *_do; // unused var, but allows a statement to run in constructor init
-	camoto::iostream_sptr baseStream;
+	stream::string_sptr base;
 	gm::MapPtr map;
 	gm::Map2DPtr map2d;
 	camoto::SuppData suppData;
-	std::map<camoto::SuppItem::Type, sstr_ptr> suppBase;
 	gm::MapTypePtr pTestType;
 
 	FIXTURE_NAME() :
-		baseData(new std::stringstream),
-		_do((*this->baseData) << makeString(INITIALSTATE_NAME)),
-		baseStream(this->baseData)
+		base(new stream::string())
 	{
+		this->base << makeString(INITIALSTATE_NAME);
+
 		#ifdef MAP_HAS_SUPPDATA_LAYER1
 			ADD_SUPPITEM(Layer1);
 		#endif
@@ -94,34 +94,32 @@ struct FIXTURE_NAME: public default_sample {
 		#endif
 
 		BOOST_REQUIRE_NO_THROW(
-			this->baseData->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
-
 			gm::ManagerPtr pManager = gm::getManager();
 			this->pTestType = pManager->getMapTypeByCode(MAP_TYPE);
 		);
 		BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE);
 
 		// Create an instance of the initialstate data
-		this->map = this->pTestType->open(this->baseStream, this->suppData);
+		this->map = this->pTestType->open(this->base, this->suppData);
 		this->map2d = boost::dynamic_pointer_cast<gm::Map2D>(this->map);
 		BOOST_REQUIRE_MESSAGE(this->map2d, "Could not create map class");
 	}
 
 	FIXTURE_NAME(int i) :
-		baseData(new std::stringstream),
-		baseStream(this->baseData)
+		base(new stream::string())
 	{
-		this->baseData->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 	}
 
 	boost::test_tools::predicate_result is_equal(const std::string& strExpected)
 	{
-		return this->default_sample::is_equal(strExpected, this->baseData->str());
+		return this->default_sample::is_equal(strExpected, this->base->str());
 	}
 
 	boost::test_tools::predicate_result is_supp_equal(camoto::SuppItem::Type type, const std::string& strExpected)
 	{
-		return this->default_sample::is_equal(strExpected, this->suppBase[type]->str());
+		stream::string_sptr ss = boost::dynamic_pointer_cast<stream::string>(this->suppData[type]);
+		assert(ss);
+		return this->default_sample::is_equal(strExpected, ss->str());
 	}
 
 };
@@ -140,11 +138,10 @@ BOOST_FIXTURE_TEST_SUITE(SUITE_NAME, FIXTURE_NAME)
 		gm::MapTypePtr pTestType(pManager->getMapTypeByCode(MAP_TYPE)); \
 		BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE); \
 		\
-		boost::shared_ptr<std::stringstream> psstrBase(new std::stringstream); \
-		(*psstrBase) << makeString(d); \
-		camoto::iostream_sptr psBase = boost::dynamic_pointer_cast<std::iostream>(psstrBase); \
+		stream::string_sptr ss(new stream::string()); \
+		ss << makeString(d); \
 		\
-		BOOST_CHECK_EQUAL(pTestType->isInstance(psBase), r); \
+		BOOST_CHECK_EQUAL(pTestType->isInstance(ss), r); \
 	}
 
 ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::MapType::DefinitelyYes);
@@ -159,7 +156,7 @@ ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::MapType::DefinitelyYes);
 		boost::shared_ptr<std::stringstream> suppSS(new std::stringstream); \
 		suppSS->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit); \
 		(*suppSS) << makeString(d); \
-		camoto::iostream_sptr suppStream(suppSS); \
+		camoto::stream::inout_sptr suppStream(suppSS); \
 		gm::SuppItem si; \
 		si.stream = suppStream; \
 		si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1); \
@@ -189,14 +186,14 @@ ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::MapType::DefinitelyYes);
 		/* Prepare an invalid map */ \
 		boost::shared_ptr<std::stringstream> psstrBase(new std::stringstream); \
 		(*psstrBase) << makeString(d); \
-		camoto::iostream_sptr psBase(psstrBase); \
+		camoto::stream::inout_sptr psBase(psstrBase); \
 		\
 		camoto::SuppData suppData; \
 		INVALIDDATA_FATCODE(f) \
 		\
 		BOOST_CHECK_THROW( \
 			gm::MapPtr pMap(pTestType->open(psBase, suppData)), \
-			std::ios::failure \
+			stream::error \
 		); \
 	}
 
@@ -252,15 +249,13 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 }
 
 #define ERASE_SUPPITEM(suppitem) \
-	this->suppBase[camoto::SuppItem::suppitem]->seekp(0); \
-	this->suppBase[camoto::SuppItem::suppitem]->str("");
+	this->suppData[camoto::SuppItem::suppitem]->truncate(0);
 
 BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 {
 	BOOST_TEST_MESSAGE("Write map codes");
 
-	this->baseData->seekp(0);
-	this->baseData->str("");
+	this->base->truncate(0);
 
 #ifdef MAP_HAS_SUPPDATA_LAYER1
 	ERASE_SUPPITEM(Layer1);
@@ -269,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 	ERASE_SUPPITEM(Layer2);
 #endif
 
-	this->pTestType->write(this->map, this->baseData, this->suppData);
+	this->pTestType->write(this->map, this->base, this->suppData);
 
 	BOOST_CHECK_MESSAGE(
 		is_equal(makeString(INITIALSTATE_NAME)),

@@ -2,7 +2,7 @@
  * @file   manager.hpp
  * @brief  Manager class, used for accessing the various map format readers.
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,8 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
-#include <camoto/types.hpp>
+#include <camoto/stream.hpp>
+#include <stdint.h>
 #include <camoto/gamemaps/maptype.hpp>
 
 namespace camoto {

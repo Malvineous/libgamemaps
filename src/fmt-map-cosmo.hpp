@@ -43,17 +43,17 @@ class CosmoMapType: virtual public MapType {
 		virtual std::vector<std::string> getGameList() const
 			throw ();
 
-		virtual Certainty isInstance(istream_sptr psMap) const
-			throw (std::ios::failure);
+		virtual Certainty isInstance(stream::input_sptr psMap) const
+			throw (stream::error);
 
 		virtual MapPtr create(SuppData& suppData) const
-			throw (std::ios::failure);
+			throw (stream::error);
 
-		virtual MapPtr open(istream_sptr input, SuppData& suppData) const
-			throw (std::ios::failure);
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
+			throw (stream::error);
 
-		virtual unsigned long write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-			throw (std::ios::failure);
+		virtual unsigned long write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+			throw (stream::error);
 
 };
 

@@ -23,7 +23,8 @@
 
 #include <camoto/gamemaps/maptype.hpp>
 #include <camoto/gamemaps/map2d.hpp>
-#include <camoto/types.hpp>
+#include <camoto/stream.hpp>
+#include <stdint.h>
 
 namespace camoto {
 namespace gamemaps {
@@ -45,17 +46,17 @@ class BashMapType: virtual public MapType {
 		virtual std::vector<std::string> getGameList() const
 			throw ();
 
-		virtual Certainty isInstance(istream_sptr psMap) const
-			throw (std::ios::failure);
+		virtual Certainty isInstance(stream::input_sptr psMap) const
+			throw (stream::error);
 
 		virtual MapPtr create(SuppData& suppData) const
-			throw (std::ios::failure);
+			throw (stream::error);
 
-		virtual MapPtr open(istream_sptr input, SuppData& suppData) const
-			throw (std::ios::failure);
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
+			throw (stream::error);
 
-		virtual unsigned long write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-			throw (std::ios::failure);
+		virtual unsigned long write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+			throw (stream::error);
 
 		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
 			throw ();

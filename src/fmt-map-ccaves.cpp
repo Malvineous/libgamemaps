@@ -83,13 +83,12 @@ std::vector<std::string> CCavesMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty CCavesMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
-	psMap->seekg(0, std::ios::beg);
+	psMap->seekg(0, stream::start);
 
 	// TESTED BY: fmt_map_ccaves_isinstance_c01
 	if (lenMap < CC_MAP_WIDTH + 1) return MapType::DefinitelyNo; // too small
@@ -127,19 +126,18 @@ MapType::Certainty CCavesMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr CCavesMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::end);
-	io::stream_offset lenMap = input->tellg();
+	stream::pos lenMap = input->size();
 
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 
 	// Read the background layer
 	uint8_t *bg = new uint8_t[lenMap];
@@ -184,13 +182,13 @@ MapPtr CCavesMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long CCavesMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned long lenWritten = 0;
 

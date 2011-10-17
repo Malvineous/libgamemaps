@@ -162,7 +162,7 @@ bool WR_At_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
 }
 
 /// Write the given data to the stream, RLE encoded
-int rleWrite(ostream_sptr output, uint8_t *data, int len)
+int rleWrite(stream::output_sptr output, uint8_t *data, int len)
 {
 	int lenWritten = 0;
 
@@ -252,11 +252,10 @@ std::vector<std::string> WordRescueMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty WordRescueMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
 #define WR_MIN_HEADER_SIZE (2*15 + 4*7) // includes INDEX_LETTER
 
@@ -265,19 +264,19 @@ MapType::Certainty WordRescueMapType::isInstance(istream_sptr psMap) const
 	if (lenMap < WR_MIN_HEADER_SIZE) return MapType::DefinitelyNo;
 
 	uint16_t mapWidth, mapHeight;
-	psMap->seekg(0, std::ios::beg);
+	psMap->seekg(0, stream::start);
 	psMap
 		>> u16le(mapWidth)
 		>> u16le(mapHeight)
 	;
-	psMap->seekg(2*7, std::ios::cur);
+	psMap->seekg(2*7, stream::cur);
 
 	// Check the items are each within range
 	int minSize = WR_MIN_HEADER_SIZE;
 	for (int i = 0; i < INDEX_SIZE; i++) {
 		uint16_t count;
 		if (i == INDEX_LETTER) {
-			psMap->seekg(WR_NUM_LETTERS * 4, std::ios::cur);
+			psMap->seekg(WR_NUM_LETTERS * 4, stream::cur);
 			continue; // hard coded, included above
 		}
 
@@ -288,7 +287,7 @@ MapType::Certainty WordRescueMapType::isInstance(istream_sptr psMap) const
 		// Make sure the item count is within range
 		// TESTED BY: fmt_map_wordresc_isinstance_c02
 		if (lenMap < minSize) return MapType::DefinitelyNo;
-		psMap->seekg(count * 4, std::ios::cur);
+		psMap->seekg(count * 4, stream::cur);
 	}
 
 	// Read in the layer and make sure all the tile codes are within range
@@ -315,16 +314,16 @@ MapType::Certainty WordRescueMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr WordRescueMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 
 	uint16_t mapWidth, mapHeight;
 	uint16_t bgColour; // EGA 0-15
@@ -454,7 +453,7 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 
 	uint16_t unknownCount;
 	input >> u16le(unknownCount);
-	input->seekg(unknownCount * 4, std::ios::cur);
+	input->seekg(unknownCount * 4, stream::cur);
 
 	uint16_t slimeCount;
 	input >> u16le(slimeCount);
@@ -494,11 +493,11 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 
 	uint16_t animCount;
 	input >> u16le(animCount);
-	input->seekg(animCount * 4, std::ios::cur);
+	input->seekg(animCount * 4, stream::cur);
 	// TODO: Figure out something with animated tiles
 
 	// Skip over trailing 0x0000
-	input->seekg(2, std::ios::cur);
+	input->seekg(2, stream::cur);
 
 	Map2D::LayerPtr itemLayer(new Map2D::Layer(
 		"Items",
@@ -584,13 +583,13 @@ MapPtr WordRescueMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long WordRescueMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 3)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
@@ -599,14 +598,14 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 
 	Map::AttributePtrVectorPtr attributes = map->getAttributes();
 	if (attributes->size() != 3) {
-		throw std::ios::failure("Cannot write map as there is an incorrect number "
+		throw stream::error("Cannot write map as there is an incorrect number "
 			"of attributes set.");
 	}
 
 	Map::EnumAttribute *attrBG =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(0).get());
 	if (!attrBG) {
-		throw std::ios::failure("Cannot write map as there is an attribute of the "
+		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (bg != enum)");
 	}
 	uint16_t bgColour = attrBG->value;
@@ -614,7 +613,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 	Map::EnumAttribute *attrTileset =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(1).get());
 	if (!attrTileset) {
-		throw std::ios::failure("Cannot write map as there is an attribute of the "
+		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (tileset != enum)");
 	}
 	uint16_t tileset;
@@ -634,7 +633,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 	Map::EnumAttribute *attrBackdrop =
 		dynamic_cast<Map::EnumAttribute *>(attributes->at(2).get());
 	if (!attrBackdrop) {
-		throw std::ios::failure("Cannot write map as there is an attribute of the "
+		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (backdrop != enum)");
 	}
 	uint16_t backdrop;
@@ -737,7 +736,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 		i++
 	) {
 		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-			throw std::ios::failure(createString("Layer has tiles outside map "
+			throw stream::error(createString("Layer has tiles outside map "
 				"boundary at (" << (*i)->x << "," << (*i)->y << ")"));
 		}
 		tiles[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
@@ -761,7 +760,7 @@ unsigned long WordRescueMapType::write(MapPtr map, ostream_sptr output, SuppData
 		if (xpos < 1) continue; // skip first column, just in case
 		xpos--;
 		if ((xpos > mapWidth * 2) || ((*i)->y > mapHeight * 2)) {
-			throw std::ios::failure(createString("Layer has tiles outside map "
+			throw stream::error(createString("Layer has tiles outside map "
 				"boundary at (" << xpos << "," << (*i)->y << ")"));
 		}
 		attr[(*i)->y * mapWidth * 2 + xpos] = (*i)->code;

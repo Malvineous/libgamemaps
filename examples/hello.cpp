@@ -1,6 +1,8 @@
-#include <fstream>
+#include <camoto/stream_file.hpp>
 #include <camoto/gamemaps.hpp>
+#include <iostream>
 
+using namespace camoto;
 using namespace camoto::gamemaps;
 
 int main(void)
@@ -12,7 +14,8 @@ int main(void)
 	MapTypePtr mapType = manager->getMapTypeByCode("map-xargon");
 
 	// Open an map file on disk
-	camoto::iostream_sptr file(new std::fstream("board_01.xr1"));
+	stream::file_sptr file(new stream::file());
+	file->open("board_01.xr1");
 
 	// We cheat here - we should check and load any supplementary files, but
 	// for the sake of keeping this example simple we know this format doesn't
@@ -23,7 +26,7 @@ int main(void)
 	MapPtr map;
 	try {
 		map = mapType->open(file, supps);
-	} catch (const std::ios::failure& e) {
+	} catch (const stream::open_error& e) {
 		std::cerr << "Error opening map: " << e.what() << std::endl;
 		return 1;
 	}
@@ -41,7 +44,7 @@ int main(void)
 	}
 
 	// No cleanup required because all the Ptr variables are shared pointers,
-	// which get destroyed automatically when they go out of scope (and nobody
+	// which get destroyed automatically when they go out of scope (if nobody
 	// else is using them!)
 
 	return 0;

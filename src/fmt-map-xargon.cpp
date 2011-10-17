@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Xargon_Map_Format
  *
- * Copyright (C) 2010 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,20 +107,19 @@ std::vector<std::string> XargonMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
-	throw (std::ios::failure)
+MapType::Certainty XargonMapType::isInstance(stream::input_sptr psMap) const
+	throw (stream::error)
 {
-	psMap->seekg(0, std::ios::end);
-	io::stream_offset lenMap = psMap->tellg();
+	stream::pos lenMap = psMap->size();
 
 	// TESTED BY: fmt_map_xargon_isinstance_c01
 	if (lenMap < XR_OFFSET_OBJLAYER + 2) return MapType::DefinitelyNo; // too short
 
-	psMap->seekg(XR_OFFSET_OBJLAYER, std::ios::beg);
+	psMap->seekg(XR_OFFSET_OBJLAYER, stream::start);
 	uint16_t numObjects;
 	psMap >> u16le(numObjects);
 
-	io::stream_offset offStrings = XR_OFFSET_OBJLAYER + 2 +
+	stream::pos offStrings = XR_OFFSET_OBJLAYER + 2 +
 		numObjects * XR_OBJ_ENTRY_LEN + XR_LEN_SAVEDATA;
 
 	// TESTED BY: fmt_map_xargon_isinstance_c02
@@ -128,7 +127,7 @@ MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 
 	// TESTED BY: fmt_map_xargon_isinstance_c03
 	if (lenMap < offStrings + 2) return MapType::DefinitelyNo; // too short
-	psMap->seekg(offStrings, std::ios::beg);
+	psMap->seekg(offStrings, stream::start);
 
 	int i;
 	for (i = 0; i < XR_SAFETY_MAX_STRINGS; i++) {
@@ -137,7 +136,7 @@ MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 		offStrings += lenStr + 2 + 1; // +2 for uint16le, +1 for terminating null
 		if (lenMap < offStrings + 2) return MapType::DefinitelyNo; // too short
 
-		psMap->seekg(offStrings, std::ios::beg);
+		psMap->seekg(offStrings, stream::start);
 		if (offStrings == lenMap) break; // reached EOF
 	}
 	if (i == XR_SAFETY_MAX_STRINGS) return MapType::DefinitelyNo; // too many strings
@@ -147,24 +146,23 @@ MapType::Certainty XargonMapType::isInstance(istream_sptr psMap) const
 }
 
 MapPtr XargonMapType::create(SuppData& suppData) const
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	// TODO: Implement
-	throw std::ios::failure("Not implemented yet!");
+	throw stream::error("Not implemented yet!");
 }
 
-MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
-	throw (std::ios::failure)
+MapPtr XargonMapType::open(stream::input_sptr input, SuppData& suppData) const
+	throw (stream::error)
 {
-	input->seekg(0, std::ios::end);
-	io::stream_offset lenMap = input->tellg();
+	stream::pos lenMap = input->size();
 
 	if (lenMap < XR_OFFSET_OBJLAYER + 2) {
-		throw std::ios::failure("Map file has been truncated! (background section cut)");
+		throw stream::error("Map file has been truncated! (background section cut)");
 	}
 
 	// Read the background layer
-	input->seekg(0, std::ios::beg);
+	input->seekg(0, stream::start);
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(XR_MAP_WIDTH * XR_MAP_HEIGHT);
@@ -193,7 +191,7 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 	input >> u16le(numObjects);
 	lenMap -= 2;
 	if (lenMap < numObjects * XR_OBJ_ENTRY_LEN) {
-		throw std::ios::failure("Map file has been truncated! (objects section cut)");
+		throw stream::error("Map file has been truncated! (objects section cut)");
 	}
 	Map2D::Layer::ItemPtrVectorPtr objects(new Map2D::Layer::ItemPtrVector());
 	objects->reserve(numObjects);
@@ -237,9 +235,9 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 
 	// Skip over the savegame data
 	if (lenMap < XR_LEN_SAVEDATA) {
-		throw std::ios::failure("Map file has been truncated! (savedata section cut)");
+		throw stream::error("Map file has been truncated! (savedata section cut)");
 	}
-	input->seekg(XR_LEN_SAVEDATA, std::ios::cur);
+	input->seekg(XR_LEN_SAVEDATA, stream::cur);
 	lenMap -= XR_LEN_SAVEDATA;
 
 	// Read the text elements
@@ -250,7 +248,7 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 		input >> u16le(lenStr);
 		lenStr++; // include terminating null
 		lenMap -= 2;
-		if (lenMap < lenStr) throw std::ios::failure("Map file has been truncated! (text section cut)");
+		if (lenMap < lenStr) throw stream::error("Map file has been truncated! (text section cut)");
 		input >> null_padded(value, lenStr, false);
 		lenMap -= lenStr;
 		std::cout << "Found string: " << value << "\n";
@@ -272,13 +270,13 @@ MapPtr XargonMapType::open(istream_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long XargonMapType::write(MapPtr map, ostream_sptr output, SuppData& suppData) const
-	throw (std::ios::failure)
+unsigned long XargonMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw std::ios::failure("Cannot write this type of map as this format.");
+	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 2)
-		throw std::ios::failure("Incorrect layer count for this format.");
+		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned long lenWritten = 0;
 

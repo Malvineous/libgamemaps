@@ -25,14 +25,15 @@
 #include <camoto/gamegraphics.hpp>
 #include <camoto/gamemaps.hpp>
 #include <camoto/util.hpp>
+#include <camoto/stream_file.hpp>
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include "png++/png.hpp"
 
 namespace po = boost::program_options;
 namespace gm = camoto::gamemaps;
 namespace gg = camoto::gamegraphics;
+namespace stream = camoto::stream;
 
 #define PROGNAME "gamemap"
 
@@ -68,20 +69,21 @@ struct CachedTile {
  *
  * @return Shared pointer to the tileset.
  *
- * @throw std::ios::failure on error
+ * @throw stream::error on error
  */
 gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	gg::ManagerPtr pManager(gg::getManager());
 
-	boost::shared_ptr<std::fstream> psTileset(new std::fstream());
-	psTileset->exceptions(std::ios::badbit | std::ios::failbit);
+	stream::file_sptr psTileset(new stream::file());
 	try {
-		psTileset->open(filename.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-	} catch (std::ios::failure& e) {
-		std::cerr << "Error opening " << filename << std::endl;
-		throw std::ios::failure("Unable to open tileset");
+		psTileset->open(filename.c_str());
+	} catch (const stream::open_error& e) {
+		std::cerr << "Error opening " << filename << ": " << e.what()
+			<< std::endl;
+		throw stream::error("Unable to open tileset " + filename + ": "
+			+ e.get_message());
 	}
 
 	gg::TilesetTypePtr pGfxType;
@@ -113,14 +115,14 @@ finishTesting:
 			std::cerr << "Unable to automatically determine the graphics file "
 				"type.  Use the --graphicstype option to manually specify the file "
 				"format." << std::endl;
-			throw std::ios::failure("Unable to open tileset");
+			throw stream::error("Unable to open tileset");
 		}
 	} else {
 		gg::TilesetTypePtr pTestType(pManager->getTilesetTypeByCode(type));
 		if (!pTestType) {
 			std::cerr << "Unknown file type given to -y/--graphicstype: " << type
 				<< std::endl;
-			throw std::ios::failure("Unable to open tileset");
+			throw stream::error("Unable to open tileset");
 		}
 		pGfxType = pTestType;
 	}
@@ -133,25 +135,20 @@ finishTesting:
 	if (suppList.size() > 0) {
 		for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 			try {
-				boost::shared_ptr<std::fstream> suppStream(new std::fstream());
-				suppStream->exceptions(std::ios::badbit | std::ios::failbit);
-				std::cout << "Opening supplemental file " << i->second << std::endl;
-				suppStream->open(i->second.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-				camoto::SuppItem si;
-				si.stream = suppStream;
-				si.fnTruncate = boost::bind<void>(camoto::truncateFromString, i->second, _1);
-				suppData[i->first] = si;
-			} catch (std::ios::failure e) {
-				std::cerr << "Error opening supplemental file " << i->second.c_str() << std::endl;
-				throw std::ios::failure("Unable to open tileset");
+				stream::file_sptr suppStream(new stream::file());
+				suppStream->open(i->second.c_str());
+				suppData[i->first] = suppStream;
+			} catch (const stream::open_error& e) {
+				std::cerr << "Error opening supplemental file " << i->second << ": "
+					<< e.what() << std::endl;
+				throw stream::error("Unable to open supplemental file " + i->second
+					+ ": " +  e.get_message());
 			}
 		}
 	}
 
 	// Open the graphics file
-	camoto::FN_TRUNCATE fnTruncate =
-		boost::bind<void>(camoto::truncateFromString, filename, _1);
-	gg::TilesetPtr pTileset(pGfxType->open(psTileset, fnTruncate, suppData));
+	gg::TilesetPtr pTileset(pGfxType->open(psTileset, suppData));
 	assert(pTileset);
 
 	return pTileset;
@@ -171,11 +168,11 @@ finishTesting:
  * @param destFile
  *   Filename of destination (including ".png")
  *
- * @throw std::ios::failure on error
+ * @throw stream::error on error
  */
 void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	const std::string& destFile)
-	throw (std::ios::failure)
+	throw (stream::error)
 {
 	int mapCaps = map->getCaps();
 	int outWidth, outHeight; // in pixels
@@ -492,15 +489,12 @@ int main(int iArgC, char *cArgV[])
 		std::cout << "Opening " << strFilename << " as type "
 			<< (strType.empty() ? "<autodetect>" : strType) << std::endl;
 
-		boost::shared_ptr<std::fstream> psMap(new std::fstream());
-		psMap->exceptions(std::ios::badbit | std::ios::failbit);
+		stream::file_sptr psMap(new stream::file());
 		try {
-			psMap->open(strFilename.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-		} catch (std::ios::failure& e) {
-			std::cerr << "Error opening " << strFilename << std::endl;
-			#ifdef DEBUG
-				std::cerr << "e.what(): " << e.what() << std::endl;
-			#endif
+			psMap->open(strFilename.c_str());
+		} catch (const stream::open_error& e) {
+			std::cerr << "Error opening " << strFilename << ": " << e.what()
+				<< std::endl;
 			return RET_SHOWSTOPPER;
 		}
 
@@ -543,10 +537,9 @@ int main(int iArgC, char *cArgV[])
 						bool bSuppOK = true;
 						for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 							try {
-								boost::shared_ptr<std::fstream> suppStream(new std::fstream());
-								suppStream->exceptions(std::ios::badbit | std::ios::failbit);
-								suppStream->open(i->second.c_str(), std::ios::in | std::ios::binary);
-							} catch (std::ios::failure e) {
+								stream::file_sptr suppStream(new stream::file());
+								suppStream->open(i->second.c_str());
+							} catch (const stream::open_error& e) {
 								bSuppOK = false;
 								std::cout << "  * Could not find/open " << i->second
 									<< ", map is probably not "
@@ -601,19 +594,12 @@ finishTesting:
 		if (suppList.size() > 0) {
 			for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 				try {
-					boost::shared_ptr<std::fstream> suppStream(new std::fstream());
-					suppStream->exceptions(std::ios::badbit | std::ios::failbit);
-					std::cout << "Opening supplemental file " << i->second << std::endl;
-					suppStream->open(i->second.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-					camoto::SuppItem si;
-					si.stream = suppStream;
-					si.fnTruncate = boost::bind<void>(camoto::truncateFromString, i->second, _1);
-					suppData[i->first] = si;
-				} catch (std::ios::failure e) {
-					std::cerr << "Error opening supplemental file " << i->second.c_str() << std::endl;
-					#ifdef DEBUG
-						std::cerr << "e.what(): " << e.what() << std::endl;
-					#endif
+					stream::file_sptr suppStream(new stream::file());
+					suppStream->open(i->second.c_str());
+					suppData[i->first] = suppStream;
+				} catch (const stream::open_error& e) {
+					std::cerr << "Error opening supplemental file " << i->second << ": "
+						<< e.what() << std::endl;
 					return RET_SHOWSTOPPER;
 				}
 			}
@@ -910,11 +896,11 @@ finishTesting:
 			}
 		} // for (all command line elements)
 		//pMap->flush();
-	} catch (po::error& e) {
+	} catch (const po::error& e) {
 		std::cerr << PROGNAME ": " << e.what()
 			<< ".  Use --help for help." << std::endl;
 		return RET_BADARGS;
-	} catch (std::ios::failure& e) {
+	} catch (const stream::error& e) {
 		std::cerr << PROGNAME ": " << e.what()
 			<< ".  Use --help for help." << std::endl;
 		return RET_SHOWSTOPPER;
