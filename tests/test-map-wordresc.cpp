@@ -61,6 +61,9 @@
 #define MAP_FIRST_CODE_L2 0x73
 #define MAP_FIRST_CODE_L3 0x06
 
+#define MAP_FIRST_CODE_X_L2 1
+#define MAP_FIRST_CODE_Y_L2 0
+
 #define MAP_CLASS fmt_map_wordresc
 #define MAP_TYPE  "map-wordresc"
 #include "test-map2d.hpp"

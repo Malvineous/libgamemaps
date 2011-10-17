@@ -218,29 +218,35 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 {
 	BOOST_TEST_MESSAGE("Reading map codes");
+#define CHECK_FIRST_TILE_IN_LAYER(LAYER) \
+	case (LAYER-1): \
+		if ( \
+			((*i)->x == MAP_FIRST_CODE_X_L ## LAYER) \
+			&& ((*i)->y == MAP_FIRST_CODE_Y_L ## LAYER) \
+		) { \
+			foundFirstTile = true; \
+			BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L ## LAYER); \
+		} \
+		break;
 
 	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
 		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
 		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 		bool foundFirstTile = false;
 		for (gm::Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-			i != items->end();
+			(i != items->end()) && (!foundFirstTile);
 			i++
 		) {
-			if (((*i)->x == 0) && ((*i)->y == 0)) {
-				switch (l) {
+			switch (l) {
 #ifdef MAP_FIRST_CODE_L1
-					case 0: BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L1); break;
+CHECK_FIRST_TILE_IN_LAYER(1)
 #endif
 #ifdef MAP_FIRST_CODE_L2
-					case 1: BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L2); break;
+CHECK_FIRST_TILE_IN_LAYER(2)
 #endif
 #ifdef MAP_FIRST_CODE_L3
-					case 2: BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L3); break;
+CHECK_FIRST_TILE_IN_LAYER(3)
 #endif
-				}
-				foundFirstTile = true;
-				break;
 			}
 		}
 		BOOST_REQUIRE_EQUAL(foundFirstTile, true);
