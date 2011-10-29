@@ -460,6 +460,9 @@ class Map2D::Layer::Item {
 		unsigned int code; ///< Format-specific tile code
 };
 
+/// Value to use for tilecodes that have not yet been set.
+const unsigned int INVALID_TILECODE = (unsigned int)-1;
+
 /// A text element stored within the layer.
 class Map2D::Layer::Text: virtual public Map2D::Layer::Item {
 	public:
