@@ -63,6 +63,30 @@ class BashMapType: virtual public MapType {
 
 };
 
+class BashForegroundLayer: virtual public Map2D::Layer {
+
+	public:
+		BashForegroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
+class BashBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		BashBackgroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
 } // namespace gamemaps
 } // namespace camoto
 

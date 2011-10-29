@@ -52,8 +52,20 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert a map code into an image.
-ImagePtr imageFromDDCode(unsigned int code, VC_TILESET& tileset)
+DDaveBackgroundLayer::DDaveBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr DDaveBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
@@ -162,14 +174,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = bg[i];
 		if (t->code != DD_DEFAULT_BGTILE) tiles->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		tiles,
-		imageFromDDCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new DDaveBackgroundLayer(tiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

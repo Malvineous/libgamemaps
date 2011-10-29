@@ -52,8 +52,20 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert a map code into an image.
-ImagePtr imageFromWWCode(unsigned int code, VC_TILESET& tileset)
+WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Surface",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr WackyBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	unsigned int t = code / WW_TILES_PER_TILESET;
@@ -141,14 +153,7 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = bg[i];
 		tiles->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		tiles,
-		imageFromWWCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new WackyBackgroundLayer(tiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

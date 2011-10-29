@@ -49,16 +49,41 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert an actor code into an image.
-ImagePtr imageFromHHActorCode(unsigned int code, VC_TILESET& tileset)
+HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Actors",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr HarryActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	// TODO
 	return ImagePtr();
 }
 
-/// Convert a map tile code into an image.
-ImagePtr imageFromHHTileCode(unsigned int code, VC_TILESET& tileset)
+
+HarryBackgroundLayer::HarryBackgroundLayer(const std::string& name,
+	ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			name,
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr HarryBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
@@ -66,6 +91,7 @@ ImagePtr imageFromHHTileCode(unsigned int code, VC_TILESET& tileset)
 	if (code >= images.size()) return ImagePtr(); // out of range
 	return tileset[0]->openImage(images[code]);
 }
+
 
 std::string HarryMapType::getMapCode() const
 	throw ()
@@ -233,14 +259,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		actors->push_back(t);
 		input->seekg(128-1-2-2, stream::cur);
 	}
-	Map2D::LayerPtr actorLayer(new Map2D::Layer(
-		"Actors",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		actors,
-		imageFromHHActorCode, NULL
-	));
+	Map2D::LayerPtr actorLayer(new HarryActorLayer(actors));
 
 	uint16_t mapWidth, mapHeight;
 	input >> u16le(mapWidth) >> u16le(mapHeight);
@@ -260,14 +279,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		bgtiles,
-		imageFromHHTileCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new HarryBackgroundLayer("Background", bgtiles));
 
 	// Read the foreground layer
 	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
@@ -283,14 +295,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::LayerPtr fgLayer(new Map2D::Layer(
-		"Foreground",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		fgtiles,
-		imageFromHHTileCode, NULL
-	));
+	Map2D::LayerPtr fgLayer(new HarryBackgroundLayer("Foreground", fgtiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

@@ -57,6 +57,30 @@ class XargonMapType: virtual public MapType {
 
 };
 
+class XargonBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		XargonBackgroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
+class XargonObjectLayer: virtual public Map2D::Layer {
+
+	public:
+		XargonObjectLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
 } // namespace gamemaps
 } // namespace camoto
 

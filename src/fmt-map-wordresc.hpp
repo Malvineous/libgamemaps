@@ -60,6 +60,50 @@ class WordRescueMapType: virtual public MapType {
 
 };
 
+class WordRescueBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		WordRescueBackgroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
+class WordRescueObjectLayer: virtual public Map2D::Layer {
+
+	public:
+		WordRescueObjectLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
+			unsigned int y, unsigned int *maxCount)
+			throw ();
+
+};
+
+class WordRescueAttributeLayer: virtual public Map2D::Layer {
+
+	public:
+		WordRescueAttributeLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
+			unsigned int y, unsigned int *maxCount)
+			throw ();
+
+};
+
 } // namespace gamemaps
 } // namespace camoto
 

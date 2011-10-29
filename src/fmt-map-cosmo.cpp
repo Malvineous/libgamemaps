@@ -55,19 +55,43 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert an actor code into an image.
-ImagePtr imageFromCCAActorCode(unsigned int code, VC_TILESET& tileset)
+CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Actors",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr CosmoActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	// TODO
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (images.size() < code) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
+	if (code >= images.size()) return ImagePtr(); // out of range
+	return tileset[0]->openImage(images[0]);
 }
 
-/// Convert a map tile code into an image.
-ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET& tileset)
+
+CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr CosmoBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 2) return ImagePtr(); // no tileset?!
@@ -86,6 +110,7 @@ ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET& tileset)
 	if (i >= images.size()) return ImagePtr(); // out of range
 	return tileset[t]->openImage(images[i]);
 }
+
 
 std::string CosmoMapType::getMapCode() const
 	throw ()
@@ -185,14 +210,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 		actors->push_back(t);
 	}
 	lenMap -= 6 * numActors;
-	Map2D::LayerPtr actorLayer(new Map2D::Layer(
-		"Actors",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		actors,
-		imageFromCCAActorCode, NULL
-	));
+	Map2D::LayerPtr actorLayer(new CosmoActorLayer(actors));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -207,14 +225,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (t->code != 0) tiles->push_back(t);
 		lenMap -= 2;
 	}
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		tiles,
-		imageFromCCATileCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new CosmoBackgroundLayer(tiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

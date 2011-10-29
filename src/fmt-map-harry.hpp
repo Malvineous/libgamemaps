@@ -57,6 +57,31 @@ class HarryMapType: virtual public MapType {
 
 };
 
+class HarryActorLayer: virtual public Map2D::Layer {
+
+	public:
+		HarryActorLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
+class HarryBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
+
 } // namespace gamemaps
 } // namespace camoto
 

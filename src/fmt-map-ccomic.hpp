@@ -57,6 +57,18 @@ class CComicMapType: virtual public MapType {
 
 };
 
+class CComicBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		CComicBackgroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
 } // namespace gamemaps
 } // namespace camoto
 

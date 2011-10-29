@@ -40,8 +40,20 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert a map code into an image.
-ImagePtr imageFromCComicCode(unsigned int code, VC_TILESET& tileset)
+CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr CComicBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
@@ -147,14 +159,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 	delete[] bg;
 
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		tiles,
-		imageFromCComicCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new CComicBackgroundLayer(tiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

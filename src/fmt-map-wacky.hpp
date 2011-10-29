@@ -69,6 +69,18 @@ class WackyMapType: virtual public MapType {
 
 };
 
+class WackyBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		WackyBackgroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
 } // namespace gamemaps
 } // namespace camoto
 

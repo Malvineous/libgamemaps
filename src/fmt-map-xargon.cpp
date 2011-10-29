@@ -62,19 +62,45 @@ struct XargonObject: virtual public Map2D::Layer::Item {
 	uint16_t zapHold;
 };
 
-/// Convert a Xargon background layer map code into an image.
-ImagePtr imageFromTileCode(unsigned int code, VC_TILESET& tileset)
+XargonBackgroundLayer::XargonBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,   // Layer size unused
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr XargonBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	return ImagePtr(); // unknown map code
 }
 
-/// Convert a Xargon object layer map code into an image.
-ImagePtr imageFromObjectCode(unsigned int code, VC_TILESET& tileset)
+
+XargonObjectLayer::XargonObjectLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Objects",
+			Map2D::Layer::HasOwnTileSize,
+			0, 0, // Layer size unused
+			1, 1,
+			items
+		)
+{
+}
+
+ImagePtr XargonObjectLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	return ImagePtr(); // unknown map code
 }
+
 
 std::string XargonMapType::getMapCode() const
 	throw ()
@@ -177,14 +203,7 @@ MapPtr XargonMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 	lenMap -= XR_MAP_WIDTH * XR_MAP_HEIGHT * 2;
 
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,   // Layer size unused
-		0, 0,
-		tiles,
-		imageFromTileCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new XargonBackgroundLayer(tiles));
 
 	// Read the object layer
 	uint16_t numObjects;
@@ -221,14 +240,7 @@ MapPtr XargonMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 	lenMap -= XR_OBJ_ENTRY_LEN * numObjects;
 
-	Map2D::LayerPtr objLayer(new Map2D::Layer(
-		"Objects",
-		Map2D::Layer::HasOwnTileSize,
-		0, 0, // Layer size unused
-		1, 1,
-		objects,
-		imageFromObjectCode, NULL
-	));
+	Map2D::LayerPtr objLayer(new XargonObjectLayer(objects));
 
 	// Make sure we read in all the objects correctly
 	assert(input->tellg() == (unsigned)(XR_OFFSET_OBJLAYER + 2 + numObjects * XR_OBJ_ENTRY_LEN));

@@ -47,8 +47,20 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert a map code into an image (foreground layer)
-ImagePtr imageFromMBFGCode(unsigned int code, VC_TILESET& tileset)
+BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Foreground",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr BashForegroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 3) return ImagePtr(); // no tileset?!
@@ -59,8 +71,21 @@ ImagePtr imageFromMBFGCode(unsigned int code, VC_TILESET& tileset)
 	return tileset[t]->openImage(images[code]);
 }
 
-/// Convert a map code into an image (background layer)
-ImagePtr imageFromMBBGCode(unsigned int code, VC_TILESET& tileset)
+
+BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr BashBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
@@ -69,6 +94,7 @@ ImagePtr imageFromMBBGCode(unsigned int code, VC_TILESET& tileset)
 	if (code >= images.size()) return ImagePtr(); // out of range
 	return tileset[0]->openImage(images[code]);
 }
+
 
 std::string BashMapType::getMapCode() const
 	throw ()
@@ -154,14 +180,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (lenBG < 2) break;
 	}
 
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		bgtiles,
-		imageFromMBBGCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new BashBackgroundLayer(bgtiles));
 
 	// Read the foreground layer
 	stream::pos lenFG = fg->size();
@@ -185,14 +204,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (lenFG < 2) break;
 	}
 
-	Map2D::LayerPtr fgLayer(new Map2D::Layer(
-		"Foreground",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		fgtiles,
-		imageFromMBFGCode, NULL
-	));
+	Map2D::LayerPtr fgLayer(new BashForegroundLayer(fgtiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

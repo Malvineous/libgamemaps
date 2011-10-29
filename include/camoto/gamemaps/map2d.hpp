@@ -266,38 +266,6 @@ class Map2D::Layer {
 		/// Vector of text elements.
 		typedef std::vector<TextPtr> TextPtrVector;
 
-		/// Function pointer to a callback for mapping tile codes to images.
-		/**
-		 * This function pointer is supplied in the constructor and is called to
-		 * convert map codes into images.  The function is defined as:
-		 *
-		 * camoto::gamegraphics::ImagePtr convertMyCodes(unsigned int code) { ... }
-		 *
-		 * Where 'code' is the map code to convert, and the return value is the
-		 * image to use for this map code.  A return value of a NULL pointer will
-		 * result in some sort of unknown/question mark tile being used.
-		 */
-		typedef camoto::gamegraphics::ImagePtr (*FN_IMAGEFROMCODE)
-			(unsigned int code, camoto::gamegraphics::VC_TILESET& tileset);
-
-		/// Function pointer to a callback for checking where tiles can be placed.
-		/**
-		 * This function pointer is supplied in the constructor and is called to
-		 * check whether a tile can be placed at the given location.  The function
-		 * is defined as:
-		 *
-		 * bool isTilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
-		 *   unsigned int *maxCodes) { ... }
-		 *
-		 * Where 'code' is the tile code, x and y are the proposed coordinates (in
-		 * tile units as per this layer's current tile size) and maxCodes can be
-		 * set to limit the number of times this code is used (zero means no limit.)
-		 * Return false to prevent the tile from being placed at the given location,
-		 * or true to allow it.  See also tilePermittedAt().
-		 */
-		typedef bool (*FN_TILEPERMITTEDAT) (unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCodes);
-
 		/// Capabilities this layer supports.
 		enum Caps {
 			NoCaps          = 0x00, ///< No caps set
@@ -342,8 +310,7 @@ class Map2D::Layer {
 		 *   dimensions are handled.
 		 */
 		Layer(const std::string& title, int caps, unsigned int width, unsigned int height,
-			unsigned int tileWidth, unsigned int tileHeight, ItemPtrVectorPtr& items,
-			FN_IMAGEFROMCODE fnImageFromCode, FN_TILEPERMITTEDAT fnTilePermittedAt)
+			unsigned int tileWidth, unsigned int tileHeight, ItemPtrVectorPtr& items)
 			throw ();
 
 		/// Destructor.
@@ -437,7 +404,9 @@ class Map2D::Layer {
 		 *   Camoto Studio reads this information from XML files distributed
 		 *   with the application, for example.
 		 *
-		 * @return Shared pointer to a camoto::gamegraphics::Image instance.
+		 * @return Shared pointer to a camoto::gamegraphics::Image instance.  A
+		 *   return value of a null pointer will result in some sort of
+		 *   unknown/question mark tile being used.
 		 */
 		virtual camoto::gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset)
@@ -468,16 +437,14 @@ class Map2D::Layer {
 			throw ();
 
 	protected:
-		std::string title;      ///< Layer's friendly name
-		int caps;               ///< Map capabilities
-		unsigned int width;              ///< Map width, in tiles
-		unsigned int height;             ///< Map height, in tiles
-		unsigned int tileWidth;          ///< Tile width, in pixels
-		unsigned int tileHeight;         ///< Tile height, in pixels
-		ItemPtrVectorPtr items; ///< Vector of all items in the layer
-		TextPtrVector strings;  ///< Vector of all text elements in the layer
-		FN_IMAGEFROMCODE fnImageFromCode;      ///< Callback for imageFromCode()
-		FN_TILEPERMITTEDAT fnTilePermittedAt;  ///< Callback for tilePermittedAt()
+		std::string title;       ///< Layer's friendly name
+		int caps;                ///< Map capabilities
+		unsigned int width;      ///< Map width, in tiles
+		unsigned int height;     ///< Map height, in tiles
+		unsigned int tileWidth;  ///< Tile width, in pixels
+		unsigned int tileHeight; ///< Tile height, in pixels
+		ItemPtrVectorPtr items;  ///< Vector of all items in the layer
+		TextPtrVector strings;   ///< Vector of all text elements in the layer
 };
 
 /// Item within the layer (a tile)

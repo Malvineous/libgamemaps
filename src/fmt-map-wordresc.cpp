@@ -79,8 +79,20 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert a map code into an image.
-ImagePtr imageFromWRCode(unsigned int code, VC_TILESET& tileset)
+WordRescueBackgroundLayer::WordRescueBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr WordRescueBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() <= 0) return ImagePtr();
@@ -89,8 +101,21 @@ ImagePtr imageFromWRCode(unsigned int code, VC_TILESET& tileset)
 	return tileset[0]->openImage(images[code]);
 }
 
-/// Convert an internal item code (WR_CODE_*) into an image.
-ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
+
+WordRescueObjectLayer::WordRescueObjectLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Items",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr WordRescueObjectLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	unsigned int t;
@@ -119,8 +144,33 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 	return tileset[t]->openImage(images[code]);
 }
 
-/// Convert an attribute code into an image.
-ImagePtr imageFromWRAtCode(unsigned int code, VC_TILESET& tileset)
+bool WordRescueObjectLayer::tilePermittedAt(unsigned int code,
+	unsigned int x, unsigned int y, unsigned int *maxCodes)
+	throw ()
+{
+	if ((code == WR_CODE_ENTRANCE) || (code == WR_CODE_EXIT)) {
+		*maxCodes = 1; // only one level entrance/exit permitted
+	} else {
+		*maxCodes = 0; // unlimited
+	}
+	return true; // anything can be placed anywhere
+}
+
+
+WordRescueAttributeLayer::WordRescueAttributeLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Attributes",
+			Map2D::Layer::HasOwnTileSize,
+			0, 0,
+			WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
+			items
+		)
+{
+}
+
+ImagePtr WordRescueAttributeLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	unsigned int t;
@@ -143,23 +193,14 @@ ImagePtr imageFromWRAtCode(unsigned int code, VC_TILESET& tileset)
 	return tileset[t]->openImage(images[code]);
 }
 
-bool WR_Item_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
-	unsigned int *maxCodes)
-{
-	if ((code == WR_CODE_ENTRANCE) || (code == WR_CODE_EXIT)) {
-		*maxCodes = 1; // only one level entrance/exit permitted
-	} else {
-		*maxCodes = 0; // unlimited
-	}
-	return true; // anything can be placed anywhere
-}
-
-bool WR_At_TilePermittedAt(unsigned int code, unsigned int x, unsigned int y,
-	unsigned int *maxCodes)
+bool WordRescueAttributeLayer::tilePermittedAt(unsigned int code,
+	unsigned int x, unsigned int y, unsigned int *maxCodes)
+	throw ()
 {
 	if (x == 0) return false; // can't place tiles in this column
 	return true; // otherwise unrestricted
 }
+
 
 /// Write the given data to the stream, RLE encoded
 int rleWrite(stream::output_sptr output, uint8_t *data, int len)
@@ -499,14 +540,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	// Skip over trailing 0x0000
 	input->seekg(2, stream::cur);
 
-	Map2D::LayerPtr itemLayer(new Map2D::Layer(
-		"Items",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		items,
-		imageFromWRItemCode, WR_Item_TilePermittedAt
-	));
+	Map2D::LayerPtr itemLayer(new WordRescueObjectLayer(items));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -527,14 +561,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 			}
 		}
 	}
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		tiles,
-		imageFromWRCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new WordRescueBackgroundLayer(tiles));
 
 	// Read the attribute layer
 	Map2D::Layer::ItemPtrVectorPtr atItems(new Map2D::Layer::ItemPtrVector());
@@ -557,14 +584,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 			}
 		}
 	}
-	Map2D::LayerPtr atLayer(new Map2D::Layer(
-		"Attributes",
-		Map2D::Layer::HasOwnTileSize,
-		0, 0,
-		WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
-		atItems,
-		imageFromWRAtCode, WR_At_TilePermittedAt
-	));
+	Map2D::LayerPtr atLayer(new WordRescueAttributeLayer(atItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

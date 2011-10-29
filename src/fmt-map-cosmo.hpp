@@ -57,6 +57,30 @@ class CosmoMapType: virtual public MapType {
 
 };
 
+class CosmoActorLayer: virtual public Map2D::Layer {
+
+	public:
+		CosmoActorLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
+class CosmoBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		CosmoBackgroundLayer(ItemPtrVectorPtr& items)
+			throw ();
+
+		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
+			camoto::gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+};
+
 } // namespace gamemaps
 } // namespace camoto
 

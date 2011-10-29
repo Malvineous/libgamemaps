@@ -47,13 +47,26 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-/// Convert a map code into an image.
-ImagePtr imageFromCCCode(unsigned int code, VC_TILESET& tileset)
+CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items)
+	throw () :
+		Map2D::Layer(
+			"Background",
+			Map2D::Layer::NoCaps,
+			0, 0,
+			0, 0,
+			items
+		)
+{
+}
+
+ImagePtr CCavesBackgroundLayer::imageFromCode(unsigned int code,
+	VC_TILESET& tileset)
 	throw ()
 {
 	// TODO
 	return ImagePtr();
 }
+
 
 std::string CCavesMapType::getMapCode() const
 	throw ()
@@ -158,14 +171,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			if (t->code != 0x20) tiles->push_back(t);
 		}
 	}
-	Map2D::LayerPtr bgLayer(new Map2D::Layer(
-		"Background",
-		Map2D::Layer::NoCaps,
-		0, 0,
-		0, 0,
-		tiles,
-		imageFromCCCode, NULL
-	));
+	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer(tiles));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
