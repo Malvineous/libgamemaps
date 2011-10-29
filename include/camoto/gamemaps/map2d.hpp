@@ -114,9 +114,10 @@ class Map2D: virtual public Map {
 		 *   map size in pixels, then divided by the layer's different tile size to
 		 *   reveal the dimensions of the layer in a number of tiles.
 		 */
-		Map2D(AttributePtrVectorPtr attributes, int caps, int viewportWidth,
-			int viewportHeight, int width, int height, int tileWidth, int tileHeight,
-			LayerPtrVector& layers, PathPtrVectorPtr paths)
+		Map2D(AttributePtrVectorPtr attributes, int caps,
+			unsigned int viewportWidth, unsigned int viewportHeight,
+			unsigned int width, unsigned int height, unsigned int tileWidth,
+			unsigned int tileHeight, LayerPtrVector& layers, PathPtrVectorPtr paths)
 			throw ();
 
 		/// Destructor.
@@ -143,7 +144,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   Pointer to store layer height, in pixels.
 		 */
-		virtual void getViewport(int *x, int *y)
+		virtual void getViewport(unsigned int *x, unsigned int *y)
 			throw ();
 
 		/// Retrieve the size of the map.
@@ -158,7 +159,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getMapSize(int *x, int *y)
+		virtual void getMapSize(unsigned int *x, unsigned int *y)
 			throw ();
 
 		/// Change the size of each cell in the layer.
@@ -171,7 +172,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   New layer height, as number of tiles.
 		 */
-		virtual void setMapSize(int x, int y)
+		virtual void setMapSize(unsigned int x, unsigned int y)
 			throw ();
 
 		/// Retrieve the size of each cell in the layer's grid.
@@ -184,7 +185,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(int *x, int *y)
+		virtual void getTileSize(unsigned int *x, unsigned int *y)
 			throw ();
 
 		/// Change the size of each cell in the layer.
@@ -197,14 +198,14 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   New tile height in pixels.
 		 */
-		virtual void setTileSize(int x, int y)
+		virtual void setTileSize(unsigned int x, unsigned int y)
 			throw ();
 
 		/// Get the number of layers in the map.
 		/**
 		 * @return Number of layers.  All maps have at least one layer.
 		 */
-		virtual int getLayerCount()
+		virtual unsigned int getLayerCount()
 			throw ();
 
 		/// Get access to the given layer.
@@ -214,7 +215,7 @@ class Map2D: virtual public Map {
 		 *
 		 * @return A shared pointer to the layer.
 		 */
-		virtual LayerPtr getLayer(int index)
+		virtual LayerPtr getLayer(unsigned int index)
 			throw ();
 
 		/// Get a list of paths in the level.
@@ -233,12 +234,12 @@ class Map2D: virtual public Map {
 
 	protected:
 		int caps;               ///< Value to return in getCaps().
-		int viewportWidth;      ///< Width of viewport in pixels.
-		int viewportHeight;     ///< Height of viewport in pixels.
-		int width;              ///< Width of map as number of tiles.
-		int height;             ///< Height of map as number of tiles.
-		int tileWidth;          ///< Width of tiles in all layers, in pixels.
-		int tileHeight;         ///< Height of tiles in all layers, in pixels.
+		unsigned int viewportWidth;      ///< Width of viewport in pixels.
+		unsigned int viewportHeight;     ///< Height of viewport in pixels.
+		unsigned int width;              ///< Width of map as number of tiles.
+		unsigned int height;             ///< Height of map as number of tiles.
+		unsigned int tileWidth;          ///< Width of tiles in all layers, in pixels.
+		unsigned int tileHeight;         ///< Height of tiles in all layers, in pixels.
 		LayerPtrVector layers;  ///< Map layers
 		PathPtrVectorPtr paths; ///< Map paths
 };
@@ -340,8 +341,8 @@ class Map2D::Layer {
 		 * @see Map2D::Map2D() for more details on how the layer and tile
 		 *   dimensions are handled.
 		 */
-		Layer(const std::string& title, int caps, int width, int height,
-			int tileWidth, int tileHeight, ItemPtrVectorPtr& items,
+		Layer(const std::string& title, int caps, unsigned int width, unsigned int height,
+			unsigned int tileWidth, unsigned int tileHeight, ItemPtrVectorPtr& items,
 			FN_IMAGEFROMCODE fnImageFromCode, FN_TILEPERMITTEDAT fnTilePermittedAt)
 			throw ();
 
@@ -374,7 +375,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getLayerSize(int *x, int *y)
+		virtual void getLayerSize(unsigned int *x, unsigned int *y)
 			throw ();
 
 		/// Change the size of each cell in the layer.
@@ -387,7 +388,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   New layer height, as number of tiles.
 		 */
-		virtual void setLayerSize(int x, int y)
+		virtual void setLayerSize(unsigned int x, unsigned int y)
 			throw ();
 
 		/// Retrieve the size of each cell in the layer's grid.
@@ -401,7 +402,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(int *x, int *y)
+		virtual void getTileSize(unsigned int *x, unsigned int *y)
 			throw ();
 
 		/// Change the size of each cell in the layer.
@@ -414,7 +415,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   New tile height in pixels.
 		 */
-		virtual void setTileSize(int x, int y)
+		virtual void setTileSize(unsigned int x, unsigned int y)
 			throw ();
 
 		/// Get a list of all tiles in the layer.
@@ -469,10 +470,10 @@ class Map2D::Layer {
 	protected:
 		std::string title;      ///< Layer's friendly name
 		int caps;               ///< Map capabilities
-		int width;              ///< Map width, in tiles
-		int height;             ///< Map height, in tiles
-		int tileWidth;          ///< Tile width, in pixels
-		int tileHeight;         ///< Tile height, in pixels
+		unsigned int width;              ///< Map width, in tiles
+		unsigned int height;             ///< Map height, in tiles
+		unsigned int tileWidth;          ///< Tile width, in pixels
+		unsigned int tileHeight;         ///< Tile height, in pixels
 		ItemPtrVectorPtr items; ///< Vector of all items in the layer
 		TextPtrVector strings;  ///< Vector of all text elements in the layer
 		FN_IMAGEFROMCODE fnImageFromCode;      ///< Callback for imageFromCode()

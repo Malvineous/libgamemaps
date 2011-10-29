@@ -93,7 +93,7 @@ ImagePtr imageFromWRCode(unsigned int code, VC_TILESET& tileset)
 ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
-	int t;
+	unsigned int t;
 	switch (code) {
 		case WR_CODE_GRUZZLE:  t = 1; code = 15; break;
 		case WR_CODE_SLIME:    t = 0; code = 238; break;
@@ -123,7 +123,7 @@ ImagePtr imageFromWRItemCode(unsigned int code, VC_TILESET& tileset)
 ImagePtr imageFromWRAtCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
-	int t;
+	unsigned int t;
 	switch (code) {
 		case 0x0000: t = 1; code = 0; break; // first question mark box
 		case 0x0001: t = 1; code = 0; break;
@@ -272,8 +272,8 @@ MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
 	psMap->seekg(2*7, stream::cur);
 
 	// Check the items are each within range
-	int minSize = WR_MIN_HEADER_SIZE;
-	for (int i = 0; i < INDEX_SIZE; i++) {
+	unsigned int minSize = WR_MIN_HEADER_SIZE;
+	for (unsigned int i = 0; i < INDEX_SIZE; i++) {
 		uint16_t count;
 		if (i == INDEX_LETTER) {
 			psMap->seekg(WR_NUM_LETTERS * 4, stream::cur);
@@ -441,7 +441,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	uint16_t gruzzleCount;
 	input >> u16le(gruzzleCount);
 	items->reserve(items->size() + gruzzleCount);
-	for (int i = 0; i < gruzzleCount; i++) {
+	for (unsigned int i = 0; i < gruzzleCount; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
 			>> u16le(t->x)
@@ -458,7 +458,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	uint16_t slimeCount;
 	input >> u16le(slimeCount);
 	items->reserve(items->size() + slimeCount);
-	for (int i = 0; i < slimeCount; i++) {
+	for (unsigned int i = 0; i < slimeCount; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
 			>> u16le(t->x)
@@ -471,7 +471,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	uint16_t bookCount;
 	input >> u16le(bookCount);
 	items->reserve(items->size() + bookCount + 7);
-	for (int i = 0; i < bookCount; i++) {
+	for (unsigned int i = 0; i < bookCount; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
 			>> u16le(t->x)
@@ -481,7 +481,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		items->push_back(t);
 	}
 
-	for (int i = 0; i < WR_NUM_LETTERS; i++) {
+	for (unsigned int i = 0; i < WR_NUM_LETTERS; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
 			>> u16le(t->x)
@@ -591,7 +591,7 @@ unsigned long WordRescueMapType::write(MapPtr map, stream::output_sptr output, S
 	if (map2d->getLayerCount() != 3)
 		throw stream::error("Incorrect layer count for this format.");
 
-	int mapWidth, mapHeight;
+	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	unsigned long lenWritten = 0;
@@ -653,7 +653,7 @@ unsigned long WordRescueMapType::write(MapPtr map, stream::output_sptr output, S
 	std::vector<point> itemLocations[INDEX_SIZE];
 
 	// Prefill the letter vector with the fixed number of letters
-	for (int i = 0; i < WR_NUM_LETTERS; i++) itemLocations[INDEX_LETTER].push_back(point(0, 0));
+	for (unsigned int i = 0; i < WR_NUM_LETTERS; i++) itemLocations[INDEX_LETTER].push_back(point(0, 0));
 
 	uint16_t startX = 0;
 	uint16_t startY = 0;
@@ -702,7 +702,7 @@ unsigned long WordRescueMapType::write(MapPtr map, stream::output_sptr output, S
 	lenWritten += 18;
 
 	// Write out all the gruzzles, slime buckets and book positions
-	for (int i = 0; i < INDEX_SIZE; i++) {
+	for (unsigned int i = 0; i < INDEX_SIZE; i++) {
 
 		// Write the number of items first, except for letters which are fixed at 7
 		if (i != INDEX_LETTER) {
@@ -756,7 +756,7 @@ unsigned long WordRescueMapType::write(MapPtr map, stream::output_sptr output, S
 		i != atitems->end();
 		i++
 	) {
-		int xpos = (*i)->x;
+		unsigned int xpos = (*i)->x;
 		if (xpos < 1) continue; // skip first column, just in case
 		xpos--;
 		if ((xpos > mapWidth * 2) || ((*i)->y > mapHeight * 2)) {

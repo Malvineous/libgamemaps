@@ -52,7 +52,7 @@ ImagePtr imageFromMBFGCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 3) return ImagePtr(); // no tileset?!
-	int t = 1 + ((code >> 7) & 1);
+	unsigned int t = 1 + ((code >> 7) & 1);
 	code &= 0x7F;
 	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
 	if (code >= images.size()) return ImagePtr(); // out of range
@@ -135,12 +135,12 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	if (lenBG < 2) throw stream::error("Background layer file too short");
 
 	mapWidth >>= 1; // convert from # of bytes to # of ints (tiles)
-	int mapHeight = mapPixelHeight / MB_TILE_HEIGHT;
+	unsigned int mapHeight = mapPixelHeight / MB_TILE_HEIGHT;
 
 	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
 	bgtiles->reserve(mapWidth * mapHeight);
-	for (int y = 0; y < mapHeight; y++) {
-		for (int x = 0; x < mapWidth; x++) {
+	for (unsigned int y = 0; y < mapHeight; y++) {
+		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
@@ -170,8 +170,8 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
 	fgtiles->reserve(mapWidth * mapHeight);
-	for (int y = 0; y < mapHeight; y++) {
-		for (int x = 0; x < mapWidth; x++) {
+	for (unsigned int y = 0; y < mapHeight; y++) {
+		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
@@ -220,7 +220,7 @@ unsigned long BashMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 
 	unsigned long lenWritten = 0;
 
-	int mapWidth, mapHeight;
+	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	stream::output_sptr bg = suppData[SuppItem::Layer1];
@@ -230,7 +230,7 @@ unsigned long BashMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 
 	// Write the background layer
 	{
-		int lenBG = mapWidth * mapHeight;
+		unsigned int lenBG = mapWidth * mapHeight;
 		boost::shared_array<uint16_t> bgdata(new uint16_t[lenBG]);
 		memset(bgdata.get(), 0, lenBG); // default background tile
 		Map2D::LayerPtr layer = map2d->getLayer(0);
@@ -255,14 +255,14 @@ unsigned long BashMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 			<< u16le(mapPixelHeight)
 		;
 		uint16_t *pbg = bgdata.get();
-		for (int i = 0; i < lenBG; i++) {
+		for (unsigned int i = 0; i < lenBG; i++) {
 			bg << u16le(*pbg++);
 		}
 	}
 
 	// Write the foreground layer
 	{
-		int lenFG = mapWidth * mapHeight;
+		unsigned int lenFG = mapWidth * mapHeight;
 		boost::shared_array<uint8_t> fgdata(new uint8_t[lenFG]);
 		memset(fgdata.get(), 0, lenFG); // default background tile
 		Map2D::LayerPtr layer = map2d->getLayer(1);
@@ -282,7 +282,7 @@ unsigned long BashMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 			<< u16le(mapWidthBytes)
 		;
 		uint8_t *pfg = fgdata.get();
-		for (int i = 0; i < lenFG; i++) {
+		for (unsigned int i = 0; i < lenFG; i++) {
 			fg << u16le(*pfg++);
 		}
 	}

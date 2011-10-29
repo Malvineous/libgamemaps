@@ -43,8 +43,8 @@ namespace gamemaps {
  * @param tileHeight
  *   Stores layer height on return, in pixels.
  */
-void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
-	int *layerHeight, int *tileWidth, int *tileHeight);
+void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, unsigned int *layerWidth,
+	unsigned int *layerHeight, unsigned int *tileWidth, unsigned int *tileHeight);
 
 } // namespace gamemaps
 } // namespace camoto

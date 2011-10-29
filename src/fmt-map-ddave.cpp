@@ -103,7 +103,7 @@ MapType::Certainty DDaveMapType::isInstance(stream::input_sptr psMap) const
 	psMap->seekg(DD_LAYER_OFF_BG, stream::start);
 	stream::len r = psMap->try_read(bg, DD_LAYER_LEN_BG);
 	if (r != DD_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
-	for (int i = 0; i < DD_LAYER_LEN_BG; i++) {
+	for (unsigned int i = 0; i < DD_LAYER_LEN_BG; i++) {
 		// TESTED BY: fmt_map_ddave_isinstance_c02
 		if (bg[i] > DD_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
 	}
@@ -132,15 +132,15 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	pathptr->fixed = true;
 	pathptr->forceClosed = false;
 	pathptr->maxPoints = 128;
-	int nextX = 0, nextY = 0;
-	for (int i = 0; i < DD_LAYER_LEN_PATH; i += 2) {
+	unsigned int nextX = 0, nextY = 0;
+	for (unsigned int i = 0; i < DD_LAYER_LEN_PATH; i += 2) {
 		if ((pathdata[i] == DD_PATH_END) && (pathdata[i+1] == DD_PATH_END)) break; // end of path
 		nextX += (int8_t)pathdata[i];
 		nextY += (int8_t)pathdata[i + 1];
 		pathptr->points.push_back(Map2D::Path::point(nextX, nextY));
 	}
 	// Hard-code the starting point and copies of each path
-	int level = 3;
+	unsigned int level = 3;
 	switch (level) {
 		case 3:
 			pathptr->start.push_back(Map2D::Path::point(44 * DD_TILE_WIDTH, 4 * DD_TILE_HEIGHT));
@@ -155,7 +155,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(DD_MAP_WIDTH * DD_MAP_HEIGHT);
-	for (int i = 0; i < DD_LAYER_LEN_BG; i++) {
+	for (unsigned int i = 0; i < DD_LAYER_LEN_BG; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		t->x = i % DD_MAP_WIDTH;
 		t->y = i / DD_MAP_WIDTH;
@@ -202,8 +202,8 @@ unsigned long DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 	Map2D::PathPtrVectorPtr paths = map2d->getPaths();
 	if (paths->size() != 1) throw stream::error("Incorrect path count for this format.");
 	Map2D::PathPtr first_path = paths->at(0);
-	int pathpos = 0;
-	int lastX = 0, lastY = 0;
+	unsigned int pathpos = 0;
+	unsigned int lastX = 0, lastY = 0;
 	int8_t x, y;
 	for (Map2D::Path::point_vector::const_iterator i = first_path->points.begin();
 		i != first_path->points.end();

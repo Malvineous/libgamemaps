@@ -56,7 +56,7 @@ using namespace camoto::gamegraphics;
 ImagePtr imageFromWWCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
-	int t = code / WW_TILES_PER_TILESET;
+	unsigned int t = code / WW_TILES_PER_TILESET;
 	code = code % WW_TILES_PER_TILESET;
 	if (tileset.size() < t) return ImagePtr();
 	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
@@ -107,7 +107,7 @@ MapType::Certainty WackyMapType::isInstance(stream::input_sptr psMap) const
 	// wouldn't be here if the file was too small anyway (isinstance_c01)
 	psMap->read(bg, WW_LAYER_LEN_BG);
 
-	for (int i = 0; i < WW_LAYER_LEN_BG; i++) {
+	for (unsigned int i = 0; i < WW_LAYER_LEN_BG; i++) {
 		// TESTED BY: fmt_map_wacky_isinstance_c02
 		if (bg[i] > WW_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
 	}
@@ -134,7 +134,7 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(WW_MAP_WIDTH * WW_MAP_HEIGHT);
-	for (int i = 0; i < WW_LAYER_LEN_BG; i++) {
+	for (unsigned int i = 0; i < WW_LAYER_LEN_BG; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		t->x = i % WW_MAP_WIDTH;
 		t->y = i / WW_MAP_WIDTH;
@@ -162,13 +162,13 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::PathPtrVectorPtr paths(new Map2D::PathPtrVector());
 	Map2D::PathPtr pathptr(new Map2D::Path());
-	int startX, startY;
+	unsigned int startX, startY;
 	rd
 		>> u16le(startX)
 		>> u16le(startY)
 	;
 	pathptr->start.push_back(Map2D::Path::point(startX, startY));
-	for (int i = 0; i < numPoints; i++) {
+	for (unsigned int i = 0; i < numPoints; i++) {
 		uint16_t nextX, nextY;
 		if (i > 0) rd->seekg(4, stream::cur);
 		rd
@@ -236,17 +236,17 @@ unsigned long WackyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 	stream::output_sptr rd = suppData[SuppItem::Layer1];
 	rd->seekp(0, stream::start);
 
-	int firstX = path->start[0].first;
-	int firstY = path->start[0].second;
-	int nextX = firstX;
-	int nextY = firstY;
+	unsigned int firstX = path->start[0].first;
+	unsigned int firstY = path->start[0].second;
+	unsigned int nextX = firstX;
+	unsigned int nextY = firstY;
 	uint16_t count = path->points.size();
 	rd << u16le(count);
 	for (Map2D::Path::point_vector::const_iterator i = path->points.begin();
 		i != path->points.end(); i++
 	) {
-		int lastX = nextX;
-		int lastY = nextY;
+		unsigned int lastX = nextX;
+		unsigned int lastY = nextY;
 		rd
 			<< u16le(lastX)
 			<< u16le(lastY)
@@ -255,10 +255,10 @@ unsigned long WackyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 		nextY = firstY + i->second;
 		int deltaX = nextX - lastX;
 		int deltaY = nextY - lastY;
-		int angle = WW_ANGLE_MAX + atan2(deltaY, deltaX) * (WW_ANGLE_MAX/2) / M_PI;
+		unsigned int angle = WW_ANGLE_MAX + atan2(deltaY, deltaX) * (WW_ANGLE_MAX/2) / M_PI;
 		angle %= WW_ANGLE_MAX;
-		int image = (int)(angle / 240.0 + 6.5) % 8;
-		int dist = sqrt(deltaX*deltaX + deltaY*deltaY);
+		unsigned int image = (int)(angle / 240.0 + 6.5) % 8;
+		unsigned int dist = sqrt(deltaX*deltaX + deltaY*deltaY);
 		rd
 			<< u16le(nextX)
 			<< u16le(nextY)

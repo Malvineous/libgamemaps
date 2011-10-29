@@ -61,7 +61,7 @@ Manager::~Manager()
 {
 }
 
-MapTypePtr Manager::getMapType(int iIndex)
+MapTypePtr Manager::getMapType(unsigned int iIndex)
 	throw ()
 {
 	if (iIndex >= this->vcTypes.size()) return MapTypePtr();

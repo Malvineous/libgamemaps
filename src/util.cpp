@@ -23,10 +23,9 @@
 namespace camoto {
 namespace gamemaps {
 
-void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
-	int *layerHeight, int *tileWidth, int *tileHeight)
+void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, unsigned int *layerWidth,
+	unsigned int *layerHeight, unsigned int *tileWidth, unsigned int *tileHeight)
 {
-	int mapCaps = map->getCaps();
 	int layerCaps = layer->getCaps();
 	if (layerCaps & Map2D::Layer::HasOwnTileSize) {
 		layer->getTileSize(tileWidth, tileHeight);
@@ -44,7 +43,7 @@ void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, int *layerWidth,
 		// The values are in global tiles, but we might have to convert them to
 		// layer tiles.
 		if (layerCaps & Map2D::Layer::HasOwnTileSize) {
-			int globalTileWidth, globalTileHeight;
+			unsigned int globalTileWidth, globalTileHeight;
 			map->getTileSize(&globalTileWidth, &globalTileHeight);
 			// Convert from global tiles to pixels
 			*layerWidth *= globalTileWidth;

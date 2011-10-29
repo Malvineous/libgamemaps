@@ -26,7 +26,9 @@ EXTRA_libgamemaps_la_SOURCES += fmt-map-wacky.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-wordresc.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-xargon.hpp
 
-AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(BOOST_CPPFLAGS) -I $(top_srcdir)/include $(libgamecommon_CFLAGS)
+WARNINGS = -Wall -Wextra -Wno-unused-parameter
+
+AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(BOOST_CPPFLAGS) -I $(top_srcdir)/include $(libgamecommon_CFLAGS) $(WARNINGS)
 AM_CXXFLAGS = $(DEBUG_CXXFLAGS)
 
 libgamemaps_la_LDFLAGS = $(AM_LDFLAGS) -release @VERSION@ -version-info 0

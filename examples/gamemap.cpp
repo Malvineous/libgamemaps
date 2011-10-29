@@ -90,7 +90,7 @@ gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
 	if (type.empty()) {
 		// Need to autodetect the file format.
 		gg::TilesetTypePtr pTestType;
-		int i = 0;
+		unsigned int i = 0;
 		while ((pTestType = pManager->getTilesetType(i++))) {
 			gg::TilesetType::Certainty cert = pTestType->isInstance(psTileset);
 			switch (cert) {
@@ -136,7 +136,7 @@ finishTesting:
 		for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 			try {
 				stream::file_sptr suppStream(new stream::file());
-				suppStream->open(i->second.c_str());
+				suppStream->open(i->second);
 				suppData[i->first] = suppStream;
 			} catch (const stream::open_error& e) {
 				std::cerr << "Error opening supplemental file " << i->second << ": "
@@ -175,8 +175,8 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	throw (stream::error)
 {
 	int mapCaps = map->getCaps();
-	int outWidth, outHeight; // in pixels
-	int globalTileWidth, globalTileHeight;
+	unsigned int outWidth, outHeight; // in pixels
+	unsigned int globalTileWidth, globalTileHeight;
 	map->getTileSize(&globalTileWidth, &globalTileHeight);
 	map->getMapSize(&outWidth, &outHeight);
 	outWidth *= globalTileWidth;
@@ -227,12 +227,12 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 		png.set_tRNS(transparency);
 	}
 
-	int layerCount = map->getLayerCount();
-	for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+	unsigned int layerCount = map->getLayerCount();
+	for (unsigned int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
 		gm::Map2D::LayerPtr layer = map->getLayer(layerIndex);
 
 		// Figure out the layer size (in tiles) and the tile size
-		int layerWidth, layerHeight, tileWidth, tileHeight;
+		unsigned int layerWidth, layerHeight, tileWidth, tileHeight;
 		getLayerDims(map, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
 
 		// Prepare tileset
@@ -242,12 +242,12 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 		// Run through all items in the layer and render them one by one
 		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 		gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
-		int numItems = items->size();
+		unsigned int numItems = items->size();
 		if (t != items->end()) {
 			CachedTile thisTile;
-			for (int y = 0; y < layerHeight; y++) {
-				for (int x = 0; x < layerWidth; x++) {
-					for (int i = 0; i < numItems; i++) {
+			for (unsigned int y = 0; y < layerHeight; y++) {
+				for (unsigned int x = 0; x < layerWidth; x++) {
+					for (unsigned int i = 0; i < numItems; i++) {
 						if (t == items->end()) t = items->begin();
 						if (((*t)->x == x) && ((*t)->y == y)) break;
 						t++;
@@ -256,7 +256,7 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 						// Found tile at this location
 
 						// TODO: Move this mapping code into a per-format class
-						int tileCode = (*t)->code;
+						unsigned int tileCode = (*t)->code;
 						if (tileCode >= allTiles.size()) tileCode = 0;
 
 						// Find the cached tile
@@ -281,13 +281,13 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 						}
 
 						// Draw tile onto png
-						int offX = x * tileWidth;
-						int offY = y * tileHeight;
-						for (int tY = 0; tY < thisTile.height; tY++) {
-							int pngY = offY+tY;
+						unsigned int offX = x * tileWidth;
+						unsigned int offY = y * tileHeight;
+						for (unsigned int tY = 0; tY < thisTile.height; tY++) {
+							unsigned int pngY = offY+tY;
 							if (pngY >= outHeight) break; // don't write past image edge
-							for (int tX = 0; tX < thisTile.width; tX++) {
-								int pngX = offX+tX;
+							for (unsigned int tX = 0; tX < thisTile.width; tX++) {
+								unsigned int pngX = offX+tX;
 								if (pngX >= outWidth) break; // don't write past image edge
 								//png[offY + tY][offX + tX] = png::index_pixel(((*t)->code % 16) + 1);
 								// Only write opaque pixels
@@ -433,7 +433,7 @@ int main(int iArgC, char *cArgV[])
 				(i->string_key.compare("list") == 0)
 			) {
 				std::cout << "Map types: (--type)\n";
-				int i = 0;
+				unsigned int i = 0;
 				{
 					gm::MapTypePtr nextType;
 					while ((nextType = pManager->getMapType(i++))) {
@@ -502,7 +502,7 @@ int main(int iArgC, char *cArgV[])
 		if (strType.empty()) {
 			// Need to autodetect the file format.
 			gm::MapTypePtr pTestType;
-			int i = 0;
+			unsigned int i = 0;
 			while ((pTestType = pManager->getMapType(i++))) {
 				gm::MapType::Certainty cert = pTestType->isInstance(psMap);
 				switch (cert) {
@@ -538,7 +538,7 @@ int main(int iArgC, char *cArgV[])
 						for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 							try {
 								stream::file_sptr suppStream(new stream::file());
-								suppStream->open(i->second.c_str());
+								suppStream->open(i->second);
 							} catch (const stream::open_error& e) {
 								bSuppOK = false;
 								std::cout << "  * Could not find/open " << i->second
@@ -595,7 +595,7 @@ finishTesting:
 			for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 				try {
 					stream::file_sptr suppStream(new stream::file());
-					suppStream->open(i->second.c_str());
+					suppStream->open(i->second);
 					suppData[i->first] = suppStream;
 				} catch (const stream::open_error& e) {
 					std::cerr << "Error opening supplemental file " << i->second << ": "
@@ -722,12 +722,12 @@ finishTesting:
 							<< "\n"
 						;
 					}
-					int mapTileWidth, mapTileHeight;
+					unsigned int mapTileWidth, mapTileHeight;
 					map2d->getTileSize(&mapTileWidth, &mapTileHeight);
 					std::cout << (bScript ? "tile_width=" : "Tile size: ") << mapTileWidth
 						<< (bScript ? "\ntile_height=" : "x") << mapTileHeight << "\n";
 
-					int mapWidth, mapHeight;
+					unsigned int mapWidth, mapHeight;
 					map2d->getMapSize(&mapWidth, &mapHeight);
 					std::cout
 						<< (bScript ? "map_width=" : "Map size: ") << mapWidth
@@ -736,17 +736,17 @@ finishTesting:
 						<< "\n";
 
 					if (mapCaps & gm::Map2D::HasViewport) {
-						int x, y;
+						unsigned int x, y;
 						map2d->getViewport(&x, &y);
 						std::cout << (bScript ? "viewport_width=" : "Viewport size: ") << x
 							<< (bScript ? "\nviewport_height=" : "x") << y
 							<< (bScript ? "" : " pixels") << "\n";
 					}
 
-					int layerCount = map2d->getLayerCount();
+					unsigned int layerCount = map2d->getLayerCount();
 					std::cout << (bScript ? "layercount=" : "Layer count: ")
 						<< layerCount << "\n";
-					for (int i = 0; i < layerCount; i++) {
+					for (unsigned int i = 0; i < layerCount; i++) {
 						gm::Map2D::LayerPtr layer = map2d->getLayer(i);
 						std::string prefix;
 						if (bScript) {
@@ -769,7 +769,7 @@ finishTesting:
 							<< "\n"
 						;
 
-						int layerTileWidth, layerTileHeight;
+						unsigned int layerTileWidth, layerTileHeight;
 						bool layerTileSame;
 						if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
 							layer->getTileSize(&layerTileWidth, &layerTileHeight);
@@ -788,7 +788,7 @@ finishTesting:
 						}
 						std::cout << "\n";
 
-						int layerWidth, layerHeight;
+						unsigned int layerWidth, layerHeight;
 						bool layerSame;
 						if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
 							layer->getLayerSize(&layerWidth, &layerHeight);
@@ -817,14 +817,14 @@ finishTesting:
 			} else if (i->string_key.compare("print") == 0) {
 				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {
-					int targetLayer = strtoul(i->value[0].c_str(), NULL, 10);
+					unsigned int targetLayer = strtoul(i->value[0].c_str(), NULL, 10);
 					if (targetLayer == 0) {
 						std::cerr << "Invalid layer index passed to --print.  Use --info "
 							"to list layers in this map." << std::endl;
 						iRet = RET_BADARGS;
 						continue;
 					}
-					int layerCount = map2d->getLayerCount();
+					unsigned int layerCount = map2d->getLayerCount();
 					if (targetLayer > layerCount) {
 						std::cerr << "Invalid layer index passed to --print.  Use --info "
 							"to list layers in this map." << std::endl;
@@ -835,16 +835,16 @@ finishTesting:
 					gm::Map2D::LayerPtr layer = map2d->getLayer(targetLayer - 1);
 
 					// Figure out the layer size
-					int layerWidth, layerHeight, tileWidth, tileHeight;
+					unsigned int layerWidth, layerHeight, tileWidth, tileHeight;
 					getLayerDims(map2d, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
 
 					const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 					gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
-					int numItems = items->size();
+					unsigned int numItems = items->size();
 					if (t != items->end()) {
-						for (int y = 0; y < layerHeight; y++) {
-							for (int x = 0; x < layerWidth; x++) {
-								for (int i = 0; i < numItems; i++) {
+						for (unsigned int y = 0; y < layerHeight; y++) {
+							for (unsigned int x = 0; x < layerWidth; x++) {
+								for (unsigned int i = 0; i < numItems; i++) {
 									if (((*t)->x == x) && ((*t)->y == y)) break;
 									t++;
 									if (t == items->end()) t = items->begin();

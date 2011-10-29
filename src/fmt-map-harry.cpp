@@ -146,7 +146,7 @@ MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
 	lenMap -= 2;
 
 	// TESTED BY: fmt_map_harry_isinstance_c05
-	if (lenMap < numActors * HH_ACTOR_LEN + 4) return MapType::DefinitelyNo;
+	if (lenMap < (unsigned)(numActors * HH_ACTOR_LEN + 4)) return MapType::DefinitelyNo;
 
 	psMap->seekg(numActors * HH_ACTOR_LEN, stream::cur);
 	lenMap -= numActors * HH_ACTOR_LEN;
@@ -157,7 +157,7 @@ MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
 	lenMap -= 4;
 
 	// TESTED BY: fmt_map_harry_isinstance_c06
-	if (lenMap != mapWidth * mapHeight * 2) return MapType::DefinitelyNo;
+	if (lenMap != (unsigned)(mapWidth * mapHeight * 2)) return MapType::DefinitelyNo;
 
 	// TESTED BY: fmt_map_harry_isinstance_c00
 	return MapType::DefinitelyYes;
@@ -218,7 +218,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	input >> u16le(numActors);
 	Map2D::Layer::ItemPtrVectorPtr actors(new Map2D::Layer::ItemPtrVector());
 	actors->reserve(numActors);
-	for (int i = 0; i < numActors; i++) {
+	for (unsigned int i = 0; i < numActors; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
 			>> u8(code)
@@ -249,8 +249,8 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
 	bgtiles->reserve(mapWidth * mapHeight);
 
-	for (int y = 0; y < mapHeight; y++) {
-		for (int x = 0; x < mapWidth; x++) {
+	for (unsigned int y = 0; y < mapHeight; y++) {
+		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
@@ -272,8 +272,8 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Read the foreground layer
 	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
 	fgtiles->reserve(mapWidth * mapHeight);
-	for (int y = 0; y < mapHeight; y++) {
-		for (int x = 0; x < mapWidth; x++) {
+	for (unsigned int y = 0; y < mapHeight; y++) {
+		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
@@ -323,7 +323,7 @@ unsigned long HarryMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 			"of attributes set.");
 	}
 
-	int mapWidth, mapHeight;
+	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	unsigned long lenWritten = 0;

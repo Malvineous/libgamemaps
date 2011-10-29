@@ -23,9 +23,10 @@
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Layer::Layer(const std::string& title, int caps, int width, int height,
-	int tileWidth, int tileHeight, ItemPtrVectorPtr& items,
-	FN_IMAGEFROMCODE fnImageFromCode, FN_TILEPERMITTEDAT fnTilePermittedAt)
+Map2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
+	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
+	ItemPtrVectorPtr& items, FN_IMAGEFROMCODE fnImageFromCode,
+	FN_TILEPERMITTEDAT fnTilePermittedAt)
 	throw () :
 		title(title),
 		caps(caps),
@@ -55,7 +56,7 @@ int Map2D::Layer::getCaps()
 	return this->caps;
 }
 
-void Map2D::Layer::getLayerSize(int *x, int *y)
+void Map2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
 	throw ()
 {
 	assert(this->getCaps() & HasOwnSize);
@@ -65,7 +66,7 @@ void Map2D::Layer::getLayerSize(int *x, int *y)
 	return;
 }
 
-void Map2D::Layer::setLayerSize(int x, int y)
+void Map2D::Layer::setLayerSize(unsigned int x, unsigned int y)
 	throw ()
 {
 	assert(this->getCaps() & CanResize);
@@ -75,7 +76,7 @@ void Map2D::Layer::setLayerSize(int x, int y)
 	return;
 }
 
-void Map2D::Layer::getTileSize(int *x, int *y)
+void Map2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
 	throw ()
 {
 	assert(this->getCaps() & HasOwnTileSize);
@@ -85,7 +86,7 @@ void Map2D::Layer::getTileSize(int *x, int *y)
 	return;
 }
 
-void Map2D::Layer::setTileSize(int x, int y)
+void Map2D::Layer::setTileSize(unsigned int x, unsigned int y)
 	throw ()
 {
 	assert(this->getCaps() & ChangeTileSize);

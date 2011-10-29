@@ -201,11 +201,11 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
 {
 	BOOST_TEST_MESSAGE("Getting map size");
 
-	int layerCount = this->map2d->getLayerCount();
-	int width, height;
+	unsigned int layerCount = this->map2d->getLayerCount();
+	unsigned int width, height;
 	this->map2d->getMapSize(&width, &height);
 
-	int x, y;
+	unsigned int x, y;
 	this->map2d->getTileSize(&x, &y);
 	width *= x;
 	height *= y;

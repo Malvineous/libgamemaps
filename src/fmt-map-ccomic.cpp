@@ -88,19 +88,19 @@ MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
 	if (lenMap < 4) return MapType::DefinitelyNo;
 
 	psMap->seekg(0, stream::start);
-	int width, height;
+	unsigned int width, height;
 	psMap >> u16le(width) >> u16le(height);
 
 	// Make sure the dimensions cover the entire file
 	// TESTED BY: fmt_map_ccomic_isinstance_c02
-	int mapLen = width * height;
+	unsigned int mapLen = width * height;
 	if (lenMap != mapLen + 4) return MapType::DefinitelyNo;
 
 	// Read in the map and make sure all the tile codes are within range
 	uint8_t *bg = new uint8_t[mapLen];
 	stream::len r = psMap->try_read(bg, mapLen);
 	if (r != mapLen) return MapType::DefinitelyNo; // read error
-	for (int i = 0; i < mapLen; i++) {
+	for (unsigned int i = 0; i < mapLen; i++) {
 		// Make sure each tile is within range
 		// TESTED BY: fmt_map_ccomic_isinstance_c03
 		if (bg[i] > CC_MAX_VALID_TILECODE) {
@@ -125,9 +125,9 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	throw (stream::error)
 {
 	input->seekg(0, stream::start);
-	int width, height;
+	unsigned int width, height;
 	input >> u16le(width) >> u16le(height);
-	int mapLen = width * height;
+	unsigned int mapLen = width * height;
 
 	// Read the background layer
 	uint8_t *bg = new uint8_t[mapLen];
@@ -135,7 +135,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(mapLen);
-	for (int i = 0; i < mapLen; i++) {
+	for (unsigned int i = 0; i < mapLen; i++) {
 		// The default tile actually has an image, so don't exclude it
 		//if (bg[i] == CC_DEFAULT_BGTILE) continue;
 
@@ -179,7 +179,7 @@ unsigned long CComicMapType::write(MapPtr map, stream::output_sptr output, SuppD
 	if (map2d->getLayerCount() != 1)
 		throw stream::error("Incorrect layer count for this format.");
 
-	int mapWidth, mapHeight;
+	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	unsigned long lenWritten = 0;
@@ -188,7 +188,7 @@ unsigned long CComicMapType::write(MapPtr map, stream::output_sptr output, SuppD
 
 	// Write the background layer
 	output << u16le(mapWidth) << u16le(mapHeight);
-	int mapLen = mapWidth * mapHeight;
+	unsigned int mapLen = mapWidth * mapHeight;
 
 	uint8_t *bg = new uint8_t[mapLen];
 	memset(bg, CC_DEFAULT_BGTILE, mapLen); // default background tile

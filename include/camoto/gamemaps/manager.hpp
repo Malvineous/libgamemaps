@@ -84,7 +84,7 @@ class Manager {
 		 *         an empty pointer once iIndex goes out of range.
 		 * @todo Remove this and replace it with a function that just returns the vector.
 		 */
-		MapTypePtr getMapType(int iIndex)
+		MapTypePtr getMapType(unsigned int iIndex)
 			throw ();
 
 		/// Get an MapType instance by its code.

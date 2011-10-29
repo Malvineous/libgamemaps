@@ -24,8 +24,9 @@
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Map2D(AttributePtrVectorPtr attributes, int caps, int viewportWidth,
-	int viewportHeight, int width, int height, int tileWidth, int tileHeight,
+Map2D::Map2D(AttributePtrVectorPtr attributes, int caps,
+	unsigned int viewportWidth, unsigned int viewportHeight, unsigned int width,
+	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
 	LayerPtrVector& layers, PathPtrVectorPtr paths)
 	throw () :
 		Map(attributes),
@@ -53,7 +54,7 @@ int Map2D::getCaps()
 	return this->caps;
 }
 
-void Map2D::getViewport(int *x, int *y)
+void Map2D::getViewport(unsigned int *x, unsigned int *y)
 	throw ()
 {
 	assert(this->getCaps() & HasViewport);
@@ -63,7 +64,7 @@ void Map2D::getViewport(int *x, int *y)
 	return;
 }
 
-void Map2D::getMapSize(int *x, int *y)
+void Map2D::getMapSize(unsigned int *x, unsigned int *y)
 	throw ()
 {
 	*x = this->width;
@@ -71,7 +72,7 @@ void Map2D::getMapSize(int *x, int *y)
 	return;
 }
 
-void Map2D::setMapSize(int x, int y)
+void Map2D::setMapSize(unsigned int x, unsigned int y)
 	throw ()
 {
 	assert(this->getCaps() & CanResize);
@@ -81,7 +82,7 @@ void Map2D::setMapSize(int x, int y)
 	return;
 }
 
-void Map2D::getTileSize(int *x, int *y)
+void Map2D::getTileSize(unsigned int *x, unsigned int *y)
 	throw ()
 {
 	*x = this->tileWidth;
@@ -89,7 +90,7 @@ void Map2D::getTileSize(int *x, int *y)
 	return;
 }
 
-void Map2D::setTileSize(int x, int y)
+void Map2D::setTileSize(unsigned int x, unsigned int y)
 	throw ()
 {
 	assert(this->getCaps() & ChangeTileSize);
@@ -99,13 +100,13 @@ void Map2D::setTileSize(int x, int y)
 	return;
 }
 
-int Map2D::getLayerCount()
+unsigned int Map2D::getLayerCount()
 	throw ()
 {
 	return this->layers.size();
 }
 
-Map2D::LayerPtr Map2D::getLayer(int index)
+Map2D::LayerPtr Map2D::getLayer(unsigned int index)
 	throw ()
 {
 	assert(index < this->getLayerCount());

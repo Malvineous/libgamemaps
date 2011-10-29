@@ -71,8 +71,8 @@ ImagePtr imageFromCCATileCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	if (tileset.size() < 2) return ImagePtr(); // no tileset?!
-	int i = code >> 3; // divide by 8
-	int t = 0;
+	unsigned int i = code >> 3; // divide by 8
+	unsigned int t = 0;
 	if (i >= 2000) {
 		i -= 2000;
 		i /= 5;
@@ -137,7 +137,7 @@ MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
 	if (numActorInts > (CCA_MAX_ACTORS * 3)) return MapType::DefinitelyNo; // too many actors
 
 	// TESTED BY: fmt_map_cosmo_isinstance_c04
-	if (6 + numActorInts * 3 > lenMap) {
+	if ((unsigned)(6 + numActorInts * 3) > lenMap) {
 		// This doesn't count the BG layer, because it seems to be possible for
 		// it to be an arbitrary size - missing tiles are just left as blanks
 		return MapType::DefinitelyNo; // file too small
@@ -171,11 +171,11 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	lenMap -= 6;
 
 	// Read in the actor layer
-	int numActors = numActorInts / 3;
+	unsigned int numActors = numActorInts / 3;
 	if (lenMap < numActors * 6) throw stream::error("Map file has been truncated!");
 	Map2D::Layer::ItemPtrVectorPtr actors(new Map2D::Layer::ItemPtrVector());
 	actors->reserve(numActors);
-	for (int i = 0; i < numActors; i++) {
+	for (unsigned int i = 0; i < numActors; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
 			>> u16le(t->code)
@@ -198,7 +198,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(CCA_NUM_TILES_BG);
 
-	for (int i = 0; (i < CCA_NUM_TILES_BG) && (lenMap >= 2); i++) {
+	for (unsigned int i = 0; (i < CCA_NUM_TILES_BG) && (lenMap >= 2); i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		t->x = i % mapWidth;
 		t->y = i / mapWidth;
@@ -242,7 +242,7 @@ unsigned long CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 
 	unsigned long lenWritten = 0;
 
-	int mapWidth, mapHeight;
+	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	uint16_t flags = 0;
@@ -289,7 +289,7 @@ unsigned long CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
 
-	for (int i = 0; i < mapWidth * mapHeight; i++) {
+	for (unsigned int i = 0; i < mapWidth * mapHeight; i++) {
 		output << u16le(bg[i]);
 	}
 	lenWritten += mapWidth * mapHeight * 2;

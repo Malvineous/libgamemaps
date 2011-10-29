@@ -129,7 +129,7 @@ MapType::Certainty XargonMapType::isInstance(stream::input_sptr psMap) const
 	if (lenMap < offStrings + 2) return MapType::DefinitelyNo; // too short
 	psMap->seekg(offStrings, stream::start);
 
-	int i;
+	unsigned int i;
 	for (i = 0; i < XR_SAFETY_MAX_STRINGS; i++) {
 		uint16_t lenStr;
 		psMap >> u16le(lenStr);
@@ -166,8 +166,8 @@ MapPtr XargonMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(XR_MAP_WIDTH * XR_MAP_HEIGHT);
-	for (int x = 0; x < XR_MAP_WIDTH; x++) {
-		for (int y = 0; y < XR_MAP_HEIGHT; y++) {
+	for (unsigned int x = 0; x < XR_MAP_WIDTH; x++) {
+		for (unsigned int y = 0; y < XR_MAP_HEIGHT; y++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
@@ -195,7 +195,7 @@ MapPtr XargonMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 	Map2D::Layer::ItemPtrVectorPtr objects(new Map2D::Layer::ItemPtrVector());
 	objects->reserve(numObjects);
-	for (int i = 0; i < numObjects; i++) {
+	for (unsigned int i = 0; i < numObjects; i++) {
 		XargonObject *obj = new XargonObject;
 		Map2D::Layer::ItemPtr objItem(obj);
 		uint8_t code;
@@ -231,7 +231,7 @@ MapPtr XargonMapType::open(stream::input_sptr input, SuppData& suppData) const
 	));
 
 	// Make sure we read in all the objects correctly
-	assert(input->tellg() == XR_OFFSET_OBJLAYER + 2 + numObjects * XR_OBJ_ENTRY_LEN);
+	assert(input->tellg() == (unsigned)(XR_OFFSET_OBJLAYER + 2 + numObjects * XR_OBJ_ENTRY_LEN));
 
 	// Skip over the savegame data
 	if (lenMap < XR_LEN_SAVEDATA) {
@@ -296,7 +296,7 @@ unsigned long XargonMapType::write(MapPtr map, stream::output_sptr output, SuppD
 		bg[(*i)->x * XR_MAP_HEIGHT + (*i)->y] = (*i)->code;
 	}
 
-	for (int i = 0; i < XR_MAP_WIDTH * XR_MAP_HEIGHT; i++) {
+	for (unsigned int i = 0; i < XR_MAP_WIDTH * XR_MAP_HEIGHT; i++) {
 		output << u16le(bg[i]);
 	}
 	lenWritten += XR_MAP_WIDTH * XR_MAP_HEIGHT * 2;

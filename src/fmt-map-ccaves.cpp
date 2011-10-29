@@ -94,7 +94,7 @@ MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
 	if (lenMap < CC_MAP_WIDTH + 1) return MapType::DefinitelyNo; // too small
 
 	uint8_t row[CC_MAP_WIDTH];
-	int y;
+	unsigned int y;
 	for (y = 0; (y < CC_MAX_MAP_HEIGHT) && lenMap; y++) {
 		uint8_t lenRow;
 		psMap >> u8(lenRow);
@@ -110,7 +110,7 @@ MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
 
 		// Ensure the row data is valid
 		psMap->read((char *)row, CC_MAP_WIDTH);
-		for (int x = 0; x < CC_MAP_WIDTH; x++) {
+		for (unsigned int x = 0; x < CC_MAP_WIDTH; x++) {
 			// TESTED BY: fmt_map_ccaves_isinstance_c04
 			if (row[x] > CC_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
 		}
@@ -144,13 +144,13 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	boost::scoped_array<uint8_t> sbg(bg);
 	input->read((char *)bg, lenMap);
 
-	int height = lenMap / (CC_MAP_WIDTH + 1);
+	unsigned int height = lenMap / (CC_MAP_WIDTH + 1);
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(CC_MAP_WIDTH * height);
-	for (int y = 0; y < height; y++) {
+	for (unsigned int y = 0; y < height; y++) {
 		bg++; // skip row length byte
-		for (int x = 0; x < CC_MAP_WIDTH; x++) {
+		for (unsigned int x = 0; x < CC_MAP_WIDTH; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
@@ -192,7 +192,7 @@ unsigned long CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppD
 
 	unsigned long lenWritten = 0;
 
-	int mapWidth, mapHeight;
+	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	// Write the background layer
@@ -212,7 +212,7 @@ unsigned long CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppD
 		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
 
-	for (int y = 0; y < mapHeight; y++) {
+	for (unsigned int y = 0; y < mapHeight; y++) {
 		output << u8(mapWidth);
 		output->write((char *)bg, mapWidth);
 		bg += mapWidth;
