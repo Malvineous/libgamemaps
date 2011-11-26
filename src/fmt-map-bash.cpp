@@ -47,14 +47,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items)
+BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Foreground",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -72,14 +73,15 @@ ImagePtr BashForegroundLayer::imageFromCode(unsigned int code,
 }
 
 
-BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items)
+BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -180,7 +182,8 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (lenBG < 2) break;
 	}
 
-	Map2D::LayerPtr bgLayer(new BashBackgroundLayer(bgtiles));
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new BashBackgroundLayer(bgtiles, validBGItems));
 
 	// Read the foreground layer
 	stream::pos lenFG = fg->size();
@@ -204,7 +207,8 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (lenFG < 2) break;
 	}
 
-	Map2D::LayerPtr fgLayer(new BashForegroundLayer(fgtiles));
+	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr fgLayer(new BashForegroundLayer(fgtiles, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

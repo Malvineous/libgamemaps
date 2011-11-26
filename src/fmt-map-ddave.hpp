@@ -60,7 +60,7 @@ class DDaveMapType: virtual public MapType {
 class DDaveBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		DDaveBackgroundLayer(ItemPtrVectorPtr& items)
+		DDaveBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

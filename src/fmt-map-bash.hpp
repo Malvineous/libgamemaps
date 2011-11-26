@@ -66,7 +66,7 @@ class BashMapType: virtual public MapType {
 class BashForegroundLayer: virtual public Map2D::Layer {
 
 	public:
-		BashForegroundLayer(ItemPtrVectorPtr& items)
+		BashForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
@@ -78,7 +78,7 @@ class BashForegroundLayer: virtual public Map2D::Layer {
 class BashBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		BashBackgroundLayer(ItemPtrVectorPtr& items)
+		BashBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

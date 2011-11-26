@@ -298,19 +298,15 @@ class Map2D::Layer {
 		 * @param items
 		 *   Vector containing all items in the layer.
 		 *
-		 * @param fnImageFromCode
-		 *   Callback function to convert map codes into images.
-		 *
-		 * @param fnTilePermittedAt
-		 *   Callback function to allow or prevent tiles from being placed at
-		 *   certain locations or more than a limited number of times.  Can be
-		 *   NULL if no restrictions are required.
+		 * @param validItems
+		 *   Vector containing all valid items that could be placed in the layer.
 		 *
 		 * @see Map2D::Map2D() for more details on how the layer and tile
 		 *   dimensions are handled.
 		 */
-		Layer(const std::string& title, int caps, unsigned int width, unsigned int height,
-			unsigned int tileWidth, unsigned int tileHeight, ItemPtrVectorPtr& items)
+		Layer(const std::string& title, int caps, unsigned int width,
+			unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
+			ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		/// Destructor.
@@ -409,7 +405,7 @@ class Map2D::Layer {
 		 *   unknown/question mark tile being used.
 		 */
 		virtual camoto::gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
+			gamegraphics::VC_TILESET& tileset)
 			throw ();
 
 		/// Is the given tile permitted at the specified location?
@@ -436,6 +432,19 @@ class Map2D::Layer {
 			unsigned int y, unsigned int *maxCount)
 			throw ();
 
+		/// Get a list of all possible items that can be placed in the layer.
+		/**
+		 * This is suitable for display to the user, to allow selection of items
+		 * to insert into the layer.
+		 *
+		 * Items are copied (i.e. with the copy constructor) if they are to be
+		 * inserted into a layer.
+		 *
+		 * @return Vector of all items.
+		 */
+		virtual const ItemPtrVectorPtr getValidItemList()
+			throw ();
+
 	protected:
 		std::string title;       ///< Layer's friendly name
 		int caps;                ///< Map capabilities
@@ -445,6 +454,7 @@ class Map2D::Layer {
 		unsigned int tileHeight; ///< Tile height, in pixels
 		ItemPtrVectorPtr items;  ///< Vector of all items in the layer
 		TextPtrVector strings;   ///< Vector of all text elements in the layer
+		ItemPtrVectorPtr validItems; ///< Vector of possible items in the layer
 };
 
 /// Item within the layer (a tile)

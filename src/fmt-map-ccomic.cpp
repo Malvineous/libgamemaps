@@ -40,14 +40,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items)
+CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -159,7 +160,8 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 	delete[] bg;
 
-	Map2D::LayerPtr bgLayer(new CComicBackgroundLayer(tiles));
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new CComicBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

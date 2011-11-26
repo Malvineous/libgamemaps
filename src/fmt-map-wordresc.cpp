@@ -79,14 +79,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-WordRescueBackgroundLayer::WordRescueBackgroundLayer(ItemPtrVectorPtr& items)
+WordRescueBackgroundLayer::WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -102,14 +103,15 @@ ImagePtr WordRescueBackgroundLayer::imageFromCode(unsigned int code,
 }
 
 
-WordRescueObjectLayer::WordRescueObjectLayer(ItemPtrVectorPtr& items)
+WordRescueObjectLayer::WordRescueObjectLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Items",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -157,14 +159,15 @@ bool WordRescueObjectLayer::tilePermittedAt(unsigned int code,
 }
 
 
-WordRescueAttributeLayer::WordRescueAttributeLayer(ItemPtrVectorPtr& items)
+WordRescueAttributeLayer::WordRescueAttributeLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Attributes",
 			Map2D::Layer::HasOwnTileSize,
 			0, 0,
 			WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
-			items
+			items, validItems
 		)
 {
 }
@@ -540,7 +543,8 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	// Skip over trailing 0x0000
 	input->seekg(2, stream::cur);
 
-	Map2D::LayerPtr itemLayer(new WordRescueObjectLayer(items));
+	Map2D::Layer::ItemPtrVectorPtr validItemItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr itemLayer(new WordRescueObjectLayer(items, validItemItems));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -561,7 +565,9 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 			}
 		}
 	}
-	Map2D::LayerPtr bgLayer(new WordRescueBackgroundLayer(tiles));
+
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new WordRescueBackgroundLayer(tiles, validBGItems));
 
 	// Read the attribute layer
 	Map2D::Layer::ItemPtrVectorPtr atItems(new Map2D::Layer::ItemPtrVector());
@@ -584,7 +590,8 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 			}
 		}
 	}
-	Map2D::LayerPtr atLayer(new WordRescueAttributeLayer(atItems));
+	Map2D::Layer::ItemPtrVectorPtr validAtItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr atLayer(new WordRescueAttributeLayer(atItems, validAtItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

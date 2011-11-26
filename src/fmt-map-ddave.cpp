@@ -52,14 +52,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-DDaveBackgroundLayer::DDaveBackgroundLayer(ItemPtrVectorPtr& items)
+DDaveBackgroundLayer::DDaveBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -174,7 +175,9 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = bg[i];
 		if (t->code != DD_DEFAULT_BGTILE) tiles->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new DDaveBackgroundLayer(tiles));
+
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new DDaveBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

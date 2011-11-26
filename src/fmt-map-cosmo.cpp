@@ -55,14 +55,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items)
+CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Actors",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -78,14 +79,15 @@ ImagePtr CosmoActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 }
 
 
-CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items)
+CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -210,7 +212,9 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 		actors->push_back(t);
 	}
 	lenMap -= 6 * numActors;
-	Map2D::LayerPtr actorLayer(new CosmoActorLayer(actors));
+
+	Map2D::Layer::ItemPtrVectorPtr validActorItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr actorLayer(new CosmoActorLayer(actors, validActorItems));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -225,7 +229,9 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (t->code != 0) tiles->push_back(t);
 		lenMap -= 2;
 	}
-	Map2D::LayerPtr bgLayer(new CosmoBackgroundLayer(tiles));
+
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new CosmoBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

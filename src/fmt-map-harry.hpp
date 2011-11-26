@@ -60,7 +60,7 @@ class HarryMapType: virtual public MapType {
 class HarryActorLayer: virtual public Map2D::Layer {
 
 	public:
-		HarryActorLayer(ItemPtrVectorPtr& items)
+		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
@@ -72,7 +72,8 @@ class HarryActorLayer: virtual public Map2D::Layer {
 class HarryBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items)
+		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

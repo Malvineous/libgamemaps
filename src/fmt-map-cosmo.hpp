@@ -60,7 +60,7 @@ class CosmoMapType: virtual public MapType {
 class CosmoActorLayer: virtual public Map2D::Layer {
 
 	public:
-		CosmoActorLayer(ItemPtrVectorPtr& items)
+		CosmoActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
@@ -72,7 +72,7 @@ class CosmoActorLayer: virtual public Map2D::Layer {
 class CosmoBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		CosmoBackgroundLayer(ItemPtrVectorPtr& items)
+		CosmoBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

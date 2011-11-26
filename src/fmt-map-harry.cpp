@@ -49,14 +49,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items)
+HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Actors",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -65,19 +66,22 @@ ImagePtr HarryActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 	throw ()
 {
 	// TODO
-	return ImagePtr();
+	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
+	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
+	if (code >= images.size()) return ImagePtr(); // out of range
+	return tileset[0]->openImage(images[code]);
 }
 
 
 HarryBackgroundLayer::HarryBackgroundLayer(const std::string& name,
-	ItemPtrVectorPtr& items)
+	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			name,
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -259,7 +263,9 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		actors->push_back(t);
 		input->seekg(128-1-2-2, stream::cur);
 	}
-	Map2D::LayerPtr actorLayer(new HarryActorLayer(actors));
+
+	Map2D::Layer::ItemPtrVectorPtr validActorItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr actorLayer(new HarryActorLayer(actors, validActorItems));
 
 	uint16_t mapWidth, mapHeight;
 	input >> u16le(mapWidth) >> u16le(mapHeight);
@@ -279,7 +285,8 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::LayerPtr bgLayer(new HarryBackgroundLayer("Background", bgtiles));
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new HarryBackgroundLayer("Background", bgtiles, validBGItems));
 
 	// Read the foreground layer
 	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
@@ -295,7 +302,8 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::LayerPtr fgLayer(new HarryBackgroundLayer("Foreground", fgtiles));
+	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr fgLayer(new HarryBackgroundLayer("Foreground", fgtiles, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

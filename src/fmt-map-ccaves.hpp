@@ -60,7 +60,7 @@ class CCavesMapType: virtual public MapType {
 class CCavesBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		CCavesBackgroundLayer(ItemPtrVectorPtr& items)
+		CCavesBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

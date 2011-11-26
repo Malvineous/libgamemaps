@@ -52,14 +52,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items)
+WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Surface",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -153,7 +154,9 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = bg[i];
 		tiles->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new WackyBackgroundLayer(tiles));
+
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new WackyBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);

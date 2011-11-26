@@ -25,13 +25,14 @@ namespace gamemaps {
 
 Map2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
 	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
-	ItemPtrVectorPtr& items)
+	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 	throw () :
 		title(title),
 		caps(caps),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
-		items(items)
+		items(items),
+		validItems(validItems)
 {
 }
 
@@ -99,7 +100,7 @@ const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getAllItems()
 }
 
 gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
-	camoto::gamegraphics::VC_TILESET& tileset)
+	gamegraphics::VC_TILESET& tileset)
 	throw ()
 {
 	// Default implementation to return an empty tile.
@@ -115,6 +116,12 @@ bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 	// Defaults
 	*maxCount = 0; // unlimited
 	return true; // permitted here
+}
+
+const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getValidItemList()
+	throw ()
+{
+	return this->validItems;
 }
 
 Map2D::Layer::Item::~Item()

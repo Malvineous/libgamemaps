@@ -60,7 +60,7 @@ class CComicMapType: virtual public MapType {
 class CComicBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		CComicBackgroundLayer(ItemPtrVectorPtr& items)
+		CComicBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

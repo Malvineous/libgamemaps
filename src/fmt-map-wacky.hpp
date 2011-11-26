@@ -72,7 +72,7 @@ class WackyMapType: virtual public MapType {
 class WackyBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		WackyBackgroundLayer(ItemPtrVectorPtr& items)
+		WackyBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

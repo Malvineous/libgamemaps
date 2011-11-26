@@ -63,7 +63,7 @@ class WordRescueMapType: virtual public MapType {
 class WordRescueBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		WordRescueBackgroundLayer(ItemPtrVectorPtr& items)
+		WordRescueBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
@@ -75,7 +75,7 @@ class WordRescueBackgroundLayer: virtual public Map2D::Layer {
 class WordRescueObjectLayer: virtual public Map2D::Layer {
 
 	public:
-		WordRescueObjectLayer(ItemPtrVectorPtr& items)
+		WordRescueObjectLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
@@ -91,7 +91,7 @@ class WordRescueObjectLayer: virtual public Map2D::Layer {
 class WordRescueAttributeLayer: virtual public Map2D::Layer {
 
 	public:
-		WordRescueAttributeLayer(ItemPtrVectorPtr& items)
+		WordRescueAttributeLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			throw ();
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,

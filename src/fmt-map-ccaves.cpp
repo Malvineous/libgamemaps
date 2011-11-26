@@ -47,14 +47,15 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items)
+CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items,
+	ItemPtrVectorPtr& validItems)
 	throw () :
 		Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
 			0, 0,
-			items
+			items, validItems
 		)
 {
 }
@@ -171,7 +172,9 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			if (t->code != 0x20) tiles->push_back(t);
 		}
 	}
-	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer(tiles));
+
+	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
