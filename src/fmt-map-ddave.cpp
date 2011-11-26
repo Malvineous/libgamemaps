@@ -212,7 +212,7 @@ unsigned long DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 	Map2D::PathPtr first_path = paths->at(0);
 	unsigned int pathpos = 0;
 	unsigned int lastX = 0, lastY = 0;
-	int8_t x, y;
+	int8_t x = 0, y = 0;
 	for (Map2D::Path::point_vector::const_iterator i = first_path->points.begin();
 		i != first_path->points.end();
 		i++
