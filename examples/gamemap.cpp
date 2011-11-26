@@ -237,76 +237,69 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 
 		// Prepare tileset
 		std::vector<CachedTile> cache;
-		const gg::Tileset::VC_ENTRYPTR& allTiles = tileset->getItems();
+		//const gg::Tileset::VC_ENTRYPTR& allTiles = tileset->getItems();
+		gg::VC_TILESET allTilesets;
+		allTilesets.push_back(tileset);
 
 		// Run through all items in the layer and render them one by one
 		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
-		unsigned int numItems = items->size();
-		if (t != items->end()) {
+		for (gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
+			t != items->end(); t++
+		) {
 			CachedTile thisTile;
-			for (unsigned int y = 0; y < layerHeight; y++) {
-				for (unsigned int x = 0; x < layerWidth; x++) {
-					for (unsigned int i = 0; i < numItems; i++) {
-						if (t == items->end()) t = items->begin();
-						if (((*t)->x == x) && ((*t)->y == y)) break;
-						t++;
+			unsigned int tileCode = (*t)->code;
+
+			// Find the cached tile
+			bool found = false;
+			for (std::vector<CachedTile>::iterator ct = cache.begin();
+				ct != cache.end(); ct++
+			) {
+				if (ct->code == tileCode) {
+					thisTile = *ct;
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				// Tile hasn't been cached yet, load it from the tileset
+				gg::ImagePtr img = layer->imageFromCode(tileCode, allTilesets);
+				//gg::ImagePtr img = tileset->openImage(allTiles[tileCode]);
+				if (img) {
+					thisTile.data = img->toStandard();
+					thisTile.mask = img->toStandardMask();
+					img->getDimensions(&thisTile.width, &thisTile.height);
+					thisTile.code = tileCode;
+				} else {
+					thisTile.width = thisTile.height = 0;
+				}
+				cache.push_back(thisTile);
+			}
+
+			if (!thisTile.data) continue; // no image
+
+			// Draw tile onto png
+			unsigned int offX = (*t)->x * tileWidth;
+			unsigned int offY = (*t)->y * tileHeight;
+			for (unsigned int tY = 0; tY < thisTile.height; tY++) {
+				unsigned int pngY = offY+tY;
+				if (pngY >= outHeight) break; // don't write past image edge
+				for (unsigned int tX = 0; tX < thisTile.width; tX++) {
+					unsigned int pngX = offX+tX;
+					if (pngX >= outWidth) break; // don't write past image edge
+					//png[offY + tY][offX + tX] = png::index_pixel(((*t)->code % 16) + 1);
+					// Only write opaque pixels
+					if (((thisTile.mask[tY*thisTile.width+tX] & 0x01) == 0) ||
+						((!useMask) && (layerIndex == 0))
+					) {
+						png[pngY][pngX] =
+							// +1 to the colour to skip over transparent (#0)
+							png::index_pixel(thisTile.data[tY*thisTile.width+tX] + (useMask ? 1 : 0));
+					} else {
+						if (layerIndex == 0) {
+							assert(useMask); // just to be sure my logic is right!
+							png[pngY][pngX] = png::index_pixel(0);
+						} // else let higher layers see through to lower ones
 					}
-					if (((*t)->x == x) && ((*t)->y == y)) {
-						// Found tile at this location
-
-						// TODO: Move this mapping code into a per-format class
-						unsigned int tileCode = (*t)->code;
-						if (tileCode >= allTiles.size()) tileCode = 0;
-
-						// Find the cached tile
-						bool found = false;
-						for (std::vector<CachedTile>::iterator ct = cache.begin();
-							ct != cache.end(); ct++
-						) {
-							if (ct->code == tileCode) {
-								thisTile = *ct;
-								found = true;
-								break;
-							}
-						}
-						if (!found) {
-							// Tile hasn't been cached yet, load it from the tileset
-							gg::ImagePtr img = tileset->openImage(allTiles[tileCode]);
-							thisTile.data = img->toStandard();
-							thisTile.mask = img->toStandardMask();
-							img->getDimensions(&thisTile.width, &thisTile.height);
-							thisTile.code = tileCode;
-							cache.push_back(thisTile);
-						}
-
-						// Draw tile onto png
-						unsigned int offX = x * tileWidth;
-						unsigned int offY = y * tileHeight;
-						for (unsigned int tY = 0; tY < thisTile.height; tY++) {
-							unsigned int pngY = offY+tY;
-							if (pngY >= outHeight) break; // don't write past image edge
-							for (unsigned int tX = 0; tX < thisTile.width; tX++) {
-								unsigned int pngX = offX+tX;
-								if (pngX >= outWidth) break; // don't write past image edge
-								//png[offY + tY][offX + tX] = png::index_pixel(((*t)->code % 16) + 1);
-								// Only write opaque pixels
-								if (((thisTile.mask[tY*thisTile.width+tX] & 0x01) == 0) ||
-									((!useMask) && (layerIndex == 0))
-								) {
-									png[pngY][pngX] =
-										// +1 to the colour to skip over transparent (#0)
-										png::index_pixel(thisTile.data[tY*thisTile.width+tX] + (useMask ? 1 : 0));
-								} else {
-									if (layerIndex == 0) {
-										assert(useMask); // just to be sure my logic is right!
-										png[pngY][pngX] = png::index_pixel(0);
-									} // else let higher layers see through to lower ones
-								}
-							}
-						}
-
-					} // else no tile at all at this position!
 				}
 			}
 		} // else layer is empty
