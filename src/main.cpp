@@ -51,6 +51,7 @@ Manager::Manager()
 	this->vcTypes.push_back(MapTypePtr(new CComicMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
+	this->vcTypes.push_back(MapTypePtr(new JillMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WordRescueMapType()));
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));

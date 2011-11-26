@@ -1,6 +1,6 @@
 /**
  * @file   fmt-map-xargon.hpp
- * @brief  MapType and Map2D implementation for Xargon maps.
+ * @brief  MapType and Map2D implementation for Jill of the Jungle and Xargon.
  *
  * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -21,15 +21,41 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_XARGON_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_XARGON_HPP_
 
+#include <map>
 #include <camoto/gamemaps/maptype.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
-/// Xargon level reader/writer.
-class XargonMapType: virtual public MapType {
+/// Generic level reader/writer for games based on Tim Sweeney's Jill engine.
+class SweeneyMapType: virtual public MapType {
 
 	public:
+		virtual Certainty isInstance(stream::input_sptr psMap) const
+			throw (stream::error);
+
+		virtual MapPtr create(SuppData& suppData) const
+			throw (stream::error);
+
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
+			throw (stream::error);
+
+		virtual unsigned long write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+			throw (stream::error);
+
+		typedef std::map<uint16_t, uint16_t> image_map;
+		typedef boost::shared_ptr<image_map> image_map_sptr;
+
+	protected:
+		unsigned int lenSavedata;
+};
+
+/// Jill of the Jungle level reader/writer.
+class JillMapType: virtual public SweeneyMapType {
+
+	public:
+		JillMapType()
+			throw ();
 
 		virtual std::string getMapCode() const
 			throw ();
@@ -43,41 +69,75 @@ class XargonMapType: virtual public MapType {
 		virtual std::vector<std::string> getGameList() const
 			throw ();
 
-		virtual Certainty isInstance(stream::input_sptr psMap) const
-			throw (stream::error);
-
-		virtual MapPtr create(SuppData& suppData) const
-			throw (stream::error);
-
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
-			throw (stream::error);
-
-		virtual unsigned long write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-			throw (stream::error);
-
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
+			throw ();
 };
 
-class XargonBackgroundLayer: virtual public Map2D::Layer {
+/// Xargon level reader/writer.
+class XargonMapType: virtual public SweeneyMapType {
 
 	public:
-		XargonBackgroundLayer(ItemPtrVectorPtr& items)
+		XargonMapType()
+			throw ();
+
+		virtual std::string getMapCode() const
+			throw ();
+
+		virtual std::string getFriendlyName() const
+			throw ();
+
+		virtual std::vector<std::string> getFileExtensions() const
+			throw ();
+
+		virtual std::vector<std::string> getGameList() const
+			throw ();
+
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
+			throw ();
+};
+
+
+class SweeneyBackgroundLayer: virtual public Map2D::Layer {
+
+	public:
+		SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
+			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
+			throw ();
+
+		virtual ~SweeneyBackgroundLayer()
 			throw ();
 
 		gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset)
 			throw ();
 
+		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+	protected:
+		SweeneyMapType::image_map_sptr imgMap;
+
 };
 
-class XargonObjectLayer: virtual public Map2D::Layer {
+class SweeneyObjectLayer: virtual public Map2D::Layer {
 
 	public:
-		XargonObjectLayer(ItemPtrVectorPtr& items)
+		SweeneyObjectLayer(ItemPtrVectorPtr& items,
+			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
+			throw ();
+
+		virtual ~SweeneyObjectLayer()
 			throw ();
 
 		gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset)
 			throw ();
+
+		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset)
+			throw ();
+
+	protected:
+		SweeneyMapType::image_map_sptr imgMap;
 
 };
 
