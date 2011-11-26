@@ -139,7 +139,12 @@ Map2D::Layer::Item::~Item()
 {
 }
 
-Map2D::Layer::Text::~Text()
+Map2D::Layer::Item::Text::~Text()
+	throw ()
+{
+}
+
+Map2D::Layer::Item::Movable::~Movable()
 	throw ()
 {
 }

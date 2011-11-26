@@ -261,12 +261,6 @@ class Map2D::Layer {
 		/// Shared pointer to a vector of items.
 		typedef boost::shared_ptr<ItemPtrVector> ItemPtrVectorPtr;
 
-		class Text;
-		/// Shared pointer to a text element.
-		typedef boost::shared_ptr<Text> TextPtr;
-		/// Vector of text elements.
-		typedef std::vector<TextPtr> TextPtrVector;
-
 		/// Capabilities this layer supports.
 		enum Caps {
 			NoCaps          = 0x00, ///< No caps set
@@ -469,7 +463,6 @@ class Map2D::Layer {
 		unsigned int tileWidth;  ///< Tile width, in pixels
 		unsigned int tileHeight; ///< Tile height, in pixels
 		ItemPtrVectorPtr items;  ///< Vector of all items in the layer
-		TextPtrVector strings;   ///< Vector of all text elements in the layer
 		gamegraphics::PaletteTablePtr pal; ///< Optional palette for layer
 		ItemPtrVectorPtr validItems; ///< Vector of possible items in the layer
 };
@@ -485,18 +478,51 @@ class Map2D::Layer::Item {
 		// Since many maps use a code like this, we'll put it here to save each
 		// map format from having to derive its own almost idential class.
 		unsigned int code; ///< Format-specific tile code
+
+		class Text;
+		class Movable;
+		class MovableText;
+
 };
 
 /// Value to use for tilecodes that have not yet been set.
 const unsigned int INVALID_TILECODE = (unsigned int)-1;
 
 /// A text element stored within the layer.
-class Map2D::Layer::Text: virtual public Map2D::Layer::Item {
+class Map2D::Layer::Item::Text: virtual public Map2D::Layer::Item {
 	public:
 		virtual ~Text() throw ();
 
+		unsigned int font;    ///< Index of font to use (0 reserved for VGA 8x8)
 		std::string content;  ///< Actual content of the text element
 };
+
+/// An item that moves.
+class Map2D::Layer::Item::Movable: virtual public Map2D::Layer::Item {
+	public:
+		virtual ~Movable() throw ();
+
+		/// These flags control which fields are valid and able to be modified
+		enum Flags {
+			DistanceLimit = 0x0001, ///< Set if dist* vars indicate movement limits
+			SpeedLimit    = 0x0002, ///< Set if speedX and speedY are valid
+		};
+
+		unsigned int flags;       ///< One or more of Flags
+
+		unsigned int distLeft;    ///< How far left the item can go, in grid units
+		unsigned int distRight;   ///< How far right the item can go, in grid units
+		unsigned int distUp;      ///< How far up the item can go, in grid units
+		unsigned int distDown;    ///< How far down the item can go, in grid units
+		unsigned int speedX;      ///< Horizontal speed, in milliseconds per pixel
+		unsigned int speedY;      ///< Vertical speed, in milliseconds per pixel
+};
+
+/// Text that moves.
+class Map2D::Layer::Item::MovableText:
+	virtual public Map2D::Layer::Item::Movable,
+	virtual public Map2D::Layer::Item::Text
+{ };
 
 /// A path of points in a map.
 class Map2D::Path {
