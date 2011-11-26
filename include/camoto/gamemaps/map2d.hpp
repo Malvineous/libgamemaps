@@ -24,6 +24,7 @@
 #include <vector>
 #include <map>
 #include <camoto/gamegraphics/tileset.hpp>
+#include <camoto/gamegraphics/palettetable.hpp>
 #include <camoto/gamemaps/map.hpp>
 
 namespace camoto {
@@ -273,6 +274,7 @@ class Map2D::Layer {
 			CanResize       = 0x02, ///< Can just this layer be resized?
 			HasOwnTileSize  = 0x04, ///< Does the layer have an independent tile size?
 			ChangeTileSize  = 0x08, ///< Can this layer's grid size be changed?
+			HasPalette      = 0x10, ///< Palette is obtained from layer instead of tileset
 		};
 
 		/// Create a new layer.
@@ -432,6 +434,20 @@ class Map2D::Layer {
 			unsigned int y, unsigned int *maxCount)
 			throw ();
 
+		/// Get the palette to use with this layer.
+		/**
+		 * Some tilesets don't have a palette, so in this case the palette to use
+		 * can be supplied here.  Palettes applied to individual tiles will still
+		 * override this.
+		 *
+		 * @pre getCaps() return value includes HasPalette.
+		 *
+		 * @return Shared pointer to a PaletteTable.
+		 */
+		virtual gamegraphics::PaletteTablePtr getPalette(
+			gamegraphics::VC_TILESET& tileset)
+			throw ();
+
 		/// Get a list of all possible items that can be placed in the layer.
 		/**
 		 * This is suitable for display to the user, to allow selection of items
@@ -454,6 +470,7 @@ class Map2D::Layer {
 		unsigned int tileHeight; ///< Tile height, in pixels
 		ItemPtrVectorPtr items;  ///< Vector of all items in the layer
 		TextPtrVector strings;   ///< Vector of all text elements in the layer
+		gamegraphics::PaletteTablePtr pal; ///< Optional palette for layer
 		ItemPtrVectorPtr validItems; ///< Vector of possible items in the layer
 };
 

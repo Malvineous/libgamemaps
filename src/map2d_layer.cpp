@@ -118,6 +118,16 @@ bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 	return true; // permitted here
 }
 
+gamegraphics::PaletteTablePtr Map2D::Layer::getPalette(
+	camoto::gamegraphics::VC_TILESET& tileset)
+	throw ()
+{
+	assert(this->getCaps() & HasPalette);
+	std::cerr << "BUG: Map2D::Layer reported having a palette but didn't "
+		"implement getPalette()" << std::endl;
+	return gamegraphics::PaletteTablePtr();
+}
+
 const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getValidItemList()
 	throw ()
 {
