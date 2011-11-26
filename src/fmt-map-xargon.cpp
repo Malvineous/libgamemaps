@@ -384,10 +384,13 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	tiles->reserve(XR_MAP_WIDTH * XR_MAP_HEIGHT);
 	for (unsigned int x = 0; x < XR_MAP_WIDTH; x++) {
 		for (unsigned int y = 0; y < XR_MAP_HEIGHT; y++) {
+			uint16_t code;
+			input >> u16le(code);
+			if ((code & 0x03FF) == 0) continue; // empty spot
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->x = x;
 			t->y = y;
-			input >> u16le(t->code);
+			t->code = code;
 			tiles->push_back(t);
 		}
 	}
@@ -406,8 +409,10 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Read all the text strings at the end of the map first
 	stream::pos offStrings = numObjects * XR_OBJ_ENTRY_LEN + this->lenSavedata;
 	input->seekg(offStrings, stream::cur);
+	if (offStrings > lenMap) {
+		throw stream::error("Map file is missing text section entirely!");
+	}
 	offStrings = lenMap - offStrings; // offStrings is now the amount of string data left to read
-		std::cout << "read all strings at offset " << offStrings << " / " << lenMap << std::endl;
 
 	std::list<std::string> mapStrings;
 	try {
@@ -427,7 +432,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 			offStrings -= lenStr;
 		}
 	} catch (const stream::incomplete_read& e) {
-		throw stream::error("Map file has been truncated! (strings section cut)");
+		throw stream::error("Map file has been truncated! (text section cut unexpectedly)");
 	}
 
 	// Go back to the start of the object layer
