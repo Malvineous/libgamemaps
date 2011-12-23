@@ -29,6 +29,7 @@
 #include "fmt-map-ccomic.hpp"
 #include "fmt-map-cosmo.hpp"
 #include "fmt-map-harry.hpp"
+#include "fmt-map-hocus.hpp"
 #include "fmt-map-wacky.hpp"
 #include "fmt-map-wordresc.hpp"
 #include "fmt-map-xargon.hpp"
@@ -51,6 +52,7 @@ Manager::Manager()
 	this->vcTypes.push_back(MapTypePtr(new CComicMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
+	this->vcTypes.push_back(MapTypePtr(new HocusMapType()));
 	this->vcTypes.push_back(MapTypePtr(new JillMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WordRescueMapType()));
