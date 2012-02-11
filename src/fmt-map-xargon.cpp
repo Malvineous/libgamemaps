@@ -542,7 +542,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
 	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);

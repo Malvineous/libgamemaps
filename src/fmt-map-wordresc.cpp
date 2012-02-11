@@ -610,7 +610,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	return map;
 }
 
-unsigned long WordRescueMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+stream::len WordRescueMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
 	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);

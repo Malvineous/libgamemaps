@@ -191,7 +191,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-unsigned long CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+stream::len CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
 	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);

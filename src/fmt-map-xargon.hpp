@@ -40,7 +40,7 @@ class SweeneyMapType: virtual public MapType {
 		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
 			throw (stream::error);
 
-		virtual unsigned long write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
 			throw (stream::error);
 
 		typedef std::map<uint16_t, uint16_t> image_map;

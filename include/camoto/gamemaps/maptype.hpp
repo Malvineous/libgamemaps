@@ -141,7 +141,7 @@ class MapType {
 		 * @return The amount of data written.  The caller should ensure the output
 		 *   stream is truncated to this length if necessary.
 		 */
-		virtual unsigned long write(MapPtr map, stream::output_sptr output,
+		virtual stream::len write(MapPtr map, stream::output_sptr output,
 			SuppData& suppData) const
 			throw (stream::error) = 0;
 
