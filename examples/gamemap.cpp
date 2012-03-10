@@ -28,7 +28,7 @@
 #include <camoto/stream_file.hpp>
 #include <iostream>
 #include <iomanip>
-#include "png++/png.hpp"
+#include <png++/png.hpp>
 
 namespace po = boost::program_options;
 namespace gm = camoto::gamemaps;
