@@ -33,5 +33,5 @@ WARNINGS = -Wall -Wextra -Wno-unused-parameter
 AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(BOOST_CPPFLAGS) -I $(top_srcdir)/include $(libgamecommon_CFLAGS) $(WARNINGS)
 AM_CXXFLAGS = $(DEBUG_CXXFLAGS)
 
-libgamemaps_la_LDFLAGS = $(AM_LDFLAGS) -release @VERSION@ -version-info 0
+libgamemaps_la_LDFLAGS = $(AM_LDFLAGS) -version-info 0:0:0
 libgamemaps_la_LIBADD = $(BOOST_SYSTEM_LIBS) $(BOOST_FILESYSTEM_LIBS) $(libgamecommon_LIBS)
