@@ -50,6 +50,11 @@ namespace stream = camoto::stream;
 /// Return value: Some files failed, but not in a common way (cut off write, disk full, etc.)
 #define RET_UNCOMMON_FAILURE   5
 
+// mingw32 doesn't have __STRING
+#ifndef __STRING
+#define __STRING(x) #x
+#endif
+
 /// Place to cache tiles when rendering a map to a .png file
 struct CachedTile {
 	unsigned int code;
