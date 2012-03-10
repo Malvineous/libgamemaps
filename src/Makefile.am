@@ -30,8 +30,20 @@ EXTRA_libgamemaps_la_SOURCES += fmt-map-xargon.hpp
 
 WARNINGS = -Wall -Wextra -Wno-unused-parameter
 
-AM_CPPFLAGS = $(DEBUG_CPPFLAGS) $(BOOST_CPPFLAGS) -I $(top_srcdir)/include $(libgamecommon_CFLAGS) $(WARNINGS)
-AM_CXXFLAGS = $(DEBUG_CXXFLAGS)
+AM_CPPFLAGS  = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS += -I $(top_srcdir)/include
+AM_CPPFLAGS += $(libgamecommon_CPPFLAGS)
+AM_CPPFLAGS += $(libgamegraphics_CPPFLAGS)
+AM_CPPFLAGS += $(WARNINGS)
 
-libgamemaps_la_LDFLAGS = $(AM_LDFLAGS) -version-info 0:0:0
-libgamemaps_la_LIBADD = $(BOOST_SYSTEM_LIBS) $(BOOST_FILESYSTEM_LIBS) $(libgamecommon_LIBS)
+AM_CXXFLAGS  = $(DEBUG_CXXFLAGS)
+AM_CXXFLAGS += $(libgamecommon_CFLAGS)
+AM_CXXFLAGS += $(libgamegraphics_CFLAGS)
+
+libgamemaps_la_LDFLAGS  = $(AM_LDFLAGS)
+libgamemaps_la_LDFLAGS += -version-info 0:0:0
+
+libgamemaps_la_LIBADD  = $(BOOST_SYSTEM_LIBS)
+libgamemaps_la_LIBADD += $(BOOST_FILESYSTEM_LIBS)
+libgamemaps_la_LIBADD += $(libgamecommon_LIBS)
+libgamemaps_la_LIBADD += $(libgamegraphics_LIBS)
