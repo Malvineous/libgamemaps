@@ -2,7 +2,7 @@
  * @file   gamemap.cpp
  * @brief  Command-line interface to libgamemaps.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -179,7 +179,6 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	const std::string& destFile)
 	throw (stream::error)
 {
-	int mapCaps = map->getCaps();
 	unsigned int outWidth, outHeight; // in pixels
 	unsigned int globalTileWidth, globalTileHeight;
 	map->getTileSize(&globalTileWidth, &globalTileHeight);
@@ -390,7 +389,7 @@ int main(int iArgC, char *cArgV[])
 				strFilename = i->value[0];
 			} else if (i->string_key.compare("help") == 0) {
 				std::cout <<
-					"Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>\n"
+					"Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>\n"
 					"This program comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
 					"and you are welcome to change and redistribute it under certain conditions;\n"
 					"see <http://www.gnu.org/licenses/> for details.\n"
@@ -611,9 +610,6 @@ finishTesting:
 		// File type of inserted files defaults to empty, which means 'generic file'
 		std::string strLastFiletype;
 
-		// Last attribute value set with -b
-		int iLastAttr;
-
 		// Run through the actions on the command line
 		for (std::vector<po::option>::iterator i = pa.options.begin(); i != pa.options.end(); i++) {
 			if (i->string_key.compare("info") == 0) {
@@ -802,7 +798,7 @@ finishTesting:
 						if (bScript) std::cout << "\n" << prefix << "height=";
 						else std::cout << "x";
 						std::cout << layerHeight;
-						if (layerTileSame && (!bScript)) {
+						if (layerSame && (!bScript)) {
 							std::cout << " (same as map)";
 						}
 						std::cout << "\n";

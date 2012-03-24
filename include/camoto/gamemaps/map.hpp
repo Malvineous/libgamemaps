@@ -81,7 +81,7 @@ class Map: virtual public Metadata {
 
 		/// Attribute that can be a single value from a list of permitted values.
 		struct EnumAttribute: public Attribute {
-			int value;
+			unsigned int value;
 
 			std::vector<std::string> values;
 
