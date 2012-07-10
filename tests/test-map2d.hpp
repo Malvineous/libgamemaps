@@ -147,7 +147,9 @@ BOOST_FIXTURE_TEST_SUITE(SUITE_NAME, FIXTURE_NAME)
 		BOOST_CHECK_EQUAL(pTestType->isInstance(ss), r); \
 	}
 
+#ifndef TILESET_DETECTION_UNCERTAIN
 ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::MapType::DefinitelyYes);
+#endif
 
 
 // Define an INVALIDDATA_TEST macro which we use to confirm the reader correctly
@@ -284,6 +286,13 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 	BOOST_CHECK_MESSAGE(
 		is_supp_equal(camoto::SuppItem::Layer1, makeString(TEST_RESULT(initialstate_Layer1))),
 		"Error writing map to a file - data is different to original in supp::layer1"
+	);
+#endif
+
+#ifdef MAP_HAS_SUPPDATA_LAYER2
+	BOOST_CHECK_MESSAGE(
+		is_supp_equal(camoto::SuppItem::Layer2, makeString(TEST_RESULT(initialstate_Layer2))),
+		"Error writing map to a file - data is different to original in supp::layer2"
 	);
 #endif
 }

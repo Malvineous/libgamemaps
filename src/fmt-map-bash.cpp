@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Monster_Bash
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -199,12 +199,12 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 			t->y = y;
 			uint8_t code;
 			fg >> u8(code);
-			lenFG -= 2;
+			lenFG--;
 			t->code = code;
 			if (code != MB_DEFAULT_FGTILE) fgtiles->push_back(t);
-			if (lenFG < 2) break;
+			if (lenFG < 1) break;
 		}
-		if (lenFG < 2) break;
+		if (lenFG < 1) break;
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
@@ -293,13 +293,13 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 			fgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}
 
-		uint16_t mapWidthBytes = mapWidth * 2; // 2 == sizeof(uint16_t)
+		uint16_t mapWidthBytes = mapWidth;
 		fg
 			<< u16le(mapWidthBytes)
 		;
 		uint8_t *pfg = fgdata.get();
 		for (unsigned int i = 0; i < lenFG; i++) {
-			fg << u16le(*pfg++);
+			fg << u8(*pfg++);
 		}
 	}
 
