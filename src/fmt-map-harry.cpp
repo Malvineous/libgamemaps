@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/GMF_Format_(Halloween_Harry)
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -247,7 +247,21 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	uint16_t numActors;
 	input >> u16le(numActors);
 	Map2D::Layer::ItemPtrVectorPtr actors(new Map2D::Layer::ItemPtrVector());
-	actors->reserve(numActors);
+	actors->reserve(numActors + 1);
+
+	// Create a fake object with the player's starting location
+	{
+		Map2D::Layer::Item::Player *p = new Map2D::Layer::Item::Player;
+		Map2D::Layer::ItemPtr t(p);
+		p->x = startX;
+		p->y = startY;
+		p->code = 0; // unused
+		p->player = 0; // player 1
+		p->facingLeft = false; // fixed?
+		actors->push_back(t);
+	}
+
+	// Read the real objects
 	for (unsigned int i = 0; i < numActors; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		input
@@ -349,7 +363,24 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	}
 	uint8_t mapFlags = attrParallax->value;
 
+	// Find the player-start-point objects
 	uint16_t startX = 0, startY = 0;
+	Map2D::LayerPtr layer = map2d->getLayer(2);
+	const Map2D::Layer::ItemPtrVectorPtr actors = layer->getAllItems();
+	uint16_t numActors = actors->size();
+	for (Map2D::Layer::ItemPtrVector::const_iterator i =
+		actors->begin(); i != actors->end(); i++
+	) {
+		Map2D::Layer::Item::Player *p = dynamic_cast<Map2D::Layer::Item::Player *>(i->get());
+		if (p) {
+			// This is the player starting location
+			if (p->player == 0) {
+				startX = p->x;
+				startY = p->y;
+			}
+			numActors--;
+		}
+	}
 
 	output
 		<< nullPadded("\x11SubZero Game File", 0x12)
@@ -380,10 +411,6 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	lenWritten += 10;
 
 	// Write the actor layer
-	Map2D::LayerPtr layer = map2d->getLayer(2);
-	const Map2D::Layer::ItemPtrVectorPtr actors = layer->getAllItems();
-
-	uint16_t numActors = actors->size();
 	output << u16le(numActors);
 	lenWritten += 2;
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = actors->begin();
@@ -391,6 +418,8 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 		i++
 	) {
 		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
+		Map2D::Layer::Item::Player *p = dynamic_cast<Map2D::Layer::Item::Player *>(i->get());
+		if (p) continue; // don't write player start points here
 		output
 			<< u8((*i)->code)
 			<< u16le((*i)->x)

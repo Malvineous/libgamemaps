@@ -476,9 +476,10 @@ class Map2D::Layer::Item {
 		unsigned int y;  ///< Item location in units of tiles
 
 		// Since many maps use a code like this, we'll put it here to save each
-		// map format from having to derive its own almost idential class.
+		// map format from having to derive its own almost identical class.
 		unsigned int code; ///< Format-specific tile code
 
+		class Player;
 		class Text;
 		class Movable;
 		class MovableText;
@@ -487,6 +488,15 @@ class Map2D::Layer::Item {
 
 /// Value to use for tilecodes that have not yet been set.
 const unsigned int INVALID_TILECODE = (unsigned int)-1;
+
+/// A player's starting location stored within the layer.
+class Map2D::Layer::Item::Player: virtual public Map2D::Layer::Item {
+	public:
+		virtual ~Player() throw ();
+
+		unsigned int player;  ///< 0 for main player, 1 for second player, etc.
+		bool facingLeft;      ///< true to face left, false to face right
+};
 
 /// A text element stored within the layer.
 class Map2D::Layer::Item::Text: virtual public Map2D::Layer::Item {

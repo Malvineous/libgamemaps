@@ -139,6 +139,11 @@ Map2D::Layer::Item::~Item()
 {
 }
 
+Map2D::Layer::Item::Player::~Player()
+	throw ()
+{
+}
+
 Map2D::Layer::Item::Text::~Text()
 	throw ()
 {
