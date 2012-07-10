@@ -92,6 +92,9 @@ struct FIXTURE_NAME: public default_sample {
 		#ifdef MAP_HAS_SUPPDATA_LAYER2
 			ADD_SUPPITEM(Layer2);
 		#endif
+		#ifdef MAP_HAS_SUPPDATA_EXTRA1
+			ADD_SUPPITEM(Extra1);
+		#endif
 
 		BOOST_REQUIRE_NO_THROW(
 			gm::ManagerPtr pManager = gm::getManager();

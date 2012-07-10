@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Jill_of_the_Jungle_Map_Format
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -346,7 +346,8 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	image_map_sptr imgMap;
 	imgMap.reset(new image_map());
-	stream::len len = dma->size();
+	stream::delta len = dma->size();
+	dma->seekg(0, stream::start);
 	do {
 		uint16_t mapCode, flags;
 		uint8_t tileset, tile, namelen;
@@ -369,7 +370,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 		// Skip name
 		dma->seekg(namelen, stream::cur);
 		len -= 7 + namelen;
-	} while (len); // TODO: Make this so it can't get stuck in an infinite loop
+	} while (len > 0);
 
 	// Read the map
 	stream::pos lenMap = input->size();
