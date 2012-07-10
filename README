@@ -1,5 +1,5 @@
 Camoto: Classic-game Modding Tools
-Copyright 2010 Adam Nielsen <malvineous@shikadi.net>
+Copyright 2010-2012 Adam Nielsen <malvineous@shikadi.net>
 http://www.shikadi.net/camoto/
 
 Camoto is a collection of utilities for editing (modding) "classic games",
@@ -35,13 +35,12 @@ to use for particular levels and where (in which files) that data is stored.
 Some formats (Duke Nukem II) supply filenames of tilesets, while others
 (Xargon) do not.  libgamemaps makes this information available if it exists.
 
-This library is still in the preliminary stages, so only maps from these
-games have been implemented:
+Editing maps for the following games are supported:
 
-  * Cosmo's Cosmic Adventures
-  * Crystal Caves
+  * Cosmo's Cosmic Adventures (partial)
+  * Crystal Caves (early)
   * Dangerous Dave
-  * Halloween Harry
+  * Halloween Harry (partial)
   * Hocus Pocus (partial)
   * Jill of the Jungle (partial)
   * Monster Bash (partial)
@@ -51,12 +50,13 @@ games have been implemented:
 
 Many more formats are planned.
 
-The example program (gamemap) requires png++ for generation of .png files.
-This is supplied in the source release but not in the git version.  If you are
-compiling from git, download png++ from http://www.nongnu.org/pngpp/ and
-extract it into a folder called png++ in the examples/ directory.  The latest
-release at the time of writing (v0.2.5) is missing some required functionality
-so you may need the SVN version instead if ./configure fails.
+This distribution includes an example program "gamemap" which serves as both
+a command-line interface to the library as well as an example of how to use
+the library.  This program is installed as part of the "make install" process.
+See "man gamemap" for full details.
+
+libgamecommon, libgamegraphics and png++ are required dependencies of this
+library.  png++ can be obtained from http://www.nongnu.org/pngpp/
 
 The library is compiled and installed in the usual way:
 
@@ -64,15 +64,8 @@ The library is compiled and installed in the usual way:
   sudo make install
   sudo ldconfig
 
-You will need libgamecommon installed first.  If you downloaded the git
-release, run ./autogen.sh before the commands above.  You can also run
-"make check" to compile and run the tests.
-
-This distribution includes an example program "gamemap" which serves as both
-a command-line interface to the library as well as an example of how to use
-the library.  This program is installed as part of the "make install" process.
-See "man gamemap" for full details (note the manpage is currently documenting
-intended behaviour, but not everything has been implemented yet.)
+If you downloaded the git release, run ./autogen.sh before the commands above.
+You can also run "make check" to compile and run the tests.
 
 All supported map formats are fully documented on the ModdingWiki - see
 http://www.shikadi.net/moddingwiki/Category:Map_Files

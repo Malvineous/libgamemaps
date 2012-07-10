@@ -4,3 +4,11 @@ Outstanding tasks
  - Implement conversion of Cosmo actor codes into images
  - Figure out how to specify DDave starting points (currently hardcoded for level 3)
  - Hocus Pocus tests
+ - Monster Bash file detection
+ - Make Monster Bash tileset filenames available (and editable as metadata?)
+ - Work out whether Crystal Caves will accept maps of a different width (and
+   then max and min widths)
+ - Figure out how to specify filenames for map backdrops and tilesets (e.g. Word
+   Rescue, Duke2, Wacky Wheels)
+ - Write Halloween Harry palette and tile flags
+ - Use try_read in all isInstance calls to avoid exceptions on short files
