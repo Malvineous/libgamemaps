@@ -261,11 +261,13 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 			bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}
 
+		uint16_t mapStripe = mapHeight * (MB_TILE_WIDTH * MB_TILE_HEIGHT) + mapWidth;
 		uint16_t mapWidthBytes = mapWidth * 2; // 2 == sizeof(uint16_t)
 		uint16_t mapPixelWidth = mapWidth * MB_TILE_WIDTH;
 		uint16_t mapPixelHeight = mapHeight * MB_TILE_HEIGHT;
+		bg->seekp(0, stream::start);
 		bg
-			<< u16le(0) // unknown
+			<< u16le(mapStripe)
 			<< u16le(mapWidthBytes)
 			<< u16le(mapPixelWidth)
 			<< u16le(mapPixelHeight)
@@ -274,6 +276,7 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		for (unsigned int i = 0; i < lenBG; i++) {
 			bg << u16le(*pbg++);
 		}
+		bg->truncate_here();
 	}
 
 	// Write the foreground layer
@@ -294,6 +297,7 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		}
 
 		uint16_t mapWidthBytes = mapWidth;
+		fg->seekp(0, stream::start);
 		fg
 			<< u16le(mapWidthBytes)
 		;
@@ -301,6 +305,7 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		for (unsigned int i = 0; i < lenFG; i++) {
 			fg << u8(*pfg++);
 		}
+		fg->truncate_here();
 	}
 
 	return lenWritten;
