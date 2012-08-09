@@ -129,7 +129,9 @@ std::vector<std::string> BashMapType::getGameList() const
 MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
 	throw (stream::error)
 {
-	return MapType::Unsure;
+	stream::len len = psMap->size();
+	if ((len == 194) || (len == 195)) return MapType::PossiblyYes;
+	return MapType::DefinitelyNo;
 }
 
 MapPtr BashMapType::create(SuppData& suppData) const
@@ -246,7 +248,13 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 
 	// Write the background layer
 	{
-		unsigned int lenBG = mapWidth * mapHeight;
+		const unsigned int lenBG = mapWidth * mapHeight;
+
+		// Make sure the stream has enough room for the data we're about to write
+		const unsigned int lenDataBG = 8 + lenBG * 2;
+		bg->truncate(lenDataBG);
+		bg->seekp(0, stream::start);
+
 		boost::shared_array<uint16_t> bgdata(new uint16_t[lenBG]);
 		memset(bgdata.get(), 0, lenBG); // default background tile
 		Map2D::LayerPtr layer = map2d->getLayer(0);
@@ -276,12 +284,20 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		for (unsigned int i = 0; i < lenBG; i++) {
 			bg << u16le(*pbg++);
 		}
-		bg->truncate_here();
+
+		// Make sure we made it to the end
+		assert(bg->tellp() == lenDataBG);
 	}
 
 	// Write the foreground layer
 	{
-		unsigned int lenFG = mapWidth * mapHeight;
+		const unsigned int lenFG = mapWidth * mapHeight;
+
+		// Make sure the stream has enough room for the data we're about to write
+		const unsigned int lenDataFG = 2 + lenFG;
+		fg->truncate(lenDataFG);
+		fg->seekp(0, stream::start);
+
 		boost::shared_array<uint8_t> fgdata(new uint8_t[lenFG]);
 		memset(fgdata.get(), 0, lenFG); // default background tile
 		Map2D::LayerPtr layer = map2d->getLayer(1);
@@ -305,8 +321,16 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		for (unsigned int i = 0; i < lenFG; i++) {
 			fg << u8(*pfg++);
 		}
-		fg->truncate_here();
+
+		// Make sure we made it to the end
+		assert(fg->tellp() == lenDataFG);
 	}
+
+	bg->flush();
+	fg->flush();
+
+	// Until all the properties are implemented, just leave the info file unchanged.
+	lenWritten += 194;
 
 	return lenWritten;
 }
