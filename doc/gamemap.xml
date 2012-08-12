@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry id="gamemap">
+	<refentryinfo>
+		<application>Camoto</application>
+		<productname>gamemap</productname>
+		<author>
+			<firstname>Adam</firstname>
+			<surname>Nielsen</surname>
+			<email>malvineous@shikadi.net</email>
+			<contrib>Original document author</contrib>
+		</author>
+	</refentryinfo>
+	<refmeta>
+		<refentrytitle>gamemap</refentrytitle>
+		<manvolnum>1</manvolnum>
+		<refmiscinfo class="date">2012-08-11</refmiscinfo>
+		<refmiscinfo class="manual">Camoto</refmiscinfo>
+	</refmeta>
+	<refnamediv id="name">
+		<refname>gamemap</refname>
+		<refpurpose>
+			get information about maps/levels used by supported games
+		</refpurpose>
+	</refnamediv>
+	<refsynopsisdiv>
+		<cmdsynopsis>
+			<command>gamemap</command>
+			<arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+			<arg choice="plain"><replaceable>map</replaceable></arg>
+			<arg choice="opt" rep="repeat"><replaceable>actions</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
+
+	<refsect1 id="description">
+		<title>Description</title>
+		<para>
+			Perform the specified <replaceable>actions</replaceable> on the given
+			<replaceable>map</replaceable> file.  The actions are performed in order
+			(i.e. the first action specified on the command line is performed first.)
+		</para>
+	</refsect1>
+
+	<refsect1 id="actions">
+		<title>Actions</title>
+		<variablelist>
+
+			<varlistentry>
+				<term><option>--info</option></term>
+				<term><option>-i</option></term>
+				<listitem>
+					<para>
+						show information about the map (size, layers, etc.)
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--print</option>=<replaceable>layer</replaceable></term>
+				<term><option>-p </option><replaceable>layer</replaceable></term>
+				<listitem>
+					<para>
+						attempt to print the given <replaceable>layer</replaceable> as ASCII
+						text to standard output.  The values printed at each tile location
+						are the internal tile codes.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--render</option>=<replaceable>dest.png</replaceable></term>
+				<term><option>-r </option><replaceable>dest.png</replaceable></term>
+				<listitem>
+					<para>
+						render the map as an image, saved to
+						<replaceable>dest.png</replaceable>.
+					</para>
+				</listitem>
+			</varlistentry>
+
+		</variablelist>
+	</refsect1>
+
+	<refsect1 id="options">
+		<title id="options-title">Options</title>
+		<variablelist>
+
+			<varlistentry>
+				<term><option>--list-types</option></term>
+				<listitem>
+					<para>
+						show a list of supported file formats, along with the values to pass
+						to <option>--type</option> and <option>--graphicstype</option>.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--force</option></term>
+				<term><option>-f</option></term>
+				<listitem>
+					<para>
+						open the file as the given <option>--type</option>, even if it
+						doesn't look like it's in that format.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--graphics</option>=<replaceable>tileset</replaceable></term>
+				<term><option>-g </option><replaceable>tileset</replaceable></term>
+				<listitem>
+					<para>
+						supply the filename of the <replaceable>tileset</replaceable> to use
+						when rendering the map.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--graphicstype</option>=<replaceable>format</replaceable></term>
+				<term><option>-y </option><replaceable>format</replaceable></term>
+				<listitem>
+					<para>
+						manually specify the file type of the graphics file given by
+						<option>--graphics</option>.  The type is normally autodetected,
+						but it needs to be specified for a few formats which lack signatures
+						to identify them by.  See <option>--list-types</option>.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--script</option></term>
+				<term><option>-s</option></term>
+				<listitem>
+					<para>
+						print output suitable for parsing by a script.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><option>--type</option>=<replaceable>format</replaceable></term>
+				<term><option>-t </option><replaceable>format</replaceable></term>
+				<listitem>
+					<para>
+						manually specify the file type.  The type is normally autodetected,
+						but it needs to be specified for a few formats which lack signatures
+						to identify them by.  See <option>--list-types</option>.
+					</para>
+				</listitem>
+			</varlistentry>
+
+		</variablelist>
+	</refsect1>
+
+	<refsect1 id="examples">
+		<title id="examples-title">Examples</title>
+		<variablelist>
+
+			<varlistentry>
+				<term><command>gamemap level01.dav --info</command></term>
+				<listitem>
+					<para>
+						display information about the first level in Dangerous Dave.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><command>gamemap level01.dav --print 1 | less -S</command></term>
+				<listitem>
+					<para>
+						display the first layer of the map as text, passing it to
+						<literal>less</literal> so that each row doesn't wrap to the next
+						line, and <literal>less</literal> can be used to scroll through the
+						layer horizontally.
+					</para>
+				</listitem>
+			</varlistentry>
+
+			<varlistentry>
+				<term><command>gamemap --graphics vgadave.dav level01.dav --render dave01.png</command></term>
+				<listitem>
+					<para>
+						use the tileset <literal>vgadave.dav</literal> to draw the entire
+						map, and save it as the PNG image <literal>dave01.png</literal>.
+					</para>
+				</listitem>
+			</varlistentry>
+
+		</variablelist>
+	</refsect1>
+
+	<refsect1 id="notes">
+		<title id="notes-title">Notes</title>
+		<para>
+			Exit status is <returnvalue>0</returnvalue> on success,
+			<returnvalue>non-zero</returnvalue> on failure (<returnvalue>1</returnvalue>
+			for bad parameters, <returnvalue>2</returnvalue> for critical errors such
+			as being unable to open the the archive file, <returnvalue>3</returnvalue>
+			for more information needed, <returnvalue>4</returnvalue> for non-critical
+			errors such as being unable to insert one of many files,
+			<returnvalue>5</returnvalue> for uncommon failures like running out of disk
+			space.)
+		</para>
+		<para>
+			All the file formats supported by this utility are fully documented on the
+			<ulink url="http://www.shikadi.net/moddingwiki">Game Modding Wiki</ulink>.
+		</para>
+	</refsect1>
+
+	<refsect1 id="bugs">
+		<title id="bugs-title">Bugs and Questions</title>
+		<para>
+			Report bugs at <ulink>http://www.shikadi.net/camoto/bugs/</ulink>
+		</para>
+		<para>
+			Ask questions about Camoto or modding in general at the <ulink
+			url="http://www.classicdosgames.com/forum/viewforum.php?f=25">RGB
+			Classic Games modding forum</ulink>
+		</para>
+	</refsect1>
+
+	<refsect1 id="copyright">
+		<title id="copyright-title">Copyright</title>
+		<para>
+			Copyright (c) 2010-2012 Adam Nielsen.
+		</para>
+		<para>
+			License GPLv3+: <ulink url="http://gnu.org/licenses/gpl.html">GNU GPL
+			version 3 or later</ulink>
+		</para>
+		<para>
+			This is free software: you are free to change and redistribute it.
+			There is NO WARRANTY, to the extent permitted by law.
+		</para>
+	</refsect1>
+
+	<refsect1 id="seealso">
+		<title id="seealso-title">See Also</title>
+		<simplelist type="inline">
+			<member><citerefentry><refentrytitle>gamearch</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+			<member><citerefentry><refentrytitle>gamecomp</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+			<member><citerefentry><refentrytitle>gameimg</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+			<member><citerefentry><refentrytitle>gametls</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+			<member><citerefentry><refentrytitle>gamemus</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+			<member><citerefentry><refentrytitle>camoto-studio</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+		</simplelist>
+	</refsect1>
+
+</refentry>
