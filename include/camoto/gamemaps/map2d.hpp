@@ -2,7 +2,7 @@
  * @file   map2d.hpp
  * @brief  2D grid-based Map interface.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ class Map2D: virtual public Map {
 		virtual ~Map2D()
 			throw ();
 
-		/// Get the capabilities of this tileset format.
+		/// Get the capabilities of this map format.
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
@@ -316,7 +316,7 @@ class Map2D::Layer {
 		virtual const std::string& getTitle()
 			throw ();
 
-		/// Get the capabilities of this tileset format.
+		/// Get the capabilities of this layer.
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */

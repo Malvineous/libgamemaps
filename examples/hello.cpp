@@ -13,7 +13,7 @@ int main(void)
 	// Use the manager to look up a particular map format
 	MapTypePtr mapType = manager->getMapTypeByCode("map-xargon");
 
-	// Open an map file on disk
+	// Open a map file on disk
 	stream::file_sptr file(new stream::file());
 	file->open("board_01.xr1");
 

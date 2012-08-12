@@ -1,5 +1,5 @@
 /**
- * @file   util.hpp
+ * @file   gamemaps/util.hpp
  * @brief  Game map utility functions.
  *
  * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
@@ -28,6 +28,10 @@ namespace gamemaps {
 
 /// Get the dimensions and tile size of a layer.
 /**
+ * @param map
+ *   Map containing the layer (for those layers which don't have a size, and
+ *   fall back to the map size.)
+ *
  * @param layer
  *   Layer to query.
  *
