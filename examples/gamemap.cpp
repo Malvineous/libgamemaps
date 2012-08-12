@@ -346,7 +346,7 @@ int main(int iArgC, char *cArgV[])
 			"format output suitable for script parsing")
 		("force,f",
 			"force open even if the map is not in the given format")
-		("list,l",
+		("list-types",
 			"list supported file types")
 	;
 
@@ -426,8 +426,7 @@ int main(int iArgC, char *cArgV[])
 			) {
 				bForceOpen = true;
 			} else if (
-				(i->string_key.compare("l") == 0) ||
-				(i->string_key.compare("list") == 0)
+				(i->string_key.compare("list-types") == 0)
 			) {
 				std::cout << "Map types: (--type)\n";
 				unsigned int i = 0;
