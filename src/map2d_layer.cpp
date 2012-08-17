@@ -26,8 +26,7 @@ namespace gamemaps {
 Map2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
 	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
 	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	throw () :
-		title(title),
+	:	title(title),
 		caps(caps),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
@@ -37,24 +36,20 @@ Map2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
 }
 
 Map2D::Layer::~Layer()
-	throw ()
 {
 }
 
 const std::string& Map2D::Layer::getTitle()
-	throw ()
 {
 	return this->title;
 }
 
 int Map2D::Layer::getCaps()
-	throw ()
 {
 	return this->caps;
 }
 
 void Map2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
-	throw ()
 {
 	assert(this->getCaps() & HasOwnSize);
 
@@ -64,7 +59,6 @@ void Map2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
 }
 
 void Map2D::Layer::setLayerSize(unsigned int x, unsigned int y)
-	throw ()
 {
 	assert(this->getCaps() & CanResize);
 
@@ -74,7 +68,6 @@ void Map2D::Layer::setLayerSize(unsigned int x, unsigned int y)
 }
 
 void Map2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
-	throw ()
 {
 	assert(this->getCaps() & HasOwnTileSize);
 
@@ -84,7 +77,6 @@ void Map2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
 }
 
 void Map2D::Layer::setTileSize(unsigned int x, unsigned int y)
-	throw ()
 {
 	assert(this->getCaps() & ChangeTileSize);
 
@@ -94,14 +86,12 @@ void Map2D::Layer::setTileSize(unsigned int x, unsigned int y)
 }
 
 const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getAllItems()
-	throw ()
 {
 	return this->items;
 }
 
 gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
 	gamegraphics::VC_TILESET& tileset)
-	throw ()
 {
 	// Default implementation to return an empty tile.
 	return gamegraphics::ImagePtr();
@@ -109,7 +99,6 @@ gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
 
 bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 	unsigned int y, unsigned int *maxCount)
-	throw ()
 {
 	assert(maxCount);
 
@@ -120,7 +109,6 @@ bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 
 gamegraphics::PaletteTablePtr Map2D::Layer::getPalette(
 	camoto::gamegraphics::VC_TILESET& tileset)
-	throw ()
 {
 	assert(this->getCaps() & HasPalette);
 	std::cerr << "BUG: Map2D::Layer reported having a palette but didn't "
@@ -129,28 +117,23 @@ gamegraphics::PaletteTablePtr Map2D::Layer::getPalette(
 }
 
 const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getValidItemList()
-	throw ()
 {
 	return this->validItems;
 }
 
 Map2D::Layer::Item::~Item()
-	throw ()
 {
 }
 
 Map2D::Layer::Item::Player::~Player()
-	throw ()
 {
 }
 
 Map2D::Layer::Item::Text::~Text()
-	throw ()
 {
 }
 
 Map2D::Layer::Item::Movable::~Movable()
-	throw ()
 {
 }
 

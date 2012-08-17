@@ -60,8 +60,7 @@ using namespace camoto::gamegraphics;
 
 HocusBackgroundLayer::HocusBackgroundLayer(const std::string& name,
 	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			name,
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -73,7 +72,6 @@ HocusBackgroundLayer::HocusBackgroundLayer(const std::string& name,
 
 ImagePtr HocusBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
@@ -83,19 +81,16 @@ ImagePtr HocusBackgroundLayer::imageFromCode(unsigned int code,
 
 
 std::string HocusMapType::getMapCode() const
-	throw ()
 {
 	return "map-hocus";
 }
 
 std::string HocusMapType::getFriendlyName() const
-	throw ()
 {
 	return "Hocus Pocus level";
 }
 
 std::vector<std::string> HocusMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("");
@@ -103,7 +98,6 @@ std::vector<std::string> HocusMapType::getFileExtensions() const
 }
 
 std::vector<std::string> HocusMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Hocus Pocus");
@@ -111,7 +105,6 @@ std::vector<std::string> HocusMapType::getGameList() const
 }
 
 MapType::Certainty HocusMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 	// TESTED BY: fmt_map_hocus_isinstance_c01
@@ -122,14 +115,12 @@ MapType::Certainty HocusMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr HocusMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	input->seekg(0, stream::start);
 
@@ -192,7 +183,6 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len HocusMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");

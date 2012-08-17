@@ -49,8 +49,7 @@ using namespace camoto::gamegraphics;
 
 BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Foreground",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -62,7 +61,6 @@ BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr BashForegroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 3) return ImagePtr(); // no tileset?!
 	unsigned int t = 1 + ((code >> 7) & 1);
@@ -75,8 +73,7 @@ ImagePtr BashForegroundLayer::imageFromCode(unsigned int code,
 
 BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -88,7 +85,6 @@ BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr BashBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	code = code & 0x1FF;
@@ -99,19 +95,16 @@ ImagePtr BashBackgroundLayer::imageFromCode(unsigned int code,
 
 
 std::string BashMapType::getMapCode() const
-	throw ()
 {
 	return "map-bash";
 }
 
 std::string BashMapType::getFriendlyName() const
-	throw ()
 {
 	return "Monster Bash level";
 }
 
 std::vector<std::string> BashMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("mif");
@@ -119,7 +112,6 @@ std::vector<std::string> BashMapType::getFileExtensions() const
 }
 
 std::vector<std::string> BashMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Monster Bash");
@@ -127,7 +119,6 @@ std::vector<std::string> BashMapType::getGameList() const
 }
 
 MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::len len = psMap->size();
 	if ((len == 194) || (len == 195)) return MapType::PossiblyYes;
@@ -135,14 +126,12 @@ MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr BashMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	stream::input_sptr bg = suppData[SuppItem::Layer1];
 	stream::input_sptr fg = suppData[SuppItem::Layer2];
@@ -229,7 +218,6 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -337,7 +325,6 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 
 SuppFilenames BashMapType::getRequiredSupps(
 	const std::string& filenameMap) const
-	throw ()
 {
 	SuppFilenames supps;
 	std::string baseName = filenameMap.substr(0, filenameMap.length() - 3);

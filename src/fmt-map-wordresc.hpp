@@ -31,76 +31,59 @@ class WordRescueMapType: virtual public MapType {
 
 	public:
 
-		virtual std::string getMapCode() const
-			throw ();
+		virtual std::string getMapCode() const;
 
-		virtual std::string getFriendlyName() const
-			throw ();
+		virtual std::string getFriendlyName() const;
 
-		virtual std::vector<std::string> getFileExtensions() const
-			throw ();
+		virtual std::vector<std::string> getFileExtensions() const;
 
-		virtual std::vector<std::string> getGameList() const
-			throw ();
+		virtual std::vector<std::string> getGameList() const;
 
-		virtual Certainty isInstance(stream::input_sptr psMap) const
-			throw (stream::error);
+		virtual Certainty isInstance(stream::input_sptr psMap) const;
 
-		virtual MapPtr create(SuppData& suppData) const
-			throw (stream::error);
+		virtual MapPtr create(SuppData& suppData) const;
 
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
-			throw (stream::error);
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
 
-		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-			throw (stream::error);
+		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const;
 
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
-			throw ();
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const;
 
 };
 
 class WordRescueBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
-		WordRescueBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			throw ();
+		WordRescueBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
 };
 
 class WordRescueObjectLayer: virtual public Map2D::Layer {
 
 	public:
-		WordRescueObjectLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			throw ();
+		WordRescueObjectLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
 		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCount)
-			throw ();
+			unsigned int y, unsigned int *maxCount);
 
 };
 
 class WordRescueAttributeLayer: virtual public Map2D::Layer {
 
 	public:
-		WordRescueAttributeLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			throw ();
+		WordRescueAttributeLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
 		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCount)
-			throw ();
+			unsigned int y, unsigned int *maxCount);
 
 };
 

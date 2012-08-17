@@ -49,8 +49,7 @@ using namespace camoto::gamegraphics;
 
 CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -62,7 +61,6 @@ CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr CCavesBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	// TODO
 	return ImagePtr();
@@ -70,19 +68,16 @@ ImagePtr CCavesBackgroundLayer::imageFromCode(unsigned int code,
 
 
 std::string CCavesMapType::getMapCode() const
-	throw ()
 {
 	return "map-ccaves";
 }
 
 std::string CCavesMapType::getFriendlyName() const
-	throw ()
 {
 	return "Crystal Caves level";
 }
 
 std::vector<std::string> CCavesMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("ccl");
@@ -90,7 +85,6 @@ std::vector<std::string> CCavesMapType::getFileExtensions() const
 }
 
 std::vector<std::string> CCavesMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Crystal Caves");
@@ -98,7 +92,6 @@ std::vector<std::string> CCavesMapType::getGameList() const
 }
 
 MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -140,14 +133,12 @@ MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr CCavesMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	stream::pos lenMap = input->size();
 
@@ -192,7 +183,6 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");

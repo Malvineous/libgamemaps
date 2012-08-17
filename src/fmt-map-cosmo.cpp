@@ -57,8 +57,7 @@ using namespace camoto::gamegraphics;
 
 CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Actors",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -69,7 +68,6 @@ CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items,
 }
 
 ImagePtr CosmoActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
-	throw ()
 {
 	// TODO
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
@@ -81,8 +79,7 @@ ImagePtr CosmoActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 
 CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -94,7 +91,6 @@ CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr CosmoBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 2) return ImagePtr(); // no tileset?!
 	unsigned int i = code >> 3; // divide by 8
@@ -115,19 +111,16 @@ ImagePtr CosmoBackgroundLayer::imageFromCode(unsigned int code,
 
 
 std::string CosmoMapType::getMapCode() const
-	throw ()
 {
 	return "map-cosmo";
 }
 
 std::string CosmoMapType::getFriendlyName() const
-	throw ()
 {
 	return "Cosmo's Cosmic Adventures level";
 }
 
 std::vector<std::string> CosmoMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("mni");
@@ -135,7 +128,6 @@ std::vector<std::string> CosmoMapType::getFileExtensions() const
 }
 
 std::vector<std::string> CosmoMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Cosmo's Cosmic Adventures");
@@ -143,7 +135,6 @@ std::vector<std::string> CosmoMapType::getGameList() const
 }
 
 MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -177,14 +168,12 @@ MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr CosmoMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	stream::pos lenMap = input->size();
 	input->seekg(0, stream::start);
@@ -250,7 +239,6 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");

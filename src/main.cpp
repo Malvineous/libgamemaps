@@ -38,13 +38,11 @@ namespace camoto {
 namespace gamemaps {
 
 ManagerPtr getManager()
-	throw ()
 {
 	return ManagerPtr(new Manager());
 }
 
 Manager::Manager()
-	throw ()
 {
 	this->vcTypes.push_back(MapTypePtr(new BashMapType()));
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
@@ -60,19 +58,16 @@ Manager::Manager()
 }
 
 Manager::~Manager()
-	throw ()
 {
 }
 
 MapTypePtr Manager::getMapType(unsigned int iIndex)
-	throw ()
 {
 	if (iIndex >= this->vcTypes.size()) return MapTypePtr();
 	return this->vcTypes[iIndex];
 }
 
 MapTypePtr Manager::getMapTypeByCode(const std::string& strCode)
-	throw ()
 {
 	for (VC_MAPTYPE::const_iterator i = this->vcTypes.begin(); i != this->vcTypes.end(); i++) {
 		if ((*i)->getMapCode().compare(strCode) == 0) return *i;

@@ -31,41 +31,31 @@ class HarryMapType: virtual public MapType {
 
 	public:
 
-		virtual std::string getMapCode() const
-			throw ();
+		virtual std::string getMapCode() const;
 
-		virtual std::string getFriendlyName() const
-			throw ();
+		virtual std::string getFriendlyName() const;
 
-		virtual std::vector<std::string> getFileExtensions() const
-			throw ();
+		virtual std::vector<std::string> getFileExtensions() const;
 
-		virtual std::vector<std::string> getGameList() const
-			throw ();
+		virtual std::vector<std::string> getGameList() const;
 
-		virtual Certainty isInstance(stream::input_sptr psMap) const
-			throw (stream::error);
+		virtual Certainty isInstance(stream::input_sptr psMap) const;
 
-		virtual MapPtr create(SuppData& suppData) const
-			throw (stream::error);
+		virtual MapPtr create(SuppData& suppData) const;
 
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
-			throw (stream::error);
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
 
-		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-			throw (stream::error);
+		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const;
 
 };
 
 class HarryActorLayer: virtual public Map2D::Layer {
 
 	public:
-		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			throw ();
+		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
 };
 
@@ -73,12 +63,10 @@ class HarryBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
 		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems)
-			throw ();
+			ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
 };
 

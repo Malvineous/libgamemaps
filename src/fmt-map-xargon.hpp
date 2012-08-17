@@ -31,17 +31,13 @@ namespace gamemaps {
 class SweeneyMapType: virtual public MapType {
 
 	public:
-		virtual Certainty isInstance(stream::input_sptr psMap) const
-			throw (stream::error);
+		virtual Certainty isInstance(stream::input_sptr psMap) const;
 
-		virtual MapPtr create(SuppData& suppData) const
-			throw (stream::error);
+		virtual MapPtr create(SuppData& suppData) const;
 
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const
-			throw (stream::error);
+		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
 
-		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-			throw (stream::error);
+		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const;
 
 		typedef std::map<uint16_t, uint16_t> image_map;
 		typedef boost::shared_ptr<image_map> image_map_sptr;
@@ -54,46 +50,34 @@ class SweeneyMapType: virtual public MapType {
 class JillMapType: virtual public SweeneyMapType {
 
 	public:
-		JillMapType()
-			throw ();
+		JillMapType();
 
-		virtual std::string getMapCode() const
-			throw ();
+		virtual std::string getMapCode() const;
 
-		virtual std::string getFriendlyName() const
-			throw ();
+		virtual std::string getFriendlyName() const;
 
-		virtual std::vector<std::string> getFileExtensions() const
-			throw ();
+		virtual std::vector<std::string> getFileExtensions() const;
 
-		virtual std::vector<std::string> getGameList() const
-			throw ();
+		virtual std::vector<std::string> getGameList() const;
 
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
-			throw ();
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const;
 };
 
 /// Xargon level reader/writer.
 class XargonMapType: virtual public SweeneyMapType {
 
 	public:
-		XargonMapType()
-			throw ();
+		XargonMapType();
 
-		virtual std::string getMapCode() const
-			throw ();
+		virtual std::string getMapCode() const;
 
-		virtual std::string getFriendlyName() const
-			throw ();
+		virtual std::string getFriendlyName() const;
 
-		virtual std::vector<std::string> getFileExtensions() const
-			throw ();
+		virtual std::vector<std::string> getFileExtensions() const;
 
-		virtual std::vector<std::string> getGameList() const
-			throw ();
+		virtual std::vector<std::string> getGameList() const;
 
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const
-			throw ();
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const;
 };
 
 
@@ -101,18 +85,14 @@ class SweeneyBackgroundLayer: virtual public Map2D::Layer {
 
 	public:
 		SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
-			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-			throw ();
+			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems);
 
-		virtual ~SweeneyBackgroundLayer()
-			throw ();
+		virtual ~SweeneyBackgroundLayer();
 
 		gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
-		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset)
-			throw ();
+		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset);
 
 	protected:
 		SweeneyMapType::image_map_sptr imgMap;
@@ -123,18 +103,14 @@ class SweeneyObjectLayer: virtual public Map2D::Layer {
 
 	public:
 		SweeneyObjectLayer(ItemPtrVectorPtr& items,
-			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-			throw ();
+			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems);
 
-		virtual ~SweeneyObjectLayer()
-			throw ();
+		virtual ~SweeneyObjectLayer();
 
 		gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset)
-			throw ();
+			camoto::gamegraphics::VC_TILESET& tileset);
 
-		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset)
-			throw ();
+		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset);
 
 	protected:
 		SweeneyMapType::image_map_sptr imgMap;

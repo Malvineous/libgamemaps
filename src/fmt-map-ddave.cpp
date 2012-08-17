@@ -54,8 +54,7 @@ using namespace camoto::gamegraphics;
 
 DDaveBackgroundLayer::DDaveBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -67,7 +66,6 @@ DDaveBackgroundLayer::DDaveBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr DDaveBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
@@ -76,19 +74,16 @@ ImagePtr DDaveBackgroundLayer::imageFromCode(unsigned int code,
 }
 
 std::string DDaveMapType::getMapCode() const
-	throw ()
 {
 	return "map-ddave";
 }
 
 std::string DDaveMapType::getFriendlyName() const
-	throw ()
 {
 	return "Dangerous Dave level";
 }
 
 std::vector<std::string> DDaveMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("dav");
@@ -96,7 +91,6 @@ std::vector<std::string> DDaveMapType::getFileExtensions() const
 }
 
 std::vector<std::string> DDaveMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Dangerous Dave");
@@ -104,7 +98,6 @@ std::vector<std::string> DDaveMapType::getGameList() const
 }
 
 MapType::Certainty DDaveMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -126,14 +119,12 @@ MapType::Certainty DDaveMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr DDaveMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	input->seekg(0, stream::start);
 
@@ -195,7 +186,6 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");

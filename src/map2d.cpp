@@ -28,8 +28,7 @@ Map2D::Map2D(AttributePtrVectorPtr attributes, int caps,
 	unsigned int viewportWidth, unsigned int viewportHeight, unsigned int width,
 	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
 	LayerPtrVector& layers, PathPtrVectorPtr paths)
-	throw () :
-		Map(attributes),
+	:	Map(attributes),
 		caps(caps),
 		viewportWidth(viewportWidth), viewportHeight(viewportHeight),
 		width(width), height(height),
@@ -44,18 +43,15 @@ Map2D::Map2D(AttributePtrVectorPtr attributes, int caps,
 }
 
 Map2D::~Map2D()
-	throw ()
 {
 }
 
 int Map2D::getCaps()
-	throw ()
 {
 	return this->caps;
 }
 
 void Map2D::getViewport(unsigned int *x, unsigned int *y)
-	throw ()
 {
 	assert(this->getCaps() & HasViewport);
 
@@ -65,7 +61,6 @@ void Map2D::getViewport(unsigned int *x, unsigned int *y)
 }
 
 void Map2D::getMapSize(unsigned int *x, unsigned int *y)
-	throw ()
 {
 	*x = this->width;
 	*y = this->height;
@@ -73,7 +68,6 @@ void Map2D::getMapSize(unsigned int *x, unsigned int *y)
 }
 
 void Map2D::setMapSize(unsigned int x, unsigned int y)
-	throw ()
 {
 	assert(this->getCaps() & CanResize);
 
@@ -83,7 +77,6 @@ void Map2D::setMapSize(unsigned int x, unsigned int y)
 }
 
 void Map2D::getTileSize(unsigned int *x, unsigned int *y)
-	throw ()
 {
 	*x = this->tileWidth;
 	*y = this->tileHeight;
@@ -91,7 +84,6 @@ void Map2D::getTileSize(unsigned int *x, unsigned int *y)
 }
 
 void Map2D::setTileSize(unsigned int x, unsigned int y)
-	throw ()
 {
 	assert(this->getCaps() & ChangeTileSize);
 
@@ -101,20 +93,17 @@ void Map2D::setTileSize(unsigned int x, unsigned int y)
 }
 
 unsigned int Map2D::getLayerCount()
-	throw ()
 {
 	return this->layers.size();
 }
 
 Map2D::LayerPtr Map2D::getLayer(unsigned int index)
-	throw ()
 {
 	assert(index < this->getLayerCount());
 	return this->layers[index];
 }
 
 Map2D::PathPtrVectorPtr Map2D::getPaths()
-	throw ()
 {
 	return this->paths;
 }

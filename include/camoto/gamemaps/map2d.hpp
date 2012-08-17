@@ -118,19 +118,16 @@ class Map2D: virtual public Map {
 		Map2D(AttributePtrVectorPtr attributes, int caps,
 			unsigned int viewportWidth, unsigned int viewportHeight,
 			unsigned int width, unsigned int height, unsigned int tileWidth,
-			unsigned int tileHeight, LayerPtrVector& layers, PathPtrVectorPtr paths)
-			throw ();
+			unsigned int tileHeight, LayerPtrVector& layers, PathPtrVectorPtr paths);
 
 		/// Destructor.
-		virtual ~Map2D()
-			throw ();
+		virtual ~Map2D();
 
 		/// Get the capabilities of this map format.
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual int getCaps()
-			throw ();
+		virtual int getCaps();
 
 		/// Retrieve the size of the in-game viewport.
 		/**
@@ -145,8 +142,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   Pointer to store layer height, in pixels.
 		 */
-		virtual void getViewport(unsigned int *x, unsigned int *y)
-			throw ();
+		virtual void getViewport(unsigned int *x, unsigned int *y);
 
 		/// Retrieve the size of the map.
 		/**
@@ -160,8 +156,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getMapSize(unsigned int *x, unsigned int *y)
-			throw ();
+		virtual void getMapSize(unsigned int *x, unsigned int *y);
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -173,8 +168,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   New layer height, as number of tiles.
 		 */
-		virtual void setMapSize(unsigned int x, unsigned int y)
-			throw ();
+		virtual void setMapSize(unsigned int x, unsigned int y);
 
 		/// Retrieve the size of each cell in the layer's grid.
 		/**
@@ -186,8 +180,7 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y)
-			throw ();
+		virtual void getTileSize(unsigned int *x, unsigned int *y);
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -199,15 +192,13 @@ class Map2D: virtual public Map {
 		 * @param y
 		 *   New tile height in pixels.
 		 */
-		virtual void setTileSize(unsigned int x, unsigned int y)
-			throw ();
+		virtual void setTileSize(unsigned int x, unsigned int y);
 
 		/// Get the number of layers in the map.
 		/**
 		 * @return Number of layers.  All maps have at least one layer.
 		 */
-		virtual unsigned int getLayerCount()
-			throw ();
+		virtual unsigned int getLayerCount();
 
 		/// Get access to the given layer.
 		/**
@@ -216,8 +207,7 @@ class Map2D: virtual public Map {
 		 *
 		 * @return A shared pointer to the layer.
 		 */
-		virtual LayerPtr getLayer(unsigned int index)
-			throw ();
+		virtual LayerPtr getLayer(unsigned int index);
 
 		/// Get a list of paths in the level.
 		/**
@@ -230,8 +220,7 @@ class Map2D: virtual public Map {
 		 *   the vector can be edited, but if getCaps() includes FixedPaths then
 		 *   paths cannot be created or removed.
 		 */
-		virtual PathPtrVectorPtr getPaths()
-			throw ();
+		virtual PathPtrVectorPtr getPaths();
 
 	protected:
 		int caps;               ///< Value to return in getCaps().
@@ -302,26 +291,22 @@ class Map2D::Layer {
 		 */
 		Layer(const std::string& title, int caps, unsigned int width,
 			unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
-			ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			throw ();
+			ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		/// Destructor.
-		virtual ~Layer()
-			throw ();
+		virtual ~Layer();
 
 		/// Get the layer's friendly name.
 		/**
 		 * @return A string containing a name suitable for display to the user.
 		 */
-		virtual const std::string& getTitle()
-			throw ();
+		virtual const std::string& getTitle();
 
 		/// Get the capabilities of this layer.
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual int getCaps()
-			throw ();
+		virtual int getCaps();
 
 		/// Retrieve the size of the layer.
 		/**
@@ -334,8 +319,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getLayerSize(unsigned int *x, unsigned int *y)
-			throw ();
+		virtual void getLayerSize(unsigned int *x, unsigned int *y);
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -347,8 +331,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   New layer height, as number of tiles.
 		 */
-		virtual void setLayerSize(unsigned int x, unsigned int y)
-			throw ();
+		virtual void setLayerSize(unsigned int x, unsigned int y);
 
 		/// Retrieve the size of each cell in the layer's grid.
 		/**
@@ -361,8 +344,7 @@ class Map2D::Layer {
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y)
-			throw ();
+		virtual void getTileSize(unsigned int *x, unsigned int *y);
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -374,15 +356,13 @@ class Map2D::Layer {
 		 * @param y
 		 *   New tile height in pixels.
 		 */
-		virtual void setTileSize(unsigned int x, unsigned int y)
-			throw ();
+		virtual void setTileSize(unsigned int x, unsigned int y);
 
 		/// Get a list of all tiles in the layer.
 		/**
 		 * @return Vector of all tiles.  The tiles are in any order.
 		 */
-		virtual const ItemPtrVectorPtr getAllItems()
-			throw ();
+		virtual const ItemPtrVectorPtr getAllItems();
 
 		/// Convert a map code into an image.
 		/**
@@ -401,8 +381,7 @@ class Map2D::Layer {
 		 *   unknown/question mark tile being used.
 		 */
 		virtual camoto::gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			gamegraphics::VC_TILESET& tileset)
-			throw ();
+			gamegraphics::VC_TILESET& tileset);
 
 		/// Is the given tile permitted at the specified location?
 		/**
@@ -425,8 +404,7 @@ class Map2D::Layer {
 		 *  limits notwithstanding) or false if the tile cannot be placed here.
 		 */
 		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCount)
-			throw ();
+			unsigned int y, unsigned int *maxCount);
 
 		/// Get the palette to use with this layer.
 		/**
@@ -439,8 +417,7 @@ class Map2D::Layer {
 		 * @return Shared pointer to a PaletteTable.
 		 */
 		virtual gamegraphics::PaletteTablePtr getPalette(
-			gamegraphics::VC_TILESET& tileset)
-			throw ();
+			gamegraphics::VC_TILESET& tileset);
 
 		/// Get a list of all possible items that can be placed in the layer.
 		/**
@@ -452,8 +429,7 @@ class Map2D::Layer {
 		 *
 		 * @return Vector of all items.
 		 */
-		virtual const ItemPtrVectorPtr getValidItemList()
-			throw ();
+		virtual const ItemPtrVectorPtr getValidItemList();
 
 	protected:
 		std::string title;       ///< Layer's friendly name
@@ -470,7 +446,7 @@ class Map2D::Layer {
 /// Item within the layer (a tile)
 class Map2D::Layer::Item {
 	public:
-		virtual ~Item() throw ();
+		virtual ~Item();
 
 		unsigned int x;  ///< Item location in units of tiles
 		unsigned int y;  ///< Item location in units of tiles
@@ -492,7 +468,7 @@ const unsigned int INVALID_TILECODE = (unsigned int)-1;
 /// A player's starting location stored within the layer.
 class Map2D::Layer::Item::Player: virtual public Map2D::Layer::Item {
 	public:
-		virtual ~Player() throw ();
+		virtual ~Player();
 
 		unsigned int player;  ///< 0 for main player, 1 for second player, etc.
 		bool facingLeft;      ///< true to face left, false to face right
@@ -501,7 +477,7 @@ class Map2D::Layer::Item::Player: virtual public Map2D::Layer::Item {
 /// A text element stored within the layer.
 class Map2D::Layer::Item::Text: virtual public Map2D::Layer::Item {
 	public:
-		virtual ~Text() throw ();
+		virtual ~Text();
 
 		unsigned int font;    ///< Index of font to use (0 reserved for VGA 8x8)
 		std::string content;  ///< Actual content of the text element
@@ -510,7 +486,7 @@ class Map2D::Layer::Item::Text: virtual public Map2D::Layer::Item {
 /// An item that moves.
 class Map2D::Layer::Item::Movable: virtual public Map2D::Layer::Item {
 	public:
-		virtual ~Movable() throw ();
+		virtual ~Movable();
 
 		/// These flags control which fields are valid and able to be modified
 		enum Flags {

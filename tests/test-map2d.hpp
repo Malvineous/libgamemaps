@@ -81,8 +81,8 @@ struct FIXTURE_NAME: public default_sample {
 	camoto::SuppData suppData;
 	gm::MapTypePtr pTestType;
 
-	FIXTURE_NAME() :
-		base(new stream::string())
+	FIXTURE_NAME()
+		:	base(new stream::string())
 	{
 		this->base << makeString(INITIALSTATE_NAME);
 
@@ -108,8 +108,8 @@ struct FIXTURE_NAME: public default_sample {
 		BOOST_REQUIRE_MESSAGE(this->map2d, "Could not create map class");
 	}
 
-	FIXTURE_NAME(int i) :
-		base(new stream::string())
+	FIXTURE_NAME(int i)
+		:	base(new stream::string())
 	{
 	}
 

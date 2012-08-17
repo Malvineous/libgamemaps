@@ -24,34 +24,28 @@ namespace camoto {
 namespace gamemaps {
 
 Map::Map(AttributePtrVectorPtr attributes)
-	throw () :
-		attributes(attributes)
+	:	attributes(attributes)
 {
 }
 
 Map::~Map()
-	throw ()
 {
 }
 
 Map::AttributePtrVectorPtr Map::getAttributes()
-	throw ()
 {
 	return this->attributes;
 }
 
 Map::Attribute::~Attribute()
-	throw ()
 {
 }
 
 Map::IntAttribute::~IntAttribute()
-	throw ()
 {
 }
 
 Map::EnumAttribute::~EnumAttribute()
-	throw ()
 {
 }
 

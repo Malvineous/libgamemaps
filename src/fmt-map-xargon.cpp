@@ -51,8 +51,7 @@ using namespace camoto::gamegraphics;
 
 SweeneyBackgroundLayer::SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
 	SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::HasPalette,
 			0, 0,   // Layer size unused
@@ -64,13 +63,11 @@ SweeneyBackgroundLayer::SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
 }
 
 SweeneyBackgroundLayer::~SweeneyBackgroundLayer()
-	throw ()
 {
 }
 
 ImagePtr SweeneyBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	try {
@@ -102,7 +99,6 @@ ImagePtr SweeneyBackgroundLayer::imageFromCode(unsigned int code,
 }
 
 PaletteTablePtr SweeneyBackgroundLayer::getPalette(VC_TILESET& tileset)
-	throw ()
 {
 	// Try (Xargon) to load the palette from tile 0.5.0
 	const Tileset::VC_ENTRYPTR& tilesets = tileset[0]->getItems();
@@ -129,8 +125,7 @@ PaletteTablePtr SweeneyBackgroundLayer::getPalette(VC_TILESET& tileset)
 
 SweeneyObjectLayer::SweeneyObjectLayer(ItemPtrVectorPtr& items,
 	SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Objects",
 			Map2D::Layer::HasOwnTileSize | Map2D::Layer::HasPalette,
 			0, 0, // Layer size unused
@@ -142,19 +137,16 @@ SweeneyObjectLayer::SweeneyObjectLayer(ItemPtrVectorPtr& items,
 }
 
 SweeneyObjectLayer::~SweeneyObjectLayer()
-	throw ()
 {
 }
 
 ImagePtr SweeneyObjectLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	return ImagePtr(); // unknown map code
 }
 
 PaletteTablePtr SweeneyObjectLayer::getPalette(VC_TILESET& tileset)
-	throw ()
 {
 	// Try (Xargon) to load the palette from tile 0.5.0
 	const Tileset::VC_ENTRYPTR& tilesets = tileset[0]->getItems();
@@ -185,25 +177,21 @@ PaletteTablePtr SweeneyObjectLayer::getPalette(VC_TILESET& tileset)
 //
 
 JillMapType::JillMapType()
-	throw ()
 {
 	this->lenSavedata = JILL_LEN_SAVEDATA;
 }
 
 std::string JillMapType::getMapCode() const
-	throw ()
 {
 	return "map-jill";
 }
 
 std::string JillMapType::getFriendlyName() const
-	throw ()
 {
 	return "Jill of the Jungle map";
 }
 
 std::vector<std::string> JillMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("jn1");
@@ -213,7 +201,6 @@ std::vector<std::string> JillMapType::getFileExtensions() const
 }
 
 std::vector<std::string> JillMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Jill of the Jungle");
@@ -222,7 +209,6 @@ std::vector<std::string> JillMapType::getGameList() const
 
 SuppFilenames JillMapType::getRequiredSupps(
 	const std::string& filenameMap) const
-	throw ()
 {
 	SuppFilenames supps;
 	supps[SuppItem::Extra1] = "jill.dma";
@@ -235,25 +221,21 @@ SuppFilenames JillMapType::getRequiredSupps(
 //
 
 XargonMapType::XargonMapType()
-	throw ()
 {
 	this->lenSavedata = XR_LEN_SAVEDATA;
 }
 
 std::string XargonMapType::getMapCode() const
-	throw ()
 {
 	return "map-xargon";
 }
 
 std::string XargonMapType::getFriendlyName() const
-	throw ()
 {
 	return "Xargon map";
 }
 
 std::vector<std::string> XargonMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("xr0");
@@ -264,7 +246,6 @@ std::vector<std::string> XargonMapType::getFileExtensions() const
 }
 
 std::vector<std::string> XargonMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Xargon");
@@ -273,7 +254,6 @@ std::vector<std::string> XargonMapType::getGameList() const
 
 SuppFilenames XargonMapType::getRequiredSupps(
 	const std::string& filenameMap) const
-	throw ()
 {
 	// Take the extension from the file being opened and use the corresponding
 	// tiles file, i.e. "blah.xr1" -> "tiles.xr1".  There are no ".xr0" levels.
@@ -289,7 +269,6 @@ SuppFilenames XargonMapType::getRequiredSupps(
 //
 
 MapType::Certainty SweeneyMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -328,14 +307,12 @@ MapType::Certainty SweeneyMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr SweeneyMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	// Read the tile properties from the suppdata
 	stream::input_sptr dma = suppData[SuppItem::Extra1];
@@ -544,7 +521,6 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");

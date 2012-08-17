@@ -24,12 +24,10 @@ namespace camoto {
 namespace gamemaps {
 
 MapType::~MapType()
-	throw ()
 {
 }
 
 SuppFilenames MapType::getRequiredSupps(const std::string& filenameMap) const
-	throw ()
 {
 	// No supplemental types/empty list
 	return SuppFilenames();

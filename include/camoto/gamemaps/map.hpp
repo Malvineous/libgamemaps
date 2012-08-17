@@ -57,7 +57,7 @@ class Map: virtual public Metadata {
 			std::string name;  ///< Short name of this attribute
 			std::string desc;  ///< Description of this attribute
 
-			virtual ~Attribute() throw ();
+			virtual ~Attribute();
 		};
 
 		/// Shared pointer to an Attribute.
@@ -76,7 +76,7 @@ class Map: virtual public Metadata {
 			int minValue;
 			int maxValue;
 
-			virtual ~IntAttribute() throw ();
+			virtual ~IntAttribute();
 		};
 
 		/// Attribute that can be a single value from a list of permitted values.
@@ -85,18 +85,15 @@ class Map: virtual public Metadata {
 
 			std::vector<std::string> values;
 
-			virtual ~EnumAttribute() throw ();
+			virtual ~EnumAttribute();
 		};
 
 
-		Map(AttributePtrVectorPtr attributes)
-			throw ();
+		Map(AttributePtrVectorPtr attributes);
 
-		virtual ~Map()
-			throw ();
+		virtual ~Map();
 
-		virtual AttributePtrVectorPtr getAttributes()
-			throw ();
+		virtual AttributePtrVectorPtr getAttributes();
 
 	protected:
 		AttributePtrVectorPtr attributes;

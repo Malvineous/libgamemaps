@@ -54,8 +54,7 @@ using namespace camoto::gamegraphics;
 
 WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Surface",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -67,7 +66,6 @@ WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr WackyBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	unsigned int t = code / WW_TILES_PER_TILESET;
 	code = code % WW_TILES_PER_TILESET;
@@ -78,19 +76,16 @@ ImagePtr WackyBackgroundLayer::imageFromCode(unsigned int code,
 }
 
 std::string WackyMapType::getMapCode() const
-	throw ()
 {
 	return "map-wacky";
 }
 
 std::string WackyMapType::getFriendlyName() const
-	throw ()
 {
 	return "Wacky Wheels level";
 }
 
 std::vector<std::string> WackyMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("m");
@@ -98,7 +93,6 @@ std::vector<std::string> WackyMapType::getFileExtensions() const
 }
 
 std::vector<std::string> WackyMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Wacky Wheels");
@@ -106,7 +100,6 @@ std::vector<std::string> WackyMapType::getGameList() const
 }
 
 MapType::Certainty WackyMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -130,14 +123,12 @@ MapType::Certainty WackyMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr WackyMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	/// @todo Implement WackyMapType::create()
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	input->seekg(0, stream::start);
 
@@ -204,7 +195,6 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -283,7 +273,6 @@ stream::len WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData
 
 SuppFilenames WackyMapType::getRequiredSupps(
 	const std::string& filenameMap) const
-	throw ()
 {
 	SuppFilenames supps;
 	std::string baseName = filenameMap.substr(0, filenameMap.length() - 1);

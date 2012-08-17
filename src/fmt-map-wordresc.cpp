@@ -81,8 +81,7 @@ using namespace camoto::gamegraphics;
 
 WordRescueBackgroundLayer::WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -94,7 +93,6 @@ WordRescueBackgroundLayer::WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr WordRescueBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() <= 0) return ImagePtr();
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
@@ -105,8 +103,7 @@ ImagePtr WordRescueBackgroundLayer::imageFromCode(unsigned int code,
 
 WordRescueObjectLayer::WordRescueObjectLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Items",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -118,7 +115,6 @@ WordRescueObjectLayer::WordRescueObjectLayer(ItemPtrVectorPtr& items,
 
 ImagePtr WordRescueObjectLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	unsigned int t;
 	switch (code) {
@@ -148,7 +144,6 @@ ImagePtr WordRescueObjectLayer::imageFromCode(unsigned int code,
 
 bool WordRescueObjectLayer::tilePermittedAt(unsigned int code,
 	unsigned int x, unsigned int y, unsigned int *maxCodes)
-	throw ()
 {
 	if ((code == WR_CODE_ENTRANCE) || (code == WR_CODE_EXIT)) {
 		*maxCodes = 1; // only one level entrance/exit permitted
@@ -161,8 +156,7 @@ bool WordRescueObjectLayer::tilePermittedAt(unsigned int code,
 
 WordRescueAttributeLayer::WordRescueAttributeLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Attributes",
 			Map2D::Layer::HasOwnTileSize,
 			0, 0,
@@ -174,7 +168,6 @@ WordRescueAttributeLayer::WordRescueAttributeLayer(ItemPtrVectorPtr& items,
 
 ImagePtr WordRescueAttributeLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	unsigned int t;
 	switch (code) {
@@ -198,7 +191,6 @@ ImagePtr WordRescueAttributeLayer::imageFromCode(unsigned int code,
 
 bool WordRescueAttributeLayer::tilePermittedAt(unsigned int code,
 	unsigned int x, unsigned int y, unsigned int *maxCodes)
-	throw ()
 {
 	if (x == 0) return false; // can't place tiles in this column
 	return true; // otherwise unrestricted
@@ -250,19 +242,16 @@ int rleWrite(stream::output_sptr output, uint8_t *data, int len)
 
 
 std::string WordRescueMapType::getMapCode() const
-	throw ()
 {
 	return "map-wordresc";
 }
 
 std::string WordRescueMapType::getFriendlyName() const
-	throw ()
 {
 	return "Word Rescue level";
 }
 
 std::vector<std::string> WordRescueMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("s0");
@@ -289,7 +278,6 @@ std::vector<std::string> WordRescueMapType::getFileExtensions() const
 }
 
 std::vector<std::string> WordRescueMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Word Rescue");
@@ -297,7 +285,6 @@ std::vector<std::string> WordRescueMapType::getGameList() const
 }
 
 MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -358,14 +345,12 @@ MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr WordRescueMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	input->seekg(0, stream::start);
 
@@ -611,7 +596,6 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 }
 
 stream::len WordRescueMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -800,7 +784,6 @@ stream::len WordRescueMapType::write(MapPtr map, stream::output_sptr output, Sup
 
 SuppFilenames WordRescueMapType::getRequiredSupps(
 	const std::string& filenameMap) const
-	throw ()
 {
 	SuppFilenames supps;
 	/// Add wr1.d0 (to wr1.d14) layer file

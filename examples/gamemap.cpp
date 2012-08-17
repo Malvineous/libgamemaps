@@ -77,7 +77,6 @@ struct CachedTile {
  * @throw stream::error on error
  */
 gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
-	throw (stream::error)
 {
 	gg::ManagerPtr pManager(gg::getManager());
 
@@ -177,7 +176,6 @@ finishTesting:
  */
 void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	const std::string& destFile)
-	throw (stream::error)
 {
 	unsigned int outWidth, outHeight; // in pixels
 	unsigned int globalTileWidth, globalTileHeight;

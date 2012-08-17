@@ -43,8 +43,7 @@ typedef boost::shared_ptr<Manager> ManagerPtr;
  *
  * @return A shared pointer to a Manager instance.
  */
-ManagerPtr getManager(void)
-	throw ();
+ManagerPtr getManager(void);
 
 /// Top-level class to manage map types.
 /**
@@ -64,16 +63,13 @@ class Manager {
 		/// List of available map types.
 		VC_MAPTYPE vcTypes;
 
-		Manager()
-			throw ();
+		Manager();
 
-		friend ManagerPtr getManager(void)
-			throw ();
+		friend ManagerPtr getManager(void);
 
 	public:
 
-		~Manager()
-			throw ();
+		~Manager();
 
 		/// Get an MapType instance for a supported file format.
 		/**
@@ -84,8 +80,7 @@ class Manager {
 		 *         an empty pointer once iIndex goes out of range.
 		 * @todo Remove this and replace it with a function that just returns the vector.
 		 */
-		MapTypePtr getMapType(unsigned int iIndex)
-			throw ();
+		MapTypePtr getMapType(unsigned int iIndex);
 
 		/// Get an MapType instance by its code.
 		/**
@@ -93,8 +88,7 @@ class Manager {
 		 * @return A shared pointer to an MapType for the given code, or
 		 *         an empty pointer on an invalid code.
 		 */
-		MapTypePtr getMapTypeByCode(const std::string& strCode)
-			throw ();
+		MapTypePtr getMapTypeByCode(const std::string& strCode);
 };
 
 } // namespace gamemaps

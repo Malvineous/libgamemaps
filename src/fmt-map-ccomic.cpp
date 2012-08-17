@@ -42,8 +42,7 @@ using namespace camoto::gamegraphics;
 
 CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -55,7 +54,6 @@ CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items,
 
 ImagePtr CComicBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
@@ -64,19 +62,16 @@ ImagePtr CComicBackgroundLayer::imageFromCode(unsigned int code,
 }
 
 std::string CComicMapType::getMapCode() const
-	throw ()
 {
 	return "map-ccomic";
 }
 
 std::string CComicMapType::getFriendlyName() const
-	throw ()
 {
 	return "Captain Comic level";
 }
 
 std::vector<std::string> CComicMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("pt");
@@ -84,7 +79,6 @@ std::vector<std::string> CComicMapType::getFileExtensions() const
 }
 
 std::vector<std::string> CComicMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Captain Comic");
@@ -92,7 +86,6 @@ std::vector<std::string> CComicMapType::getGameList() const
 }
 
 MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 
@@ -128,14 +121,12 @@ MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr CComicMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	input->seekg(0, stream::start);
 	unsigned int width, height;
@@ -179,7 +170,6 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len CComicMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");

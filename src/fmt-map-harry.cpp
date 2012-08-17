@@ -51,8 +51,7 @@ using namespace camoto::gamegraphics;
 
 HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			"Actors",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -63,7 +62,6 @@ HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items,
 }
 
 ImagePtr HarryActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
-	throw ()
 {
 	// TODO
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
@@ -75,8 +73,7 @@ ImagePtr HarryActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 
 HarryBackgroundLayer::HarryBackgroundLayer(const std::string& name,
 	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	throw () :
-		Map2D::Layer(
+	:	Map2D::Layer(
 			name,
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -88,7 +85,6 @@ HarryBackgroundLayer::HarryBackgroundLayer(const std::string& name,
 
 ImagePtr HarryBackgroundLayer::imageFromCode(unsigned int code,
 	VC_TILESET& tileset)
-	throw ()
 {
 	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
 	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
@@ -98,19 +94,16 @@ ImagePtr HarryBackgroundLayer::imageFromCode(unsigned int code,
 
 
 std::string HarryMapType::getMapCode() const
-	throw ()
 {
 	return "map-harry";
 }
 
 std::string HarryMapType::getFriendlyName() const
-	throw ()
 {
 	return "Halloween Harry level";
 }
 
 std::vector<std::string> HarryMapType::getFileExtensions() const
-	throw ()
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("gmf");
@@ -118,7 +111,6 @@ std::vector<std::string> HarryMapType::getFileExtensions() const
 }
 
 std::vector<std::string> HarryMapType::getGameList() const
-	throw ()
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Alien Carnage");
@@ -127,7 +119,6 @@ std::vector<std::string> HarryMapType::getGameList() const
 }
 
 MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
-	throw (stream::error)
 {
 	stream::pos lenMap = psMap->size();
 	// TESTED BY: fmt_map_harry_isinstance_c01
@@ -194,14 +185,12 @@ MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
 }
 
 MapPtr HarryMapType::create(SuppData& suppData) const
-	throw (stream::error)
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
 MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
-	throw (stream::error)
 {
 	input->seekg(0, stream::start);
 
@@ -337,7 +326,6 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 }
 
 stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
-	throw (stream::error)
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
