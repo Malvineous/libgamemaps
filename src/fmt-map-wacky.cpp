@@ -54,7 +54,7 @@ using namespace camoto::gamegraphics;
 
 WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Surface",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -182,7 +182,7 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	pathptr->maxPoints = 0; // no limit
 	paths->push_back(pathptr);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasPaths | Map2D::FixedPathCount,
 		0, 0,
@@ -194,7 +194,8 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void WackyMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -210,8 +211,6 @@ stream::len WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	if (suppData.find(SuppItem::Layer1) == suppData.end()) {
 		throw stream::error("No SuppItem::Layer1 specified (need *.rd file)");
 	}
-
-	unsigned long lenWritten = 0;
 
 	// Write the background layer
 	uint8_t bg[WW_LAYER_LEN_BG];
@@ -229,7 +228,6 @@ stream::len WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	}
 
 	output->write((char *)bg, WW_LAYER_LEN_BG);
-	lenWritten += WW_LAYER_LEN_BG;
 
 	stream::output_sptr rd = suppData[SuppItem::Layer1];
 	rd->seekp(0, stream::start);
@@ -268,7 +266,7 @@ stream::len WackyMapType::write(MapPtr map, stream::output_sptr output, SuppData
 
 	rd->truncate(2 + count * 14); // implicit flush
 
-	return lenWritten;
+	return;
 }
 
 SuppFilenames WackyMapType::getRequiredSupps(

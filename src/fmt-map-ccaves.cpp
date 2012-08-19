@@ -22,8 +22,8 @@
  */
 
 #include <boost/scoped_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
+#include "map2d-generic.hpp"
 #include "fmt-map-ccaves.hpp"
 
 #define CC_MAP_WIDTH            40
@@ -49,7 +49,7 @@ using namespace camoto::gamegraphics;
 
 CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -170,7 +170,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport,
 		CC_VIEWPORT_WIDTH, CC_VIEWPORT_HEIGHT,
@@ -182,14 +182,13 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
 		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned long lenWritten = 0;
 
 	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
@@ -215,12 +214,16 @@ stream::len CCavesMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 		output << u8(mapWidth);
 		output->write((char *)bg, mapWidth);
 		bg += mapWidth;
-		lenWritten += mapWidth;
 	}
-
-	return lenWritten;
+	return;
 }
 
+SuppFilenames CCavesMapType::getRequiredSupps(const std::string& filenameMap)
+	const
+{
+	SuppFilenames supps;
+	return supps;
+}
 
 } // namespace gamemaps
 } // namespace camoto

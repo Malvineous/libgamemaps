@@ -1,6 +1,6 @@
 /**
- * @file   map-generic.cpp
- * @brief  Generic implementation of Map interface.
+ * @file   base-maptype.hpp
+ * @brief  Shared functionality for all MapType classes.
  *
  * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -18,24 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "map-generic.hpp"
+#ifndef _CAMOTO_GAMEMAPS_BASE_MAPTYPE_HPP_
+#define _CAMOTO_GAMEMAPS_BASE_MAPTYPE_HPP_
+
+#include <camoto/gamemaps/maptype.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
-GenericMap::GenericMap(AttributePtrVectorPtr attributes)
-	:	attributes(attributes)
-{
-}
+/// SuppData equivalent but with expanding output streams instead.
+typedef std::map<SuppItem::Type, stream::expanding_output_sptr> ExpandingSuppData;
 
-GenericMap::~GenericMap()
+/// Standard functionality used by all map types
+class BaseMapType: virtual public MapType
 {
-}
+	public:
+		BaseMapType();
+		virtual ~BaseMapType();
 
-Map::AttributePtrVectorPtr GenericMap::getAttributes()
-{
-	return this->attributes;
-}
+		virtual void write(MapPtr map, stream::output_sptr output,
+			SuppData& suppData) const;
+
+		virtual void write(MapPtr map, stream::expanding_output_sptr output,
+			ExpandingSuppData& suppData) const = 0;
+};
 
 } // namespace gamemaps
 } // namespace camoto
+
+#endif // _CAMOTO_GAMEMAPS_BASE_MAPTYPE_HPP_

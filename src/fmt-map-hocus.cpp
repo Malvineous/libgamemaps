@@ -22,7 +22,7 @@
  */
 
 #include <boost/scoped_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
+#include "map2d-generic.hpp"
 #include <camoto/iostream_helpers.hpp>
 #include "fmt-map-hocus.hpp"
 
@@ -60,7 +60,7 @@ using namespace camoto::gamegraphics;
 
 HocusBackgroundLayer::HocusBackgroundLayer(const std::string& name,
 	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			name,
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -170,7 +170,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 	//layers.push_back(actorLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport,
 		HP_VIEWPORT_WIDTH, HP_VIEWPORT_HEIGHT,
@@ -182,7 +182,8 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len HocusMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void HocusMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -236,9 +237,15 @@ stream::len HocusMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	layerFile->flush();
 	assert(layerFile->tellp() == 14400);
 
-	return HP_MAP_SIZE;
+	return;
 }
 
+SuppFilenames HocusMapType::getRequiredSupps(const std::string& filenameMap)
+	const
+{
+	SuppFilenames supps;
+	return supps;
+}
 
 } // namespace gamemaps
 } // namespace camoto

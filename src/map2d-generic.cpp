@@ -1,8 +1,8 @@
 /**
- * @file   map2d.cpp
- * @brief  Implementation of base functions in Map2D class.
+ * @file   map2d-generic.cpp
+ * @brief  Generic implementation of a Map2D interface.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,17 +18,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <camoto/gamemaps/map2d.hpp>
 #include <cassert>
+#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Map2D(AttributePtrVectorPtr attributes, int caps,
+GenericMap2D::GenericMap2D(AttributePtrVectorPtr attributes, int caps,
 	unsigned int viewportWidth, unsigned int viewportHeight, unsigned int width,
 	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
 	LayerPtrVector& layers, PathPtrVectorPtr paths)
-	:	Map(attributes),
+	:	GenericMap(attributes),
 		caps(caps),
 		viewportWidth(viewportWidth), viewportHeight(viewportHeight),
 		width(width), height(height),
@@ -42,16 +42,16 @@ Map2D::Map2D(AttributePtrVectorPtr attributes, int caps,
 	assert(tileHeight > 0);
 }
 
-Map2D::~Map2D()
+GenericMap2D::~GenericMap2D()
 {
 }
 
-int Map2D::getCaps()
+int GenericMap2D::getCaps()
 {
 	return this->caps;
 }
 
-void Map2D::getViewport(unsigned int *x, unsigned int *y)
+void GenericMap2D::getViewport(unsigned int *x, unsigned int *y)
 {
 	assert(this->getCaps() & HasViewport);
 
@@ -60,14 +60,14 @@ void Map2D::getViewport(unsigned int *x, unsigned int *y)
 	return;
 }
 
-void Map2D::getMapSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::getMapSize(unsigned int *x, unsigned int *y)
 {
 	*x = this->width;
 	*y = this->height;
 	return;
 }
 
-void Map2D::setMapSize(unsigned int x, unsigned int y)
+void GenericMap2D::setMapSize(unsigned int x, unsigned int y)
 {
 	assert(this->getCaps() & CanResize);
 
@@ -76,14 +76,14 @@ void Map2D::setMapSize(unsigned int x, unsigned int y)
 	return;
 }
 
-void Map2D::getTileSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::getTileSize(unsigned int *x, unsigned int *y)
 {
 	*x = this->tileWidth;
 	*y = this->tileHeight;
 	return;
 }
 
-void Map2D::setTileSize(unsigned int x, unsigned int y)
+void GenericMap2D::setTileSize(unsigned int x, unsigned int y)
 {
 	assert(this->getCaps() & ChangeTileSize);
 
@@ -92,18 +92,18 @@ void Map2D::setTileSize(unsigned int x, unsigned int y)
 	return;
 }
 
-unsigned int Map2D::getLayerCount()
+unsigned int GenericMap2D::getLayerCount()
 {
 	return this->layers.size();
 }
 
-Map2D::LayerPtr Map2D::getLayer(unsigned int index)
+Map2D::LayerPtr GenericMap2D::getLayer(unsigned int index)
 {
 	assert(index < this->getLayerCount());
 	return this->layers[index];
 }
 
-Map2D::PathPtrVectorPtr Map2D::getPaths()
+Map2D::PathPtrVectorPtr GenericMap2D::getPaths()
 {
 	return this->paths;
 }

@@ -2,7 +2,7 @@
  * @file   fmt-map-wordresc.hpp
  * @brief  MapType and Map2D implementation for Word Rescue levels.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,70 +21,61 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_WORDRESC_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_WORDRESC_HPP_
 
-#include <camoto/gamemaps/maptype.hpp>
+#include "base-maptype.hpp"
+#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
 
 /// Word Rescue level reader/writer.
-class WordRescueMapType: virtual public MapType {
-
+class WordRescueMapType: virtual public BaseMapType
+{
 	public:
-
 		virtual std::string getMapCode() const;
-
 		virtual std::string getFriendlyName() const;
-
 		virtual std::vector<std::string> getFileExtensions() const;
-
 		virtual std::vector<std::string> getGameList() const;
-
 		virtual Certainty isInstance(stream::input_sptr psMap) const;
-
 		virtual MapPtr create(SuppData& suppData) const;
-
 		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
-
-		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const;
-
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const;
-
+		virtual void write(MapPtr map, stream::expanding_output_sptr output,
+			ExpandingSuppData& suppData) const;
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
+			const;
 };
 
-class WordRescueBackgroundLayer: virtual public Map2D::Layer {
-
+class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
+{
 	public:
-		WordRescueBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
+		WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 };
 
-class WordRescueObjectLayer: virtual public Map2D::Layer {
-
+class WordRescueObjectLayer: virtual public GenericMap2D::Layer
+{
 	public:
-		WordRescueObjectLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
+		WordRescueObjectLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
 			unsigned int y, unsigned int *maxCount);
-
 };
 
-class WordRescueAttributeLayer: virtual public Map2D::Layer {
-
+class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
+{
 	public:
-		WordRescueAttributeLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
+		WordRescueAttributeLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
 			unsigned int y, unsigned int *maxCount);
-
 };
 
 } // namespace gamemaps

@@ -18,9 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
-#include <camoto/gamemaps.hpp>
-#include <camoto/debug.hpp>
+#include <camoto/gamemaps/manager.hpp>
 
 // Include all the file formats for the Manager to load
 #include "fmt-map-bash.hpp"
@@ -37,12 +35,26 @@
 namespace camoto {
 namespace gamemaps {
 
-ManagerPtr getManager()
+class ActualManager: virtual public Manager
 {
-	return ManagerPtr(new Manager());
+	private:
+		/// List of available map types.
+		MapTypeVector vcTypes;
+
+	public:
+		ActualManager();
+		~ActualManager();
+
+		virtual const MapTypePtr getMapType(unsigned int iIndex) const;
+		virtual const MapTypePtr getMapTypeByCode(const std::string& strCode) const;
+};
+
+const ManagerPtr getManager()
+{
+	return ManagerPtr(new ActualManager());
 }
 
-Manager::Manager()
+ActualManager::ActualManager()
 {
 	this->vcTypes.push_back(MapTypePtr(new BashMapType()));
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
@@ -57,19 +69,20 @@ Manager::Manager()
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
 }
 
-Manager::~Manager()
+ActualManager::~ActualManager()
 {
 }
 
-MapTypePtr Manager::getMapType(unsigned int iIndex)
+const MapTypePtr ActualManager::getMapType(unsigned int iIndex) const
 {
 	if (iIndex >= this->vcTypes.size()) return MapTypePtr();
 	return this->vcTypes[iIndex];
 }
 
-MapTypePtr Manager::getMapTypeByCode(const std::string& strCode)
+const MapTypePtr ActualManager::getMapTypeByCode(const std::string& strCode)
+	const
 {
-	for (VC_MAPTYPE::const_iterator i = this->vcTypes.begin(); i != this->vcTypes.end(); i++) {
+	for (MapTypeVector::const_iterator i = this->vcTypes.begin(); i != this->vcTypes.end(); i++) {
 		if ((*i)->getMapCode().compare(strCode) == 0) return *i;
 	}
 	return MapTypePtr();

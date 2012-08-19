@@ -1,5 +1,5 @@
 /**
- * @file   map-generic.cpp
+ * @file   map-generic.hpp
  * @brief  Generic implementation of Map interface.
  *
  * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
@@ -18,24 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "map-generic.hpp"
+#ifndef _CAMOTO_GAMEMAPS_MAP_GENERIC_HPP_
+#define _CAMOTO_GAMEMAPS_MAP_GENERIC_HPP_
+
+#include <camoto/gamemaps/map.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
-GenericMap::GenericMap(AttributePtrVectorPtr attributes)
-	:	attributes(attributes)
+/// Generic implementation of a Map.
+class GenericMap: virtual public Map
 {
-}
+	public:
+		GenericMap(AttributePtrVectorPtr attributes);
+		virtual ~GenericMap();
 
-GenericMap::~GenericMap()
-{
-}
+		virtual AttributePtrVectorPtr getAttributes();
 
-Map::AttributePtrVectorPtr GenericMap::getAttributes()
-{
-	return this->attributes;
-}
+	protected:
+		AttributePtrVectorPtr attributes;
+};
 
 } // namespace gamemaps
 } // namespace camoto
+
+#endif // _CAMOTO_GAMEMAPS_MAP_GENERIC_HPP_

@@ -22,28 +22,10 @@
 #define _CAMOTO_GAMEMAPS_MANAGER_HPP_
 
 #include <boost/shared_ptr.hpp>
-#include <vector>
-
-#include <camoto/stream.hpp>
-#include <stdint.h>
 #include <camoto/gamemaps/maptype.hpp>
 
 namespace camoto {
 namespace gamemaps {
-
-class Manager;
-
-/// Shared pointer to a Manager.
-typedef boost::shared_ptr<Manager> ManagerPtr;
-
-/// Library entry point.
-/**
- * All further functionality is provided by calling functions in the Manager
- * class.
- *
- * @return A shared pointer to a Manager instance.
- */
-ManagerPtr getManager(void);
 
 /// Top-level class to manage map types.
 /**
@@ -55,41 +37,47 @@ ManagerPtr getManager(void);
  * Map instance around a particular file.  It is this Map instance that
  * is then used to access the map file itself.
  *
- * @note This class shouldn't be created manually, use the global function
- *       getManager() to obtain a pointer to it.
+ * @note Use the free function getManager() to obtain a pointer to an instance
+ *   of an object implementing the Manager interface.
  */
-class Manager {
-	private:
-		/// List of available map types.
-		VC_MAPTYPE vcTypes;
-
-		Manager();
-
-		friend ManagerPtr getManager(void);
-
+class Manager
+{
 	public:
-
-		~Manager();
-
 		/// Get an MapType instance for a supported file format.
 		/**
 		 * This can be used to enumerate all available file formats.
 		 *
-		 * @param  iIndex Index of the format, starting from 0.
-		 * @return A shared pointer to an MapType for the given index, or
-		 *         an empty pointer once iIndex goes out of range.
-		 * @todo Remove this and replace it with a function that just returns the vector.
+		 * @param iIndex
+		 *   Index of the format, starting from 0.
+		 *
+		 * @return A shared pointer to a MapType for the given index, or an empty
+		 *   pointer once iIndex goes out of range.
 		 */
-		MapTypePtr getMapType(unsigned int iIndex);
+		virtual const MapTypePtr getMapType(unsigned int iIndex) const = 0;
 
 		/// Get an MapType instance by its code.
 		/**
-		 * @param  strCode %Map code (e.g. "grp-duke3d")
-		 * @return A shared pointer to an MapType for the given code, or
-		 *         an empty pointer on an invalid code.
+		 * @param strCode
+		 *   %Map code (e.g. "grp-duke3d")
+		 *
+		 * @return A shared pointer to an MapType for the given code, or an empty
+		 *   pointer on an invalid code.
 		 */
-		MapTypePtr getMapTypeByCode(const std::string& strCode);
+		virtual const MapTypePtr getMapTypeByCode(const std::string& strCode)
+			const = 0;
 };
+
+/// Shared pointer to a Manager.
+typedef boost::shared_ptr<Manager> ManagerPtr;
+
+/// Library entry point.
+/**
+ * All further functionality is provided by calling functions in the Manager
+ * class.
+ *
+ * @return A shared pointer to a Manager instance.
+ */
+const ManagerPtr getManager(void);
 
 } // namespace gamemaps
 } // namespace camoto

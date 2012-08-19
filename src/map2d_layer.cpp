@@ -2,7 +2,7 @@
  * @file   map2d_layer.cpp
  * @brief  Generic layer in a 2D grid-based map.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <camoto/gamemaps/map2d.hpp>
+#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
 
-Map2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
+GenericMap2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
 	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
 	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 	:	title(title),
@@ -35,21 +35,21 @@ Map2D::Layer::Layer(const std::string& title, int caps, unsigned int width,
 {
 }
 
-Map2D::Layer::~Layer()
+GenericMap2D::Layer::~Layer()
 {
 }
 
-const std::string& Map2D::Layer::getTitle()
+const std::string& GenericMap2D::Layer::getTitle()
 {
 	return this->title;
 }
 
-int Map2D::Layer::getCaps()
+int GenericMap2D::Layer::getCaps()
 {
 	return this->caps;
 }
 
-void Map2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
 {
 	assert(this->getCaps() & HasOwnSize);
 
@@ -58,7 +58,7 @@ void Map2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
 	return;
 }
 
-void Map2D::Layer::setLayerSize(unsigned int x, unsigned int y)
+void GenericMap2D::Layer::setLayerSize(unsigned int x, unsigned int y)
 {
 	assert(this->getCaps() & CanResize);
 
@@ -67,7 +67,7 @@ void Map2D::Layer::setLayerSize(unsigned int x, unsigned int y)
 	return;
 }
 
-void Map2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
 {
 	assert(this->getCaps() & HasOwnTileSize);
 
@@ -76,7 +76,7 @@ void Map2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
 	return;
 }
 
-void Map2D::Layer::setTileSize(unsigned int x, unsigned int y)
+void GenericMap2D::Layer::setTileSize(unsigned int x, unsigned int y)
 {
 	assert(this->getCaps() & ChangeTileSize);
 
@@ -85,19 +85,19 @@ void Map2D::Layer::setTileSize(unsigned int x, unsigned int y)
 	return;
 }
 
-const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getAllItems()
+const Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getAllItems()
 {
 	return this->items;
 }
 
-gamegraphics::ImagePtr Map2D::Layer::imageFromCode(unsigned int code,
+gamegraphics::ImagePtr GenericMap2D::Layer::imageFromCode(unsigned int code,
 	gamegraphics::VC_TILESET& tileset)
 {
 	// Default implementation to return an empty tile.
 	return gamegraphics::ImagePtr();
 }
 
-bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
+bool GenericMap2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 	unsigned int y, unsigned int *maxCount)
 {
 	assert(maxCount);
@@ -107,34 +107,18 @@ bool Map2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 	return true; // permitted here
 }
 
-gamegraphics::PaletteTablePtr Map2D::Layer::getPalette(
+gamegraphics::PaletteTablePtr GenericMap2D::Layer::getPalette(
 	camoto::gamegraphics::VC_TILESET& tileset)
 {
 	assert(this->getCaps() & HasPalette);
-	std::cerr << "BUG: Map2D::Layer reported having a palette but didn't "
+	std::cerr << "BUG: GenericMap2D::Layer reported having a palette but didn't "
 		"implement getPalette()" << std::endl;
 	return gamegraphics::PaletteTablePtr();
 }
 
-const Map2D::Layer::ItemPtrVectorPtr Map2D::Layer::getValidItemList()
+const Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getValidItemList()
 {
 	return this->validItems;
-}
-
-Map2D::Layer::Item::~Item()
-{
-}
-
-Map2D::Layer::Item::Player::~Player()
-{
-}
-
-Map2D::Layer::Item::Text::~Text()
-{
-}
-
-Map2D::Layer::Item::Movable::~Movable()
-{
 }
 
 } // namespace gamemaps

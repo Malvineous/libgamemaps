@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/DDave_Map_Format
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
  */
 
 #include <boost/shared_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
+#include "map2d-generic.hpp"
 #include "fmt-map-ddave.hpp"
 
 #define DD_MAP_WIDTH            100
@@ -54,7 +54,7 @@ using namespace camoto::gamegraphics;
 
 DDaveBackgroundLayer::DDaveBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -173,7 +173,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPathCount,
 		20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
@@ -185,14 +185,13 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void DDaveMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 1)
 		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned long lenWritten = 0;
 
 	// Write the path
 	uint8_t path[DD_LAYER_LEN_PATH];
@@ -240,7 +239,6 @@ stream::len DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppData
 		path[pathpos++] = DD_PATH_END;
 	}
 	output->write((char *)path, DD_LAYER_LEN_PATH);
-	lenWritten += DD_LAYER_LEN_PATH;
 
 	// Write the background layer
 	uint8_t bg[DD_LAYER_LEN_BG];
@@ -256,19 +254,22 @@ stream::len DDaveMapType::write(MapPtr map, stream::output_sptr output, SuppData
 		}
 		bg[(*i)->y * DD_MAP_WIDTH + (*i)->x] = (*i)->code;
 	}
-
 	output->write((char *)bg, DD_LAYER_LEN_BG);
-	lenWritten += DD_LAYER_LEN_BG;
 
 	// Write out padding
 	uint8_t pad[DD_PAD_LEN];
 	memset(pad, 0, DD_PAD_LEN);
 	output->write((char *)pad, DD_PAD_LEN);
-	lenWritten += DD_PAD_LEN;
 
-	return lenWritten;
+	return;
 }
 
+SuppFilenames DDaveMapType::getRequiredSupps(const std::string& filenameMap)
+	const
+{
+	SuppFilenames supps;
+	return supps;
+}
 
 } // namespace gamemaps
 } // namespace camoto

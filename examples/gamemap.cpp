@@ -620,37 +620,36 @@ finishTesting:
 					for (gm::Map::AttributePtrVector::const_iterator
 						i = attributes->begin(); i != attributes->end(); i++
 					) {
+						gm::Map::AttributePtr a = *i;
+
 						if (bScript) std::cout << "attribute" << attrNum << "_name=";
 						else std::cout << "Attribute " << attrNum+1 << ": ";
-						std::cout << (*i)->name << "\n";
+						std::cout << a->name << "\n";
 
 						if (bScript) std::cout << "attribute" << attrNum << "_desc=";
 						else std::cout << "  Description: ";
-						std::cout << (*i)->desc << "\n";
+						std::cout << a->desc << "\n";
 
 						if (bScript) std::cout << "attribute" << attrNum << "_type=";
 						else std::cout << "  Type: ";
-						switch ((*i)->type) {
+						switch (a->type) {
 
 							case gm::Map::Attribute::Integer: {
 								std::cout << (bScript ? "int" : "Integer value") << "\n";
-								gm::Map::IntAttribute *a =
-									dynamic_cast<gm::Map::IntAttribute *>(i->get());
-								assert(a);
 
 								if (bScript) std::cout << "attribute" << attrNum << "_value=";
 								else std::cout << "  Current value: ";
-								std::cout << a->value << "\n";
+								std::cout << a->integerValue << "\n";
 
 								if (bScript) {
-									std::cout << "attribute" << attrNum << "_min=" << a->minValue
-										<< "\nattribute" << attrNum << "_max=" << a->maxValue;
+									std::cout << "attribute" << attrNum << "_min=" << a->integerMinValue
+										<< "\nattribute" << attrNum << "_max=" << a->integerMaxValue;
 								} else {
 									std::cout << "  Range: ";
-									if ((a->minValue == 0) && (a->maxValue == 0)) {
+									if ((a->integerMinValue == 0) && (a->integerMaxValue == 0)) {
 										std::cout << "[unlimited]";
 									} else {
-										std::cout << a->minValue << " to " << a->maxValue;
+										std::cout << a->integerMinValue << " to " << a->integerMaxValue;
 									}
 								}
 								std::cout << "\n";
@@ -659,26 +658,24 @@ finishTesting:
 
 							case gm::Map::Attribute::Enum: {
 								std::cout << (bScript ? "enum" : "Item from list") << "\n";
-								gm::Map::EnumAttribute *a =
-									dynamic_cast<gm::Map::EnumAttribute *>(i->get());
-								assert(a);
 
 								if (bScript) std::cout << "attribute" << attrNum << "_value=";
 								else std::cout << "  Current value: ";
-								if (a->value > a->values.size()) {
+								if (a->enumValue > a->enumValueNames.size()) {
 									std::cout << (bScript ? "error" : "[out of range]");
 								} else {
-									if (bScript) std::cout << a->value;
-									else std::cout << "[" << a->value << "] " << a->values[a->value];
+									if (bScript) std::cout << a->enumValue;
+									else std::cout << "[" << a->enumValue << "] "
+										<< a->enumValueNames[a->enumValue];
 								}
 								std::cout << "\n";
 
 								if (bScript) std::cout << "attribute" << attrNum
-									<< "_choice_count=" << a->values.size() << "\n";
+									<< "_choice_count=" << a->enumValueNames.size() << "\n";
 
 								int option = 0;
 								for (std::vector<std::string>::const_iterator
-									i = a->values.begin(); i != a->values.end(); i++
+									j = a->enumValueNames.begin(); j != a->enumValueNames.end(); j++
 								) {
 									if (bScript) {
 										std::cout << "attribute" << attrNum << "_choice" << option
@@ -686,7 +683,7 @@ finishTesting:
 									} else {
 										std::cout << "  Allowed value " << option << ": ";
 									}
-									std::cout << *i << "\n";
+									std::cout << *j << "\n";
 									option++;
 								}
 								break;

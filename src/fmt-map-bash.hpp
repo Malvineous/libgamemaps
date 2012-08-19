@@ -2,7 +2,7 @@
  * @file   fmt-map-bash.hpp
  * @brief  MapType and Map2D implementation for Monster Bash levels.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,57 +21,45 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_BASH_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_BASH_HPP_
 
-#include <camoto/gamemaps/maptype.hpp>
-#include <camoto/gamemaps/map2d.hpp>
-#include <camoto/stream.hpp>
-#include <stdint.h>
+#include "base-maptype.hpp"
+#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
 
 /// Monster Bash level reader/writer.
-class BashMapType: virtual public MapType {
-
+class BashMapType: virtual public BaseMapType
+{
 	public:
-
 		virtual std::string getMapCode() const;
-
 		virtual std::string getFriendlyName() const;
-
 		virtual std::vector<std::string> getFileExtensions() const;
-
 		virtual std::vector<std::string> getGameList() const;
-
 		virtual Certainty isInstance(stream::input_sptr psMap) const;
-
 		virtual MapPtr create(SuppData& suppData) const;
-
 		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
-
-		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const;
-
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const;
-
+		virtual void write(MapPtr map, stream::expanding_output_sptr output,
+			ExpandingSuppData& suppData) const;
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
+			const;
 };
 
-class BashForegroundLayer: virtual public Map2D::Layer {
-
+class BashForegroundLayer: virtual public GenericMap2D::Layer
+{
 	public:
 		BashForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 };
 
-class BashBackgroundLayer: virtual public Map2D::Layer {
-
+class BashBackgroundLayer: virtual public GenericMap2D::Layer
+{
 	public:
 		BashBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 };
 
 } // namespace gamemaps

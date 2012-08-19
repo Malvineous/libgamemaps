@@ -22,8 +22,8 @@
  */
 
 #include <boost/scoped_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
+#include "map2d-generic.hpp"
 #include "fmt-map-harry.hpp"
 
 /// Width of each tile in pixels
@@ -51,7 +51,7 @@ using namespace camoto::gamegraphics;
 
 HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Actors",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -73,7 +73,7 @@ ImagePtr HarryActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 
 HarryBackgroundLayer::HarryBackgroundLayer(const std::string& name,
 	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			name,
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -210,16 +210,15 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	uint8_t mapFlags;
 	input >> u8(mapFlags);
 
-	Map::EnumAttribute *attrParallax = new Map::EnumAttribute();
-	Map::AttributePtr ptr(attrParallax);
+	Map::AttributePtr attrParallax(new Map::Attribute);
 	attrParallax->type = Map::Attribute::Enum;
 	attrParallax->name = "Background";
 	attrParallax->desc = "How to position the background layer as the player "
 		"moves (parallax is only visible in-game).";
-	attrParallax->value = mapFlags == 0 ? 0 : 1;
-	attrParallax->values.push_back("Fixed");
-	attrParallax->values.push_back("Parallax");
-	attributes->push_back(ptr);
+	attrParallax->enumValue = mapFlags == 0 ? 0 : 1;
+	attrParallax->enumValueNames.push_back("Fixed");
+	attrParallax->enumValueNames.push_back("Parallax");
+	attributes->push_back(attrParallax);
 
 	// TODO: Load palette
 	input->seekg(768, stream::cur);
@@ -240,14 +239,14 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	// Create a fake object with the player's starting location
 	{
-		Map2D::Layer::Item::Player *p = new Map2D::Layer::Item::Player;
-		Map2D::Layer::ItemPtr t(p);
+		Map2D::Layer::ItemPtr p(new Map2D::Layer::Item);
+		p->type = Map2D::Layer::Item::Player;
 		p->x = startX;
 		p->y = startY;
 		p->code = 0; // unused
-		p->player = 0; // player 1
-		p->facingLeft = false; // fixed?
-		actors->push_back(t);
+		p->playerNumber = 0; // player 1
+		p->playerFacingLeft = false; // fixed?
+		actors->push_back(p);
 	}
 
 	// Read the real objects
@@ -258,6 +257,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 			>> u16le(t->x)
 			>> u16le(t->y)
 		;
+		t->type = Map2D::Layer::Item::Default;
 		// TEMP
 		t->x /= 16;
 		t->y /= 16;
@@ -280,6 +280,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	for (unsigned int y = 0; y < mapHeight; y++) {
 		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			input >> u8(code);
@@ -297,6 +298,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	for (unsigned int y = 0; y < mapHeight; y++) {
 		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			input >> u8(code);
@@ -313,7 +315,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 	layers.push_back(actorLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		attributes,
 		Map2D::HasViewport,
 		HH_VIEWPORT_WIDTH, HH_VIEWPORT_HEIGHT,
@@ -325,7 +327,8 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -341,30 +344,32 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
-	unsigned long lenWritten = 0;
-
-	Map::EnumAttribute *attrParallax =
-		dynamic_cast<Map::EnumAttribute *>(attributes->at(0).get());
-	if (!attrParallax) {
+	Map::Attribute *attrParallax = attributes->at(0).get();
+	if (attrParallax->type != Map::Attribute::Enum) {
 		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (parallax != enum)");
 	}
-	uint8_t mapFlags = attrParallax->value;
+	uint8_t mapFlags = attrParallax->enumValue;
 
 	// Find the player-start-point objects
 	uint16_t startX = 0, startY = 0;
+	bool setPlayer = false;
 	Map2D::LayerPtr layer = map2d->getLayer(2);
 	const Map2D::Layer::ItemPtrVectorPtr actors = layer->getAllItems();
 	uint16_t numActors = actors->size();
 	for (Map2D::Layer::ItemPtrVector::const_iterator i =
 		actors->begin(); i != actors->end(); i++
 	) {
-		Map2D::Layer::Item::Player *p = dynamic_cast<Map2D::Layer::Item::Player *>(i->get());
-		if (p) {
+		if ((*i)->type & Map2D::Layer::Item::Player) {
 			// This is the player starting location
-			if (p->player == 0) {
-				startX = p->x;
-				startY = p->y;
+			if (setPlayer) {
+				// We've already set the player position
+				throw stream::error("This map format can only have one player.");
+			}
+			if ((*i)->playerNumber == 0) {
+				startX = (*i)->x;
+				startY = (*i)->y;
+				setPlayer = true;
 			}
 			numActors--;
 		}
@@ -378,36 +383,33 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 		<< u16le(0)
 		<< u8(mapFlags)
 	;
-	lenWritten += 0x12 + 11;
 
 	// TODO: Write the palette
 	char pal[768];
 	memset(pal, 0x00, 768);
 	output->write(pal, 768);
-	lenWritten += 768;
 
 	// TODO: Write the tile flags
 	char tileFlags[256];
 	memset(tileFlags, 0x00, 256);
 	output->write(tileFlags, 256);
-	lenWritten += 256;
 
 	// Unknown data
 	char unk[10];
 	memset(unk, 0x00, 10);
 	output->write(unk, 10);
-	lenWritten += 10;
 
 	// Write the actor layer
 	output << u16le(numActors);
-	lenWritten += 2;
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = actors->begin();
 		i != actors->end();
 		i++
 	) {
 		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
-		Map2D::Layer::Item::Player *p = dynamic_cast<Map2D::Layer::Item::Player *>(i->get());
-		if (p) continue; // don't write player start points here
+
+		// Don't write player start points here
+		if ((*i)->type & Map2D::Layer::Item::Player) continue;
+
 		output
 			<< u8((*i)->code)
 			<< u16le((*i)->x)
@@ -416,14 +418,12 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 		char pad[128-5];
 		memset(pad, 0x00, 128-5);
 		output->write(pad, 128-5);
-		lenWritten += 128;
 	}
 
 	output
 		<< u16le(mapWidth)
 		<< u16le(mapHeight)
 	;
-	lenWritten += 4;
 
 	// Write the background layer
 	unsigned long lenTiles = mapWidth * mapHeight;
@@ -443,7 +443,6 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	}
 
 	output->write((char *)tiles, lenTiles);
-	lenWritten += lenTiles;
 
 	// Write the foreground layer
 	memset(tiles, HH_DEFAULT_TILE, lenTiles);
@@ -458,11 +457,16 @@ stream::len HarryMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	}
 
 	output->write((char *)tiles, lenTiles);
-	lenWritten += lenTiles;
 
-	return lenWritten;
+	return;
 }
 
+SuppFilenames HarryMapType::getRequiredSupps(const std::string& filenameMap)
+	const
+{
+	SuppFilenames supps;
+	return supps;
+}
 
 } // namespace gamemaps
 } // namespace camoto

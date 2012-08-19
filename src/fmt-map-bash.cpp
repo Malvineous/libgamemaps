@@ -21,8 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fmt-map-bash.hpp"
 #include <camoto/iostream_helpers.hpp>
+#include "map2d-generic.hpp"
+#include "fmt-map-bash.hpp"
 
 /// Width of map tiles
 #define MB_TILE_WIDTH           16
@@ -49,7 +50,7 @@ using namespace camoto::gamegraphics;
 
 BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Foreground",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -73,7 +74,7 @@ ImagePtr BashForegroundLayer::imageFromCode(unsigned int code,
 
 BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -205,7 +206,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 	layers.push_back(fgLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport,
 		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
@@ -217,14 +218,13 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 2)
 		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned long lenWritten = 0;
 
 	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
@@ -237,11 +237,6 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 	// Write the background layer
 	{
 		const unsigned int lenBG = mapWidth * mapHeight;
-
-		// Make sure the stream has enough room for the data we're about to write
-		const unsigned int lenDataBG = 8 + lenBG * 2;
-		bg->truncate(lenDataBG);
-		bg->seekp(0, stream::start);
 
 		boost::shared_array<uint16_t> bgdata(new uint16_t[lenBG]);
 		memset(bgdata.get(), 0, lenBG); // default background tile
@@ -272,19 +267,11 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		for (unsigned int i = 0; i < lenBG; i++) {
 			bg << u16le(*pbg++);
 		}
-
-		// Make sure we made it to the end
-		assert(bg->tellp() == lenDataBG);
 	}
 
 	// Write the foreground layer
 	{
 		const unsigned int lenFG = mapWidth * mapHeight;
-
-		// Make sure the stream has enough room for the data we're about to write
-		const unsigned int lenDataFG = 2 + lenFG;
-		fg->truncate(lenDataFG);
-		fg->seekp(0, stream::start);
 
 		boost::shared_array<uint8_t> fgdata(new uint8_t[lenFG]);
 		memset(fgdata.get(), 0, lenFG); // default background tile
@@ -309,18 +296,13 @@ stream::len BashMapType::write(MapPtr map, stream::output_sptr output, SuppData&
 		for (unsigned int i = 0; i < lenFG; i++) {
 			fg << u8(*pfg++);
 		}
-
-		// Make sure we made it to the end
-		assert(fg->tellp() == lenDataFG);
 	}
 
 	bg->flush();
 	fg->flush();
 
 	// Until all the properties are implemented, just leave the info file unchanged.
-	lenWritten += 194;
-
-	return lenWritten;
+	return;
 }
 
 SuppFilenames BashMapType::getRequiredSupps(

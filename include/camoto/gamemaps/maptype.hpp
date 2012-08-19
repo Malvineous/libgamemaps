@@ -3,7 +3,7 @@
  * @brief  MapType class, used to identify and open an instance of a
  *         particular map format.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,9 @@
 #ifndef _CAMOTO_GAMEMAPS_MAPTYPE_HPP_
 #define _CAMOTO_GAMEMAPS_MAPTYPE_HPP_
 
+#include <string>
 #include <vector>
-#include <map>
-
 #include <camoto/stream.hpp>
-#include <stdint.h>
 #include <camoto/suppitem.hpp>
 #include <camoto/gamemaps/map.hpp>
 
@@ -36,10 +34,9 @@ namespace camoto {
 namespace gamemaps {
 
 /// Interface to a particular map format.
-class MapType {
-
+class MapType
+{
 	public:
-
 		/// Confidence level when guessing a file format.
 		enum Certainty {
 			DefinitelyNo,  ///< Definitely not in this format
@@ -47,9 +44,6 @@ class MapType {
 			PossiblyYes,   ///< Everything checked out OK, but there's no signature
 			DefinitelyYes, ///< This format has a signature and it matched
 		};
-
-		/// No-op virtual destructor.
-		virtual ~MapType();
 
 		/// Get a short code to identify this file format, e.g. "map-xargon"
 		/**
@@ -130,10 +124,16 @@ class MapType {
 		 * @param suppData
 		 *   Any supplemental data required by this format (see getRequiredSupps())
 		 *
-		 * @return The amount of data written.  The caller should ensure the output
-		 *   stream is truncated to this length if necessary.
+		 * @post output and possibly the streams in suppData have been truncated to
+		 *   the required length.
+		 *
+		 * @throw stream::error on I/O error or a map limitation (e.g. two player
+		 *   starting points in a map format that can only store one.)
+		 *
+		 * @note If an exception is thrown, both output and suppData streams will
+		 *   have been left unchanged.
 		 */
-		virtual stream::len write(MapPtr map, stream::output_sptr output,
+		virtual void write(MapPtr map, stream::output_sptr output,
 			SuppData& suppData) const = 0;
 
 		/// Get a list of any required supplemental files.
@@ -161,7 +161,8 @@ class MapType {
 		 *         returned can have relative paths, and may even have an absolute
 		 *         path, if one was passed in with filenameMap.
 		 */
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap) const;
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
+			const = 0;
 
 };
 
@@ -169,7 +170,7 @@ class MapType {
 typedef boost::shared_ptr<MapType> MapTypePtr;
 
 /// Vector of MapType shared pointers.
-typedef std::vector<MapTypePtr> VC_MAPTYPE;
+typedef std::vector<MapTypePtr> MapTypeVector;
 
 } // namespace gamemaps
 } // namespace camoto

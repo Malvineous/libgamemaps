@@ -22,8 +22,8 @@
  */
 
 #include <boost/scoped_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
 #include <camoto/iostream_helpers.hpp>
+#include "map2d-generic.hpp"
 #include "fmt-map-cosmo.hpp"
 
 /// Width of each tile in pixels
@@ -57,7 +57,7 @@ using namespace camoto::gamegraphics;
 
 CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Actors",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -79,7 +79,7 @@ ImagePtr CosmoActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
 
 CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -226,7 +226,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 	layers.push_back(actorLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport,
 		CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
@@ -238,14 +238,13 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 2)
 		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned long lenWritten = 0;
 
 	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
@@ -255,7 +254,6 @@ stream::len CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData
 		<< u16le(flags)
 		<< u16le(mapWidth)
 	;
-	lenWritten += 4;
 
 	// Write the actor layer
 	Map2D::LayerPtr layer = map2d->getLayer(1);
@@ -263,7 +261,6 @@ stream::len CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData
 
 	uint16_t numActorInts = actors->size() * 3;
 	output << u16le(numActorInts);
-	lenWritten += 2;
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = actors->begin();
 		i != actors->end();
 		i++
@@ -274,7 +271,6 @@ stream::len CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData
 			<< u16le((*i)->x)
 			<< u16le((*i)->y)
 		;
-		lenWritten += 6;
 	}
 
 	// Write the background layer
@@ -297,11 +293,16 @@ stream::len CosmoMapType::write(MapPtr map, stream::output_sptr output, SuppData
 	for (unsigned int i = 0; i < mapWidth * mapHeight; i++) {
 		output << u16le(bg[i]);
 	}
-	lenWritten += mapWidth * mapHeight * 2;
 
-	return lenWritten;
+	return;
 }
 
+SuppFilenames CosmoMapType::getRequiredSupps(const std::string& filenameMap)
+	const
+{
+	SuppFilenames supps;
+	return supps;
+}
 
 } // namespace gamemaps
 } // namespace camoto

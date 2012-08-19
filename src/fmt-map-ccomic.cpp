@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Captain_Comic_Map_Format
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
+#include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
+#include "map2d-generic.hpp"
 #include "fmt-map-ccomic.hpp"
 
 #define CC_TILE_WIDTH           16
@@ -42,7 +42,7 @@ using namespace camoto::gamegraphics;
 
 CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items,
 	ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Background",
 			Map2D::Layer::NoCaps,
 			0, 0,
@@ -157,7 +157,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport,
 		193, 160, // viewport size
@@ -169,7 +169,8 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len CComicMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void CComicMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
@@ -179,8 +180,6 @@ stream::len CComicMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
-	unsigned long lenWritten = 0;
-
 	Map2D::LayerPtr layer = map2d->getLayer(0);
 
 	// Write the background layer
@@ -188,6 +187,7 @@ stream::len CComicMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 	unsigned int mapLen = mapWidth * mapHeight;
 
 	uint8_t *bg = new uint8_t[mapLen];
+	boost::scoped_array<uint8_t> scoped_bg(bg);
 	memset(bg, CC_DEFAULT_BGTILE, mapLen); // default background tile
 	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
@@ -195,19 +195,21 @@ stream::len CComicMapType::write(MapPtr map, stream::output_sptr output, SuppDat
 		i++
 	) {
 		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-			delete[] bg;
 			throw stream::error("Layer has tiles outside map boundary!");
 		}
 		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
 
 	output->write((char *)bg, mapLen);
-	lenWritten += mapLen;
-	delete[] bg;
-
-	return lenWritten;
+	return;
 }
 
+SuppFilenames CComicMapType::getRequiredSupps(const std::string& filenameMap)
+	const
+{
+	SuppFilenames supps;
+	return supps;
+}
 
 } // namespace gamemaps
 } // namespace camoto

@@ -24,7 +24,7 @@
 #include <iostream>
 #include <list>
 #include <boost/scoped_array.hpp>
-#include <camoto/gamemaps/map2d.hpp>
+#include "map2d-generic.hpp"
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/stream_string.hpp>
 #include "fmt-map-xargon.hpp"
@@ -51,7 +51,7 @@ using namespace camoto::gamegraphics;
 
 SweeneyBackgroundLayer::SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
 	SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Background",
 			Map2D::Layer::HasPalette,
 			0, 0,   // Layer size unused
@@ -76,7 +76,7 @@ ImagePtr SweeneyBackgroundLayer::imageFromCode(unsigned int code,
 		uint16_t v = (*this->imgMap)[code & 0x0FFF];
 		uint8_t t = ((v >> 8) & 0xFF);
 		uint8_t i = v & 0xFF;
-		if (tilesets[t]->attr & Tileset::EmptySlot) {
+		if (tilesets[t]->getAttr() & Tileset::EmptySlot) {
 			std::cerr << "[SweeneyBackgroundLayer] Tried to open tileset 0x"
 				<< std::hex << (int)t << std::dec << " but it's an empty slot!"
 				<< std::endl;
@@ -85,7 +85,7 @@ ImagePtr SweeneyBackgroundLayer::imageFromCode(unsigned int code,
 		TilesetPtr tls = tileset[0]->openTileset(tilesets[t]);
 		const Tileset::VC_ENTRYPTR& images = tls->getItems();
 		if (i >= images.size()) return ImagePtr(); // out of range
-		if (images[i]->attr & Tileset::EmptySlot) {
+		if (images[i]->getAttr() & Tileset::EmptySlot) {
 			std::cerr << "[SweeneyBackgroundLayer] Tried to open image " << t << "."
 				<< i << " but it's an empty slot!" << std::endl;
 			return ImagePtr();
@@ -125,7 +125,7 @@ PaletteTablePtr SweeneyBackgroundLayer::getPalette(VC_TILESET& tileset)
 
 SweeneyObjectLayer::SweeneyObjectLayer(ItemPtrVectorPtr& items,
 	SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-	:	Map2D::Layer(
+	:	GenericMap2D::Layer(
 			"Objects",
 			Map2D::Layer::HasOwnTileSize | Map2D::Layer::HasPalette,
 			0, 0, // Layer size unused
@@ -338,6 +338,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 		// Add to list of valid tiles
 		v.reset(new Map2D::Layer::Item());
+		v->type = Map2D::Layer::Item::Default;
 		v->code = mapCode;
 		validBGItems->push_back(v);
 
@@ -366,6 +367,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 			input >> u16le(code);
 			if ((code & 0x03FF) == 0) continue; // empty spot
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			t->code = code;
@@ -405,7 +407,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 				throw stream::error("Map file has been truncated! (text section cut)");
 			}
 			std::string next;
-			input >> null_padded(next, lenStr, false);
+			input >> fixedLength(next, lenStr);
 			mapStrings.push_back(next);
 			offStrings -= lenStr;
 		}
@@ -450,53 +452,50 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 		;
 
 		//SweeneyObject *obj = new SweeneyObject;
-		Map2D::Layer::Item *obj;
-		if (pointer) {
-			// This one refers to a text entry
-			Map2D::Layer::Item::Text *t_obj = new Map2D::Layer::Item::Text();
-			t_obj->font = 0; ///< @todo Correct font
-			if (!mapStrings.empty()) {
-				t_obj->content = mapStrings.front();
-				mapStrings.pop_front();
-			}
-			obj = t_obj;
-		} else if (spdHoriz || spdVert) {
-			Map2D::Layer::Item::Movable *t_obj = new Map2D::Layer::Item::Movable();
-			t_obj->speedX = spdHoriz; ///< @todo Correct calculation
-			t_obj->speedY = spdVert;  ///< @todo Correct calculation
-			t_obj->distLeft = 0;
-			t_obj->distRight = 0;
-			t_obj->distUp = 0;
-			t_obj->distDown = 0;
-			obj = t_obj;
-		} else {
-			obj = new Map2D::Layer::Item();
-		}
-
+		Map2D::Layer::ItemPtr obj(new Map2D::Layer::Item);
+		obj->type = Map2D::Layer::Item::Default;
 		obj->x = x;
 		obj->y = y;
 		obj->code = code | (subType << 8);
 
-		Map2D::Layer::ItemPtr objItem(obj);
-		objects->push_back(objItem);
+		if (pointer) {
+			// This one refers to a text entry
+			obj->type |= Map2D::Layer::Item::Text;
+			obj->textFont = 0; ///< @todo Correct font
+			if (!mapStrings.empty()) {
+				obj->textContent = mapStrings.front();
+				mapStrings.pop_front();
+			}
+		}
+		if (spdHoriz || spdVert) {
+			obj->type |= Map2D::Layer::Item::Movement;
+			obj->movementSpeedX = spdHoriz; ///< @todo Correct calculation
+			obj->movementSpeedY = spdVert;  ///< @todo Correct calculation
+			obj->movementDistLeft = 0;
+			obj->movementDistRight = 0;
+			obj->movementDistUp = 0;
+			obj->movementDistDown = 0;
+		}
+		objects->push_back(obj);
 	}
 	lenMap -= XR_OBJ_ENTRY_LEN * numObjects;
 
 	Map2D::Layer::ItemPtrVectorPtr validObjItems(new Map2D::Layer::ItemPtrVector());
 	v.reset(new Map2D::Layer::Item());
+	v->type = Map2D::Layer::Item::Default;
 	v->code = 0x33; // Clouds
 	validObjItems->push_back(v);
 
-	Map2D::Layer::Item::Text *txt = new Map2D::Layer::Item::Text();
-	v.reset(txt);
-	txt->font = 0;
-	txt->content = "Small text";
+	v.reset(new Map2D::Layer::Item);
+	v->type = Map2D::Layer::Item::Text;
+	v->textFont = 0;
+	v->textContent = "Small text";
 	validObjItems->push_back(v);
 
-	txt = new Map2D::Layer::Item::Text();
-	v.reset(txt);
-	txt->font = 0;
-	txt->content = "Large text";
+	v.reset(new Map2D::Layer::Item);
+	v->type = Map2D::Layer::Item::Text;
+	v->textFont = 0;
+	v->textContent = "Large text";
 	validObjItems->push_back(v);
 
 	Map2D::LayerPtr objLayer(new SweeneyObjectLayer(objects, imgMap, validObjItems));
@@ -508,7 +507,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 	layers.push_back(objLayer);
 
-	Map2DPtr map(new Map2D(
+	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(),
 		Map2D::HasViewport,
 		20 * XR_TILE_WIDTH, 10 * XR_TILE_HEIGHT, // viewport size
@@ -520,14 +519,13 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppData& suppData) const
+void SweeneyMapType::write(MapPtr map, stream::expanding_output_sptr output,
+	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
 	if (map2d->getLayerCount() != 2)
 		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned long lenWritten = 0;
 
 	// Write the background layer
 	uint16_t *bg = new uint16_t[XR_MAP_WIDTH * XR_MAP_HEIGHT];
@@ -548,7 +546,6 @@ stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 	for (unsigned int i = 0; i < XR_MAP_WIDTH * XR_MAP_HEIGHT; i++) {
 		output << u16le(bg[i]);
 	}
-	lenWritten += XR_MAP_WIDTH * XR_MAP_HEIGHT * 2;
 
 	// Write the object layer
 	layer = map2d->getLayer(1);
@@ -556,22 +553,19 @@ stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 
 	uint16_t numObjects = objects->size();
 	output << u16le(numObjects);
-	lenWritten += 2;
 	for (Map2D::Layer::ItemPtrVector::const_iterator i = objects->begin();
 		i != objects->end();
 		i++
 	) {
 		Map2D::Layer::Item *obj = i->get();
-		Map2D::Layer::Item::Text *obj_text = dynamic_cast<Map2D::Layer::Item::Text *>(obj);
-		Map2D::Layer::Item::Movable *obj_movable = dynamic_cast<Map2D::Layer::Item::Movable *>(obj);
 		uint8_t code = obj->code & 0xFF;
 		uint16_t x = obj->x;
 		uint16_t y = obj->y;
 		uint16_t spdHoriz;
 		uint16_t spdVert;
-		if (obj_movable) {
-			spdHoriz = obj_movable->speedX;
-			spdVert = obj_movable->speedY;
+		if (obj->type & Map2D::Layer::Item::Movement) {
+			spdHoriz = obj->movementSpeedX;
+			spdVert = obj->movementSpeedY;
 		} else {
 			spdHoriz = 0;
 			spdVert = 0;
@@ -584,7 +578,7 @@ stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 		uint16_t link = 0;
 		uint16_t flags = 0;
 		uint32_t pointer;
-		if (obj_text) {
+		if (obj->type & Map2D::Layer::Item::Text) {
 			pointer = 1; // non-zero means text is present
 		} else {
 			pointer = 0;
@@ -609,7 +603,6 @@ stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 			<< u16le(info)
 			<< u16le(zapHold)
 		;
-		lenWritten += 31;
 	}
 
 	// Write out savedata
@@ -622,16 +615,17 @@ stream::len SweeneyMapType::write(MapPtr map, stream::output_sptr output, SuppDa
 		i != objects->end();
 		i++
 	) {
-		Map2D::Layer::Item::Text *t = dynamic_cast<Map2D::Layer::Item::Text *>(i->get());
-		if (t) {
-			unsigned int len = t->content.length();
+		if ((*i)->type & Map2D::Layer::Item::Text) {
+			unsigned int len = (*i)->textContent.length();
 			if (len > 255) throw stream::error("Cannot write a text element longer than 255 characters.");
 			output << u8(len);
-			output->write(t->content);
+			output->write((*i)->textContent);
 		}
 	}
 
-	return lenWritten;
+	output->truncate_here();
+
+	return;
 }
 
 

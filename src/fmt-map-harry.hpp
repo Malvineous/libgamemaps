@@ -2,7 +2,7 @@
  * @file   fmt-map-harry.hpp
  * @brief  MapType and Map2D implementation for Halloween Harry/Alien Carnage.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,55 +21,47 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_HARRY_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_HARRY_HPP_
 
-#include <camoto/gamemaps/maptype.hpp>
+#include "base-maptype.hpp"
+#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
 
 /// Halloween Harry level reader/writer.
-class HarryMapType: virtual public MapType {
-
+class HarryMapType: virtual public BaseMapType
+{
 	public:
-
 		virtual std::string getMapCode() const;
-
 		virtual std::string getFriendlyName() const;
-
 		virtual std::vector<std::string> getFileExtensions() const;
-
 		virtual std::vector<std::string> getGameList() const;
-
 		virtual Certainty isInstance(stream::input_sptr psMap) const;
-
 		virtual MapPtr create(SuppData& suppData) const;
-
 		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
-
-		virtual stream::len write(MapPtr map, stream::output_sptr output, SuppData& suppData) const;
-
+		virtual void write(MapPtr map, stream::expanding_output_sptr output,
+			ExpandingSuppData& suppData) const;
+		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
+			const;
 };
 
-class HarryActorLayer: virtual public Map2D::Layer {
-
+class HarryActorLayer: virtual public GenericMap2D::Layer
+{
 	public:
 		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 };
 
-class HarryBackgroundLayer: virtual public Map2D::Layer {
-
+class HarryBackgroundLayer: virtual public GenericMap2D::Layer
+{
 	public:
 		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems);
 
 		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
 			camoto::gamegraphics::VC_TILESET& tileset);
-
 };
-
 
 } // namespace gamemaps
 } // namespace camoto

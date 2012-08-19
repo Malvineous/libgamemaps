@@ -3,7 +3,7 @@
  * @brief  Declaration of top-level Map class, for accessing files
  *         storing game map data.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,19 +22,16 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_HPP_
 
-#include <boost/shared_ptr.hpp>
-#include <exception>
 #include <vector>
-
-#include <camoto/stream.hpp>
-#include <stdint.h>
+#include <boost/shared_ptr.hpp>
+#include <camoto/error.hpp>
 #include <camoto/metadata.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
 /// Generic "invalid map format" exception.
-class EInvalidFormat: public std::exception {
+class EInvalidFormat: virtual public error {
 };
 
 /// Primary interface to a map file.
@@ -43,21 +40,35 @@ class EInvalidFormat: public std::exception {
  *
  * @note Multithreading: Only call one function in this class at a time.
  */
-class Map: virtual public Metadata {
-
+class Map: virtual public Metadata
+{
 	public:
-
-		/// Attribute attached to this map.
+		/// Attribute attached to this map
 		struct Attribute {
 			enum Type {
-				Integer,         ///< Implements IntAttribute
-				Enum,            ///< Implements EnumAttribute
+				Integer,         ///< One number within a given range
+				Enum,            ///< One choice from a list of static values
+				Filename,        ///< A filename of the given type
 			};
 			Type type;         ///< What type this attribute is
 			std::string name;  ///< Short name of this attribute
 			std::string desc;  ///< Description of this attribute
 
-			virtual ~Attribute();
+			int integerValue;    ///< Integer type: current value
+			int integerMinValue; ///< Integer type: minimum allowed value (set min and max to 0 for unlimited)
+			int integerMaxValue; ///< Integer type: maximum allowed value (set min and max to 0 for unlimited)
+
+			unsigned int enumValue;                  ///< Enum type: current value
+			std::vector<std::string> enumValueNames; ///< Enum type: permitted values
+
+			std::string filenameValue; ///< Filename type: current filename
+			/// Valid filename extensions
+			/**
+			 * Any files that match this specification will be listed as valid choices
+			 * for this attribute value.  An empty string means there is no
+			 * restriction on file extension.
+			 */
+			std::string filenameValidExtensions;
 		};
 
 		/// Shared pointer to an Attribute.
@@ -69,42 +80,15 @@ class Map: virtual public Metadata {
 		/// Shared pointer to Attribute vector.
 		typedef boost::shared_ptr<AttributePtrVector> AttributePtrVectorPtr;
 
-		/// Attribute that can be a number, within a given range.
-		struct IntAttribute: public Attribute {
-			int value;
-
-			int minValue;
-			int maxValue;
-
-			virtual ~IntAttribute();
-		};
-
-		/// Attribute that can be a single value from a list of permitted values.
-		struct EnumAttribute: public Attribute {
-			unsigned int value;
-
-			std::vector<std::string> values;
-
-			virtual ~EnumAttribute();
-		};
-
-
-		Map(AttributePtrVectorPtr attributes);
-
-		virtual ~Map();
-
-		virtual AttributePtrVectorPtr getAttributes();
-
-	protected:
-		AttributePtrVectorPtr attributes;
-
+		/// Get a list of attributes that can be set in this map.
+		virtual AttributePtrVectorPtr getAttributes() = 0;
 };
 
 /// Shared pointer to a Map.
 typedef boost::shared_ptr<Map> MapPtr;
 
 /// Vector of Map shared pointers.
-typedef std::vector<MapPtr> VC_MAP;
+typedef std::vector<MapPtr> MapVector;
 
 } // namespace gamemaps
 } // namespace camoto
