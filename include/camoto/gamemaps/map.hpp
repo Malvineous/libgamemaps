@@ -68,7 +68,7 @@ class Map: virtual public Metadata
 			 * for this attribute value.  An empty string means there is no
 			 * restriction on file extension.
 			 */
-			std::string filenameValidExtensions;
+			std::string filenameValidExtension;
 		};
 
 		/// Shared pointer to an Attribute.

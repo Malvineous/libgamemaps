@@ -688,6 +688,25 @@ finishTesting:
 								}
 								break;
 							}
+
+							case gm::Map::Attribute::Filename: {
+								std::cout << (bScript ? "filename" : "Filename") << "\n";
+
+								if (bScript) std::cout << "attribute" << attrNum << "_value=";
+								else std::cout << "  Current value: ";
+								std::cout << a->filenameValue << "\n";
+
+								if (bScript) std::cout << "attribute" << attrNum
+									<< "_filespec=";
+								else std::cout << "  Valid files: ";
+								std::cout << "*";
+								if (!a->filenameValidExtension.empty()) {
+									std::cout << '.' << a->filenameValidExtension;
+								}
+								std::cout << "\n";
+								break;
+							}
+
 							default:
 								std::cout << (bScript ? "unknown" : "Unknown type (fix this!)");
 								break;

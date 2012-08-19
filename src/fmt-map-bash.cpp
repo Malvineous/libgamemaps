@@ -43,8 +43,24 @@
 /// This is the largest valid tile code in the background layer.
 #define MB_MAX_VALID_TILECODE 0x6C
 
+/// Number of fields in the .mif file
+#define MB_NUM_ATTRIBUTES        7
+
+/// Index of attribute for .snd file, which never gets its extension removed.
+#define MB_ATTR_KEEP_EXT         5
+
 namespace camoto {
 namespace gamemaps {
+
+static const char *validTypes[] = {
+	"tbg",
+	"tfg",
+	"tbn",
+	"sif",
+	"spr", ///< @todo could be type 14 (unknown)
+	"snd",
+	"",
+};
 
 using namespace camoto::gamegraphics;
 
@@ -139,6 +155,50 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	assert(bg);
 	assert(fg);
 
+	// Read the map info file
+	static const char *attrNames[] = {
+		"Background tileset",
+		"Foreground tileset",
+		"Bonus tileset",
+		"Sprite information",
+		"Main sprite",
+		"Sound effects",
+		"Unknown",
+	};
+	static const char *attrDesc[] = {
+		"Filename of the tileset to use for drawing the map background layer",
+		"Filename of the first tileset to use for drawing the map foreground layer",
+		"Filename of the second tileset to use for drawing the map foreground layer",
+		"Something to do with sprite data?",
+		"Sprite of the main player?",
+		"Filename to load PC speaker sounds from",
+		"Unknown",
+	};
+	input->seekg(0, stream::start);
+	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+	for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
+		Map::AttributePtr attr(new Map::Attribute);
+		attr->type = Map::Attribute::Filename;
+		attr->name = attrNames[i];
+		attr->desc = attrDesc[i];
+		attr->filenameValidExtension = validTypes[i];
+		input >> nullPadded(attr->filenameValue, 31);
+		if (attr->filenameValue.compare("UNNAMED") == 0) {
+			attr->filenameValue.clear();
+		} else {
+			// Add the fake extension
+			if (
+				(!attr->filenameValue.empty())
+				&& (i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
+			) {
+				attr->filenameValue += ".";
+				attr->filenameValue += validTypes[i];
+			}
+		}
+		attributes->push_back(attr);
+	}
+
+	// Read the background layer
 	stream::pos lenBG = bg->size();
 	bg->seekg(0, stream::start);
 
@@ -207,7 +267,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(),
+		attributes,
 		Map2D::HasViewport,
 		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,
@@ -233,6 +293,35 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	stream::output_sptr fg = suppData[SuppItem::Layer2];
 	assert(bg);
 	assert(fg);
+
+	// Write map info file
+	{
+		Map::AttributePtrVectorPtr attributes = map->getAttributes();
+		if (attributes->size() != MB_NUM_ATTRIBUTES) {
+			throw stream::error("Cannot write map as there is an incorrect number "
+				"of attributes set.");
+		}
+		std::string val;
+		for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
+			Map::Attribute *attr = attributes->at(i).get();
+			if (attr->filenameValue.empty()) {
+				val = "UNNAMED";
+			} else {
+				std::string::size_type dot = attr->filenameValue.find_last_of('.');
+				if (
+					(i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
+					&& (dot != std::string::npos)
+					&& (attr->filenameValue.substr(dot + 1).compare(validTypes[i]) == 0)
+				) {
+					// Extension matches, remove it
+					val = attr->filenameValue.substr(0, dot);
+				} else {
+					val = attr->filenameValue; // don't chop off extension
+				}
+			}
+			output << nullPadded(val, 31);
+		}
+	}
 
 	// Write the background layer
 	{
@@ -300,8 +389,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 
 	bg->flush();
 	fg->flush();
-
-	// Until all the properties are implemented, just leave the info file unchanged.
+	output->flush();
 	return;
 }
 
