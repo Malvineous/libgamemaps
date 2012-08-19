@@ -23,6 +23,10 @@
 
 #include <camoto/gamemaps/map2d.hpp>
 
+#ifndef DLL_EXPORT
+#define DLL_EXPORT
+#endif
+
 namespace camoto {
 namespace gamemaps {
 
@@ -47,7 +51,7 @@ namespace gamemaps {
  * @param tileHeight
  *   Stores layer height on return, in pixels.
  */
-void getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, unsigned int *layerWidth,
+void DLL_EXPORT getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, unsigned int *layerWidth,
 	unsigned int *layerHeight, unsigned int *tileWidth, unsigned int *tileHeight);
 
 } // namespace gamemaps

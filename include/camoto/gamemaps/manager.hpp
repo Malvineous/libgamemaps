@@ -24,6 +24,10 @@
 #include <boost/shared_ptr.hpp>
 #include <camoto/gamemaps/maptype.hpp>
 
+#ifndef DLL_EXPORT
+#define DLL_EXPORT
+#endif
+
 namespace camoto {
 namespace gamemaps {
 
@@ -77,7 +81,7 @@ typedef boost::shared_ptr<Manager> ManagerPtr;
  *
  * @return A shared pointer to a Manager instance.
  */
-const ManagerPtr getManager(void);
+const ManagerPtr DLL_EXPORT getManager(void);
 
 } // namespace gamemaps
 } // namespace camoto
