@@ -261,6 +261,7 @@ void DDaveMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	memset(pad, 0, DD_PAD_LEN);
 	output->write((char *)pad, DD_PAD_LEN);
 
+	output->flush();
 	return;
 }
 

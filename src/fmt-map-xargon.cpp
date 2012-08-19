@@ -623,8 +623,7 @@ void SweeneyMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		}
 	}
 
-	output->truncate_here();
-
+	output->flush();
 	return;
 }
 

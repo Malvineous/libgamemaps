@@ -768,7 +768,7 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	}
 
 	rleWrite(output, attr, lenAttr);
-
+	output->flush();
 	return;
 }
 

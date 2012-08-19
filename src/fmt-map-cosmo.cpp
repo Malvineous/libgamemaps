@@ -294,6 +294,7 @@ void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		output << u16le(bg[i]);
 	}
 
+	output->flush();
 	return;
 }
 

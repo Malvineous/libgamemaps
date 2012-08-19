@@ -441,7 +441,6 @@ void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
 		tiles[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
-
 	output->write((char *)tiles, lenTiles);
 
 	// Write the foreground layer
@@ -455,9 +454,9 @@ void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
 		tiles[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 	}
-
 	output->write((char *)tiles, lenTiles);
 
+	output->flush();
 	return;
 }
 

@@ -215,6 +215,7 @@ void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		output->write((char *)bg, mapWidth);
 		bg += mapWidth;
 	}
+	output->flush();
 	return;
 }
 
