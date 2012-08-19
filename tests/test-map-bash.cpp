@@ -56,7 +56,7 @@
 #define MAP_HAS_SUPPDATA_LAYER2
 
 // Skip isInstance checks
-#define TILESET_DETECTION_UNCERTAIN
+#define MAP_DETECTION_UNCERTAIN
 
 #define MAP_CLASS fmt_map_bash
 #define MAP_TYPE  "map-bash"
