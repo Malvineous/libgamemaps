@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/util.hpp>
@@ -251,10 +252,10 @@ void WackyMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		nextY = firstY + i->second;
 		int deltaX = nextX - lastX;
 		int deltaY = nextY - lastY;
-		unsigned int angle = WW_ANGLE_MAX + atan2(deltaY, deltaX) * (WW_ANGLE_MAX/2) / M_PI;
+		unsigned int angle = WW_ANGLE_MAX + atan2((double)deltaY, (double)deltaX) * (WW_ANGLE_MAX/2) / M_PI;
 		angle %= WW_ANGLE_MAX;
 		unsigned int image = (int)(angle / 240.0 + 6.5) % 8;
-		unsigned int dist = sqrt(deltaX*deltaX + deltaY*deltaY);
+		unsigned int dist = sqrt((double)(deltaX*deltaX + deltaY*deltaY));
 		rd
 			<< u16le(nextX)
 			<< u16le(nextY)
