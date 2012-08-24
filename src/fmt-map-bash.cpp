@@ -137,9 +137,43 @@ std::vector<std::string> BashMapType::getGameList() const
 
 MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
 {
+	bool maybe = false;
 	stream::len len = psMap->size();
-	if ((len == 194) || (len == 195)) return MapType::PossiblyYes;
-	return MapType::DefinitelyNo;
+
+	// Make sure the file is large enough...
+	// TESTED BY: fmt_map_bash_isinstance_c01
+	if (len < 187) return MapType::DefinitelyNo;
+
+	// ...but not too large.
+	// TESTED BY: fmt_map_bash_isinstance_c02
+	if (len > 217) return MapType::DefinitelyNo;
+
+	uint8_t *d;
+	boost::shared_ptr<uint8_t> data(d = new uint8_t[len]);
+	psMap->seekg(0, stream::start);
+	psMap->read(d, len);
+	for (int n = 0; n < 7; n++) {
+		bool null = false;
+		for (int i = 0; i < 31; i++) {
+			if (*d == 0) {
+				null = true; // encountered the first null
+			} else if (null) {
+				// If there are chars after the null, it may not be the right format
+				// TESTED BY: fmt_map_bash_isinstance_c03
+				maybe = true;
+			} else if ((*d < 32) || (*d > 127)) {
+				// Make sure the filenames contain valid chars only
+				// TESTED BY: fmt_map_bash_isinstance_c04
+				return MapType::DefinitelyNo; // bad chars
+			}
+			d++;
+		}
+		// Make sure each entry has a terminating null
+		// TESTED BY: fmt_map_bash_isinstance_c05
+		if (!null) return MapType::DefinitelyNo;
+	}
+	if (maybe) return MapType::PossiblyYes;
+	return MapType::DefinitelyYes;
 }
 
 MapPtr BashMapType::create(SuppData& suppData) const
