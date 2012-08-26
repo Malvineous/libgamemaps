@@ -526,12 +526,15 @@ int main(int iArgC, char *cArgV[])
 				}
 				if (cert != gm::MapType::DefinitelyNo) {
 					// We got a possible match, see if it requires any suppdata
-					camoto::SuppFilenames suppList = pTestType->getRequiredSupps(strFilename);
+					camoto::SuppFilenames suppList = pTestType->getRequiredSupps(psMap,
+						strFilename);
 					if (suppList.size() > 0) {
 						// It has suppdata, see if it's present
 						std::cout << "  * This format requires supplemental files..." << std::endl;
 						bool bSuppOK = true;
-						for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
+						for (camoto::SuppFilenames::iterator
+							i = suppList.begin(); i != suppList.end(); i++
+						) {
 							try {
 								stream::file_sptr suppStream(new stream::file());
 								suppStream->open(i->second);
@@ -585,10 +588,13 @@ finishTesting:
 		}
 
 		// See if the format requires any supplemental files
-		camoto::SuppFilenames suppList = pMapType->getRequiredSupps(strFilename);
+		camoto::SuppFilenames suppList = pMapType->getRequiredSupps(psMap,
+			strFilename);
 		camoto::SuppData suppData;
 		if (suppList.size() > 0) {
-			for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
+			for (camoto::SuppFilenames::iterator
+				i = suppList.begin(); i != suppList.end(); i++
+			) {
 				try {
 					stream::file_sptr suppStream(new stream::file());
 					suppStream->open(i->second);

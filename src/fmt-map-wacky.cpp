@@ -270,11 +270,11 @@ void WackyMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames WackyMapType::getRequiredSupps(
-	const std::string& filenameMap) const
+SuppFilenames WackyMapType::getRequiredSupps(stream::input_sptr input,
+	const std::string& filename) const
 {
 	SuppFilenames supps;
-	std::string baseName = filenameMap.substr(0, filenameMap.length() - 1);
+	std::string baseName = filename.substr(0, filename.length() - 1);
 	supps[SuppItem::Layer1] = baseName + "rd";
 	return supps;
 }

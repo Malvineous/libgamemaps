@@ -772,13 +772,13 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames WordRescueMapType::getRequiredSupps(
-	const std::string& filenameMap) const
+SuppFilenames WordRescueMapType::getRequiredSupps(stream::input_sptr input,
+	const std::string& filename) const
 {
 	SuppFilenames supps;
 	/// Add wr1.d0 (to wr1.d14) layer file
-	std::string baseName = filenameMap.substr(0, filenameMap.find_last_of('.'))
-		+ ".d" + filenameMap.substr(filenameMap.find_last_of('s') + 1);
+	std::string baseName = filename.substr(0, filename.find_last_of('.'))
+		+ ".d" + filename.substr(filename.find_last_of('s') + 1);
 	supps[SuppItem::Layer1] = baseName;
 	return supps;
 }

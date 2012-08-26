@@ -205,8 +205,8 @@ void CComicMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames CComicMapType::getRequiredSupps(const std::string& filenameMap)
-	const
+SuppFilenames CComicMapType::getRequiredSupps(stream::input_sptr input,
+	const std::string& filename) const
 {
 	SuppFilenames supps;
 	return supps;

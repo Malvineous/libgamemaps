@@ -161,9 +161,8 @@ class MapType
 		 *         returned can have relative paths, and may even have an absolute
 		 *         path, if one was passed in with filenameMap.
 		 */
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
-			const = 0;
-
+		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+			const std::string& filename) const = 0;
 };
 
 /// Shared pointer to a MapType.

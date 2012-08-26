@@ -219,8 +219,8 @@ void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames CCavesMapType::getRequiredSupps(const std::string& filenameMap)
-	const
+SuppFilenames CCavesMapType::getRequiredSupps(stream::input_sptr input,
+	const std::string& filename) const
 {
 	SuppFilenames supps;
 	return supps;

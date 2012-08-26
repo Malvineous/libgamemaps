@@ -40,8 +40,8 @@ class CosmoMapType: virtual public BaseMapType
 		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
 		virtual void write(MapPtr map, stream::expanding_output_sptr output,
 			ExpandingSuppData& suppData) const;
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
-			const;
+		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+			const std::string& filename) const;
 };
 
 class CosmoActorLayer: virtual public GenericMap2D::Layer

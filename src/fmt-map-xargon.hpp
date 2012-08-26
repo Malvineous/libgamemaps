@@ -54,8 +54,8 @@ class JillMapType: virtual public SweeneyMapType
 		virtual std::string getFriendlyName() const;
 		virtual std::vector<std::string> getFileExtensions() const;
 		virtual std::vector<std::string> getGameList() const;
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
-			const;
+		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+			const std::string& filename) const;
 };
 
 /// Xargon level reader/writer.
@@ -68,8 +68,8 @@ class XargonMapType: virtual public SweeneyMapType
 		virtual std::string getFriendlyName() const;
 		virtual std::vector<std::string> getFileExtensions() const;
 		virtual std::vector<std::string> getGameList() const;
-		virtual SuppFilenames getRequiredSupps(const std::string& filenameMap)
-			const;
+		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+			const std::string& filename) const;
 };
 
 

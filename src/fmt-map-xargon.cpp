@@ -207,8 +207,8 @@ std::vector<std::string> JillMapType::getGameList() const
 	return vcGames;
 }
 
-SuppFilenames JillMapType::getRequiredSupps(
-	const std::string& filenameMap) const
+SuppFilenames JillMapType::getRequiredSupps(stream::input_sptr input,
+	const std::string& filename) const
 {
 	SuppFilenames supps;
 	supps[SuppItem::Extra1] = "jill.dma";
@@ -252,13 +252,13 @@ std::vector<std::string> XargonMapType::getGameList() const
 	return vcGames;
 }
 
-SuppFilenames XargonMapType::getRequiredSupps(
-	const std::string& filenameMap) const
+SuppFilenames XargonMapType::getRequiredSupps(stream::input_sptr input,
+	const std::string& filename) const
 {
 	// Take the extension from the file being opened and use the corresponding
 	// tiles file, i.e. "blah.xr1" -> "tiles.xr1".  There are no ".xr0" levels.
 	SuppFilenames supps;
-	std::string ext = filenameMap.substr(filenameMap.find_last_of('.'));
+	std::string ext = filename.substr(filename.find_last_of('.'));
 	supps[SuppItem::Extra1] = "tiles" + ext;
 	return supps;
 }
