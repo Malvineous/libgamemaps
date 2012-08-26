@@ -171,7 +171,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	//layers.push_back(actorLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(),
+		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
 		Map2D::HasViewport,
 		HP_VIEWPORT_WIDTH, HP_VIEWPORT_HEIGHT,
 		HP_MAP_WIDTH, HP_MAP_HEIGHT,

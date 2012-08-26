@@ -111,6 +111,29 @@ ImagePtr BashBackgroundLayer::imageFromCode(unsigned int code,
 }
 
 
+Map::FilenameVectorPtr bash_getGraphicsFilenames(const Map *map)
+{
+	Map::AttributePtrVectorPtr attributes = map->getAttributes();
+	assert(attributes); // this map format always has attributes
+	assert(attributes->size() == MB_NUM_ATTRIBUTES);
+
+	Map::FilenameVectorPtr files(new Map::FilenameVector);
+	Map::GraphicsFilename gf;
+	gf.purpose = Map::GraphicsFilename::Tileset;
+	gf.type = "tls-bash-bg";
+	gf.filename = attributes->at(0)->filenameValue;
+	files->push_back(gf); // bg tiles
+
+	gf.type = "tls-bash-fg";
+	gf.filename = attributes->at(1)->filenameValue;
+	files->push_back(gf); // fg tiles
+
+	gf.filename = attributes->at(2)->filenameValue;
+	files->push_back(gf); // bon tiles
+	return files;
+}
+
+
 std::string BashMapType::getMapCode() const
 {
 	return "map-bash";
@@ -215,7 +238,6 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		attr->type = Map::Attribute::Filename;
 		attr->name = attrNames[i];
 		attr->desc = attrDesc[i];
-		attr->filenameValidExtension = validTypes[i];
 		input >> nullPadded(attr->filenameValue, 31);
 		if (attr->filenameValue.compare("UNNAMED") == 0) {
 			attr->filenameValue.clear();
@@ -229,6 +251,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 				attr->filenameValue += validTypes[i];
 			}
 		}
+		attr->filenameValidExtension = validTypes[i];
 		attributes->push_back(attr);
 	}
 
@@ -301,7 +324,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		attributes,
+		attributes, bash_getGraphicsFilenames,
 		Map2D::HasViewport,
 		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,

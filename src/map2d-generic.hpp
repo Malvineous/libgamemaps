@@ -38,6 +38,10 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		 * @param attributes
 		 *   List of attributes that apply to this map.
 		 *
+		 * @param fnGfxFiles
+		 *   Callback to retrieve the list of graphics files needed to render this
+		 *   map.
+		 *
 		 * @param caps
 		 *   Map capabilities.  One or more Caps values OR'd together.
 		 *
@@ -88,7 +92,8 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		 *   map size in pixels, then divided by the layer's different tile size to
 		 *   reveal the dimensions of the layer in a number of tiles.
 		 */
-		GenericMap2D(AttributePtrVectorPtr attributes, int caps,
+		GenericMap2D(AttributePtrVectorPtr attributes,
+			GraphicsFilenamesCallback fnGfxFiles, int caps,
 			unsigned int viewportWidth, unsigned int viewportHeight,
 			unsigned int width, unsigned int height, unsigned int tileWidth,
 			unsigned int tileHeight, LayerPtrVector& layers, PathPtrVectorPtr paths);

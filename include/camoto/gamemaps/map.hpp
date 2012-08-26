@@ -43,12 +43,26 @@ class EInvalidFormat: virtual public error {
 class Map: virtual public Metadata
 {
 	public:
-		/// Attribute attached to this map
+		/// Attribute attached to this map.
+		/**
+		 * Attributes are configuration options that apply to particular map files,
+		 * such as a default background colour or which song to play as background
+		 * music in the level.
+		 *
+		 * Attributes should reflect data contained in the map file itself, so for
+		 * example, if the map file doesn't store some value that controls which
+		 * tileset is used to draw the level, then the tileset filename shouldn't be
+		 * exposed as an attribute (because if it was changed, the new value
+		 * couldn't be saved back into the map file.)
+		 *
+		 * Attributes should reflect properties of the map that the user can and may
+		 * wish to change.
+		 */
 		struct Attribute {
 			enum Type {
 				Integer,         ///< One number within a given range
 				Enum,            ///< One choice from a list of static values
-				Filename,        ///< A filename of the given type
+				Filename,        ///< A filename of the given file type
 			};
 			Type type;         ///< What type this attribute is
 			std::string name;  ///< Short name of this attribute
@@ -61,8 +75,20 @@ class Map: virtual public Metadata
 			unsigned int enumValue;                  ///< Enum type: current value
 			std::vector<std::string> enumValueNames; ///< Enum type: permitted values
 
-			std::string filenameValue; ///< Filename type: current filename
-			/// Valid filename extensions
+			/// Filename type: current filename
+			/**
+			 * Filenames should be specified here as map attributes (as opposed to
+			 * supplementary items) if the files are not required to load the map.
+			 *
+			 * Parts of the actual map (like layer data or sprite positions) should
+			 * be listed as supp data because the map will be incomplete if those
+			 * files are not available, but things like tileset filenames are not
+			 * required to load the map (e.g. if all you want to do is find out the
+			 * map dimensions) so those optional files should be listed as attributes.
+			 */
+			std::string filenameValue;
+
+			/// Filename type: valid filename extensions
 			/**
 			 * Any files that match this specification will be listed as valid choices
 			 * for this attribute value.  An empty string means there is no
@@ -82,6 +108,30 @@ class Map: virtual public Metadata
 
 		/// Get a list of attributes that can be set in this map.
 		virtual AttributePtrVectorPtr getAttributes() = 0;
+
+		/// Const-accessible version
+		virtual const AttributePtrVectorPtr getAttributes() const = 0;
+
+		/// Information about a graphics file used to render this map.
+		struct GraphicsFilename {
+			enum Purpose {
+				Tileset,             ///< Normal tileset
+				BackgroundImage,     ///< Image to appear behind all tiles
+			};
+			Purpose purpose;
+			std::string filename;  ///< Actual filename
+			std::string type;      ///< Type code (e.g. "tls-blah")
+		};
+		typedef std::vector<GraphicsFilename> FilenameVector;
+		typedef boost::shared_ptr<FilenameVector> FilenameVectorPtr;
+
+		/// Get a list of additional files needed to render the map.
+		/**
+		 * This function returns a list of filenames and format types needed to
+		 * render the map.  Tilesets, background images, etc.  These values may
+		 * change as map attributes are altered.
+		 */
+		virtual FilenameVectorPtr getGraphicsFilenames() const = 0;
 };
 
 /// Shared pointer to a Map.

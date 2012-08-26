@@ -21,22 +21,40 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_GENERIC_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_GENERIC_HPP_
 
+#include <boost/function.hpp>
 #include <camoto/gamemaps/map.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
+/// Callback to use when the list of graphics filenames is required
+/**
+ * This is used as a convenience function, to avoid having to derive from
+ * GenericMap and implement getGraphicsFilenames().
+ */
+typedef boost::function<Map::FilenameVectorPtr(const Map *)> GraphicsFilenamesCallback;
+
+/// Value to use when there is no callback to get the list of graphics filenames
+#define NO_GFX_CALLBACK ((GraphicsFilenamesCallback)NULL)
+
 /// Generic implementation of a Map.
 class GenericMap: virtual public Map
 {
 	public:
-		GenericMap(AttributePtrVectorPtr attributes);
+		GenericMap(AttributePtrVectorPtr attributes,
+			GraphicsFilenamesCallback fnGfxFiles);
 		virtual ~GenericMap();
 
 		virtual AttributePtrVectorPtr getAttributes();
+		virtual const AttributePtrVectorPtr getAttributes() const;
+		virtual FilenameVectorPtr getGraphicsFilenames() const;
 
 	protected:
+		/// Vector holding the current attributes
 		AttributePtrVectorPtr attributes;
+
+		/// Callback function to get the names of the graphics files
+		GraphicsFilenamesCallback fnGfxFiles;
 };
 
 } // namespace gamemaps

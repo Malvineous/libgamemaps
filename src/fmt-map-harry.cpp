@@ -316,7 +316,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(actorLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		attributes,
+		attributes, NO_GFX_CALLBACK,
 		Map2D::HasViewport,
 		HH_VIEWPORT_WIDTH, HH_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,

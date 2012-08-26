@@ -197,6 +197,31 @@ bool WordRescueAttributeLayer::tilePermittedAt(unsigned int code,
 }
 
 
+Map::FilenameVectorPtr wr_getGraphicsFilenames(const Map *map)
+{
+	Map::AttributePtrVectorPtr attributes = map->getAttributes();
+	assert(attributes); // this map format always has attributes
+	assert(attributes->size() == 3);
+
+	Map::FilenameVectorPtr files(new Map::FilenameVector);
+	Map::GraphicsFilename gf;
+	gf.purpose = Map::GraphicsFilename::Tileset;
+	gf.type = "tls-wordresc";
+	gf.filename = createString("back" << (int)(attributes->at(1)->enumValue + 1)
+		<< ".wr");
+	files->push_back(gf); // bg tiles
+
+	unsigned int dropNum = attributes->at(2)->enumValue;
+	if (dropNum > 0) {
+		gf.purpose = Map::GraphicsFilename::BackgroundImage;
+		gf.filename = createString("drop" << dropNum << ".wr");
+		files->push_back(gf); // fg tiles
+	}
+
+	return files;
+}
+
+
 /// Write the given data to the stream, RLE encoded
 int rleWrite(stream::output_sptr output, uint8_t *data, int len)
 {
@@ -400,47 +425,28 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	attrTileset->type = Map::Attribute::Enum;
 	attrTileset->name = "Tileset";
 	attrTileset->desc = "Tileset to use for this map";
-	switch (tileset) {
-		case 1: attrTileset->enumValue = 0; break;
-		case 2: attrTileset->enumValue = 1; break;
-		case 3: attrTileset->enumValue = 2; break;
-		case 5: attrTileset->enumValue = 3; break;
-		case 4: attrTileset->enumValue = 4; break;
-
-		case 6: attrTileset->enumValue = 5; break;
-		case 7: attrTileset->enumValue = 6; break;
-		case 8: attrTileset->enumValue = 7; break;
-		default: attrTileset->enumValue = 0; break;
-	}
+	if (tileset > 0) tileset--; // just in case it *is* ever zero
+	attrTileset->enumValue = tileset;
 	attrTileset->enumValueNames.push_back("Desert");
 	attrTileset->enumValueNames.push_back("Castle");
 	attrTileset->enumValueNames.push_back("Suburban");
-	attrTileset->enumValueNames.push_back("Industrial");
 	attrTileset->enumValueNames.push_back("Spooky (episode 3 only)");
-	attrTileset->enumValueNames.push_back("Custom (back5.wr)");
+	attrTileset->enumValueNames.push_back("Industrial");
 	attrTileset->enumValueNames.push_back("Custom (back6.wr)");
 	attrTileset->enumValueNames.push_back("Custom (back7.wr)");
+	attrTileset->enumValueNames.push_back("Custom (back8.wr)");
 	attributes->push_back(attrTileset);
 
 	Map::AttributePtr attrBackdrop(new Map::Attribute);
 	attrBackdrop->type = Map::Attribute::Enum;
 	attrBackdrop->name = "Backdrop";
 	attrBackdrop->desc = "Image to show behind map (overrides background colour)";
-	switch (backdrop) {
-		case 0: attrBackdrop->enumValue = 0; break;
-		case 3: attrBackdrop->enumValue = 1; break;
-		case 4: attrBackdrop->enumValue = 2; break;
-		case 2: attrBackdrop->enumValue = 3; break;
-
-		case 5: attrBackdrop->enumValue = 4; break;
-		case 6: attrBackdrop->enumValue = 5; break;
-		case 7: attrBackdrop->enumValue = 6; break;
-		default: attrBackdrop->enumValue = 0; break;
-	}
+	attrBackdrop->enumValue = backdrop;
 	attrBackdrop->enumValueNames.push_back("None (use background colour)");
+	attrBackdrop->enumValueNames.push_back("Custom (drop1.wr)");
+	attrBackdrop->enumValueNames.push_back("Cave (episodes 2-3 only)");
 	attrBackdrop->enumValueNames.push_back("Desert");
 	attrBackdrop->enumValueNames.push_back("Mountain");
-	attrBackdrop->enumValueNames.push_back("Cave (episodes 2-3 only)");
 	attrBackdrop->enumValueNames.push_back("Custom (drop5.wr)");
 	attrBackdrop->enumValueNames.push_back("Custom (drop6.wr)");
 	attrBackdrop->enumValueNames.push_back("Custom (drop7.wr)");
@@ -581,7 +587,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	layers.push_back(itemLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		attributes,
+		attributes, wr_getGraphicsFilenames,
 		Map2D::HasViewport,
 		288, 152, // viewport
 		mapWidth, mapHeight,
@@ -621,37 +627,14 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (tileset != enum)");
 	}
-	uint16_t tileset;
-	switch (attrTileset->enumValue) {
-		case 0: tileset = 1; break;
-		case 1: tileset = 2; break;
-		case 2: tileset = 3; break;
-		case 3: tileset = 5; break;
-		case 4: tileset = 4; break;
-
-		case 5: tileset = 6; break;
-		case 6: tileset = 7; break;
-		case 7: tileset = 8; break;
-		default: tileset = 1; break;
-	}
+	uint16_t tileset = attrTileset->enumValue + 1;
 
 	Map::Attribute *attrBackdrop = attributes->at(2).get();
 	if (attrBackdrop->type != Map::Attribute::Enum) {
 		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (backdrop != enum)");
 	}
-	uint16_t backdrop;
-	switch (attrBackdrop->enumValue) {
-		case 0: backdrop = 0; break;
-		case 1: backdrop = 3; break;
-		case 2: backdrop = 4; break;
-		case 3: backdrop = 2; break;
-
-		case 4: backdrop = 5; break;
-		case 5: backdrop = 6; break;
-		case 6: backdrop = 7; break;
-		default: backdrop = 0; break;
-	}
+	uint16_t backdrop = attrBackdrop->enumValue;
 
 	typedef std::pair<uint16_t, uint16_t> point;
 	std::vector<point> itemLocations[INDEX_SIZE];

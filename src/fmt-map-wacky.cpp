@@ -184,7 +184,7 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	paths->push_back(pathptr);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(),
+		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
 		Map2D::HasPaths | Map2D::FixedPathCount,
 		0, 0,
 		WW_MAP_WIDTH, WW_MAP_HEIGHT,

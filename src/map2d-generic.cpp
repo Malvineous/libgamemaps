@@ -24,11 +24,12 @@
 namespace camoto {
 namespace gamemaps {
 
-GenericMap2D::GenericMap2D(AttributePtrVectorPtr attributes, int caps,
+GenericMap2D::GenericMap2D(AttributePtrVectorPtr attributes,
+	GraphicsFilenamesCallback fnGfxFiles, int caps,
 	unsigned int viewportWidth, unsigned int viewportHeight, unsigned int width,
 	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
 	LayerPtrVector& layers, PathPtrVectorPtr paths)
-	:	GenericMap(attributes),
+	:	GenericMap(attributes, fnGfxFiles),
 		caps(caps),
 		viewportWidth(viewportWidth), viewportHeight(viewportHeight),
 		width(width), height(height),

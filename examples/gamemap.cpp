@@ -722,6 +722,43 @@ finishTesting:
 				} else {
 					std::cout << "0\n"; // number of attributes
 				}
+
+				std::cout << (bScript ? "gfx_filename_count=" : "Number of graphics filenames: ");
+				gm::Map::FilenameVectorPtr gfxFilenames = pMap->getGraphicsFilenames();
+				if (gfxFilenames) {
+					std::cout << gfxFilenames->size() << "\n";
+					int fileNum = 0;
+					for (gm::Map::FilenameVector::const_iterator
+						i = gfxFilenames->begin(); i != gfxFilenames->end(); i++
+					) {
+						const gm::Map::GraphicsFilename *a = &(*i);
+
+						if (bScript) {
+							std::cout << "gfx_file" << fileNum << "_name=" << a->filename << "\n";
+							std::cout << "gfx_file" << fileNum << "_type=" << a->type << "\n";
+							std::cout << "gfx_file" << fileNum << "_purpose=" << a->purpose << "\n";
+						} else {
+							std::cout << "Graphics file " << fileNum+1 << ": " << a->filename
+								<< " [";
+							switch (a->purpose) {
+								case gm::Map::GraphicsFilename::Tileset:
+									std::cout << "tileset";
+									break;
+								case gm::Map::GraphicsFilename::BackgroundImage:
+									std::cout << "background image";
+									break;
+								default:
+									std::cout << "Unknown purpose <fix this>";
+									break;
+							}
+							std::cout << " of type " << a->type << "]\n";
+						}
+						fileNum++;
+					}
+				} else {
+					std::cout << "0\n"; // number of gfx filenames
+				}
+
 				std::cout << (bScript ? "map_type=" : "Map type: ");
 				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {

@@ -227,7 +227,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(actorLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(),
+		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
 		Map2D::HasViewport,
 		CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
 		mapWidth, 32768 / mapWidth,

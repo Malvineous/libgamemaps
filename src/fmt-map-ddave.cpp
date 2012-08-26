@@ -174,7 +174,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(),
+		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
 		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPathCount,
 		20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
 		DD_MAP_WIDTH, DD_MAP_HEIGHT,
