@@ -125,11 +125,11 @@ Map::FilenameVectorPtr bash_getGraphicsFilenames(const Map *map)
 	files->push_back(gf); // bg tiles
 
 	gf.type = "tls-bash-fg";
-	gf.filename = attributes->at(1)->filenameValue;
-	files->push_back(gf); // fg tiles
-
 	gf.filename = attributes->at(2)->filenameValue;
 	files->push_back(gf); // bon tiles
+
+	gf.filename = attributes->at(1)->filenameValue;
+	files->push_back(gf); // fg tiles
 	return files;
 }
 
