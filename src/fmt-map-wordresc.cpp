@@ -33,9 +33,9 @@
 #define WR_BGTILE_HEIGHT          16
 
 /// Width of tiles in attribute layer
-#define WR_ATTILE_WIDTH           8
+#define WR_ATTILE_WIDTH            8
 /// Height of tiles in attribute layer
-#define WR_ATTILE_HEIGHT          8
+#define WR_ATTILE_HEIGHT           8
 
 /// Map code to write for locations with no tile set.
 #define WR_DEFAULT_BGTILE       0xFF
@@ -44,14 +44,15 @@
 #define WR_DEFAULT_ATTILE       0x20
 
 /// This is the largest valid tile code in the background layer.
-#define WR_MAX_VALID_TILECODE   240
+#define WR_MAX_VALID_TILECODE    240
+
+/// Height of the door image, in pixels (to align it with the floor)
+#define DOOR_HEIGHT               40
 
 // Internal codes for various items
 #define WR_CODE_GRUZZLE  1
 #define WR_CODE_SLIME    2
 #define WR_CODE_BOOK     3
-#define WR_CODE_ENTRANCE 4
-#define WR_CODE_EXIT     5
 #define WR_CODE_LETTER   6
 #define WR_CODE_LETTER1  6 // same as WR_CODE_LETTER
 #define WR_CODE_LETTER2  7
@@ -60,6 +61,9 @@
 #define WR_CODE_LETTER5  10
 #define WR_CODE_LETTER6  11
 #define WR_CODE_LETTER7  12
+
+#define WR_CODE_ENTRANCE 0x1001
+#define WR_CODE_EXIT     0x1002
 
 /// Fixed number of letters in each map (to spell a word)
 #define WR_NUM_LETTERS   7
@@ -121,8 +125,6 @@ ImagePtr WordRescueObjectLayer::imageFromCode(unsigned int code,
 		case WR_CODE_GRUZZLE:  t = 1; code = 15; break;
 		case WR_CODE_SLIME:    t = 0; code = 238; break;
 		case WR_CODE_BOOK:     t = 0; code = 239; break;
-		case WR_CODE_ENTRANCE: t = 1; code = 1; break;
-		case WR_CODE_EXIT:     t = 1; code = 3; break;
 		case WR_CODE_LETTER1:
 		case WR_CODE_LETTER2:
 		case WR_CODE_LETTER3:
@@ -130,8 +132,7 @@ ImagePtr WordRescueObjectLayer::imageFromCode(unsigned int code,
 		case WR_CODE_LETTER5:
 		case WR_CODE_LETTER6:
 		case WR_CODE_LETTER7:
-			t = 1;
-			code += 31;
+			t = 2;
 			code -= WR_CODE_LETTER;
 			break;
 		default: return ImagePtr();
@@ -171,6 +172,8 @@ ImagePtr WordRescueAttributeLayer::imageFromCode(unsigned int code,
 {
 	unsigned int t;
 	switch (code) {
+		case WR_CODE_ENTRANCE: t = 1; code = 1; break;
+		case WR_CODE_EXIT:     t = 1; code = 3; break;
 		case 0x0000: t = 1; code = 0; break; // first question mark box
 		case 0x0001: t = 1; code = 0; break;
 		case 0x0002: t = 1; code = 0; break;
@@ -454,22 +457,6 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 
 	Map2D::Layer::ItemPtrVectorPtr items(new Map2D::Layer::ItemPtrVector());
 
-	// Add the map entrance and exit as special items
-	{
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->x = startX / 2;
-		t->y = startY / 2;
-		t->code = WR_CODE_ENTRANCE;
-		items->push_back(t);
-	}
-	{
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->x = endX / 2;
-		t->y = endY / 2;
-		t->code = WR_CODE_EXIT;
-		items->push_back(t);
-	}
-
 	uint16_t gruzzleCount;
 	input >> u16le(gruzzleCount);
 	items->reserve(items->size() + gruzzleCount);
@@ -578,6 +565,23 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 			}
 		}
 	}
+
+	// Add the map entrance and exit as special items
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->x = startX;
+		t->y = startY;
+		t->code = WR_CODE_ENTRANCE;
+		atItems->push_back(t);
+	}
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->x = endX;
+		t->y = endY + (DOOR_HEIGHT / WR_ATTILE_HEIGHT) - 1;
+		t->code = WR_CODE_EXIT;
+		atItems->push_back(t);
+	}
+
 	Map2D::Layer::ItemPtrVectorPtr validAtItems(new Map2D::Layer::ItemPtrVector());
 	Map2D::LayerPtr atLayer(new WordRescueAttributeLayer(atItems, validAtItems));
 
@@ -664,13 +668,23 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			case WR_CODE_LETTER5: itemLocations[INDEX_LETTER][4] = point((*i)->x, (*i)->y); break;
 			case WR_CODE_LETTER6: itemLocations[INDEX_LETTER][5] = point((*i)->x, (*i)->y); break;
 			case WR_CODE_LETTER7: itemLocations[INDEX_LETTER][6] = point((*i)->x, (*i)->y); break;
+		}
+	}
+
+	layer = map2d->getLayer(1);
+	const Map2D::Layer::ItemPtrVectorPtr items1 = layer->getAllItems();
+	for (Map2D::Layer::ItemPtrVector::const_iterator i = items1->begin();
+		i != items1->end();
+		i++
+	) {
+		switch ((*i)->code) {
 			case WR_CODE_ENTRANCE:
-				startX = (*i)->x * 2;
-				startY = (*i)->y * 2;
+				startX = (*i)->x;
+				startY = (*i)->y;
 				break;
 			case WR_CODE_EXIT:
-				endX = (*i)->x * 2;
-				endY = (*i)->y * 2;
+				endX = (*i)->x;
+				endY = (*i)->y - (DOOR_HEIGHT / WR_ATTILE_HEIGHT) + 1;
 				break;
 		}
 	}
@@ -740,6 +754,13 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		i != atitems->end();
 		i++
 	) {
+		// Ignore these internal codes
+		switch ((*i)->code) {
+			case WR_CODE_ENTRANCE:
+			case WR_CODE_EXIT:
+				continue;
+		}
+
 		unsigned int xpos = (*i)->x;
 		if (xpos < 1) continue; // skip first column, just in case
 		xpos--;
