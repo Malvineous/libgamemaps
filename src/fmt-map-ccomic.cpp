@@ -144,6 +144,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 		//if (bg[i] == CC_DEFAULT_BGTILE) continue;
 
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		t->x = i % width;
 		t->y = i / width;
 		t->code = bg[i];

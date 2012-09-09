@@ -211,6 +211,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	for (unsigned int i = 0; (i < CCA_NUM_TILES_BG) && (lenMap >= 2); i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		t->x = i % mapWidth;
 		t->y = i / mapWidth;
 		input >> u16le(t->code);

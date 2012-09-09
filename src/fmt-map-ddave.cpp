@@ -161,6 +161,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	tiles->reserve(DD_MAP_WIDTH * DD_MAP_HEIGHT);
 	for (unsigned int i = 0; i < DD_LAYER_LEN_BG; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		t->x = i % DD_MAP_WIDTH;
 		t->y = i / DD_MAP_WIDTH;
 		t->code = bg[i];

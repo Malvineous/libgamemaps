@@ -532,6 +532,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		} else {
 			while (num-- > 0) {
 				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+				t->type = Map2D::Layer::Item::Default;
 				t->x = i % mapWidth;
 				t->y = i / mapWidth;
 				t->code = code;
@@ -557,6 +558,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		} else {
 			while (num-- > 0) {
 				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+				t->type = Map2D::Layer::Item::Default;
 				t->x = i % atWidth + 1;
 				t->y = i / atWidth;
 				t->code = code;
@@ -569,13 +571,16 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	// Add the map entrance and exit as special items
 	{
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Player;
 		t->x = startX;
 		t->y = startY;
+		t->playerNumber = 0;
 		t->code = WR_CODE_ENTRANCE;
 		atItems->push_back(t);
 	}
 	{
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		t->x = endX;
 		t->y = endY + (DOOR_HEIGHT / WR_ATTILE_HEIGHT) - 1;
 		t->code = WR_CODE_EXIT;

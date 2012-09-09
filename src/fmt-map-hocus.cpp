@@ -133,6 +133,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	for (unsigned int y = 0; y < HP_MAP_HEIGHT; y++) {
 		for (unsigned int x = 0; x < HP_MAP_WIDTH; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			input >> u8(code);
@@ -154,6 +155,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	for (unsigned int y = 0; y < HP_MAP_HEIGHT; y++) {
 		for (unsigned int x = 0; x < HP_MAP_WIDTH; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			layerFile >> u8(code);

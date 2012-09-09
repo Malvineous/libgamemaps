@@ -157,6 +157,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 		bg++; // skip row length byte
 		for (unsigned int x = 0; x < CC_MAP_WIDTH; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			t->code = *bg++;
