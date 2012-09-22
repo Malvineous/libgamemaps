@@ -329,6 +329,7 @@ class Map2D::Layer::Item
 			Player    = 0x0001, ///< Set if player fields are valid
 			Text      = 0x0002, ///< Set if text fields are valid
 			Movement  = 0x0004, ///< Set if movement fields are valid
+			Blocking  = 0x0008, ///< Set if blocking fields are valid
 		};
 
 		unsigned int type; ///< Which fields are valid?
@@ -356,7 +357,6 @@ class Map2D::Layer::Item
 			DistanceLimit = 0x0001, ///< Set if dist* vars indicate movement limits
 			SpeedLimit    = 0x0002, ///< Set if speedX and speedY are valid
 		};
-
 		unsigned int movementFlags;       ///< One or more of MovementFlags
 
 		unsigned int movementDistLeft;    ///< How far left the item can go, in grid units
@@ -365,6 +365,17 @@ class Map2D::Layer::Item
 		unsigned int movementDistDown;    ///< How far down the item can go, in grid units
 		unsigned int movementSpeedX;      ///< Horizontal speed, in milliseconds per pixel
 		unsigned int movementSpeedY;      ///< Vertical speed, in milliseconds per pixel
+
+		enum BlockingFlags {
+			BlockLeft     = 0x0001, ///< Prevent movement right, through the left edge
+			BlockRight    = 0x0002, ///< Prevent movement left, through the right edge
+			BlockTop      = 0x0004, ///< Prevent movement down through the top edge (can stand on)
+			BlockBottom   = 0x0008, ///< Prevent movement up through the bottom edge
+			JumpDown      = 0x0010, ///< Can down-jump to fall through
+			Slant45       = 0x0020, ///< Slanted tile /, 45 degrees CCW from the horizontal
+			Slant135      = 0x0040, ///< Slanted tile \, 135 degrees CCW from the horizontal
+		};
+		unsigned int blockingFlags;       ///< One or more of MovementFlags
 };
 
 /// Value to use for tilecodes that have not yet been set.
