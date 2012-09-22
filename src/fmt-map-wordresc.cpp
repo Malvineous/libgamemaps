@@ -558,10 +558,30 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		} else {
 			while (num-- > 0) {
 				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-				t->type = Map2D::Layer::Item::Default;
 				t->x = i % atWidth + 1;
 				t->y = i / atWidth;
 				t->code = code;
+				switch (code) {
+					case 0x73:
+						t->type = Map2D::Layer::Item::Blocking;
+						t->blockingFlags =
+							Map2D::Layer::Item::BlockLeft
+							| Map2D::Layer::Item::BlockRight
+							| Map2D::Layer::Item::BlockTop
+							| Map2D::Layer::Item::BlockBottom
+						;
+						break;
+					case 0x74:
+						t->type = Map2D::Layer::Item::Blocking;
+						t->blockingFlags =
+							Map2D::Layer::Item::BlockTop
+							| Map2D::Layer::Item::JumpDown
+						;
+						break;
+					default:
+						t->type = Map2D::Layer::Item::Default;
+						break;
+				}
 				atItems->push_back(t);
 				i++;
 			}
@@ -759,11 +779,21 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		i != atitems->end();
 		i++
 	) {
+		uint16_t code = (*i)->code;
+
 		// Ignore these internal codes
-		switch ((*i)->code) {
+		switch (code) {
 			case WR_CODE_ENTRANCE:
 			case WR_CODE_EXIT:
 				continue;
+		}
+		if (((*i)->type & Map2D::Layer::Item::Blocking) && (*i)->blockingFlags) {
+			if ((*i)->blockingFlags & Map2D::Layer::Item::JumpDown) {
+				code = 0x74;
+			} else {
+				// Probably all Block* flags set
+				code = 0x73;
+			}
 		}
 
 		unsigned int xpos = (*i)->x;
@@ -773,7 +803,7 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			throw stream::error(createString("Layer has tiles outside map "
 				"boundary at (" << xpos << "," << (*i)->y << ")"));
 		}
-		attr[(*i)->y * mapWidth * 2 + xpos] = (*i)->code;
+		attr[(*i)->y * mapWidth * 2 + xpos] = code;
 	}
 
 	rleWrite(output, attr, lenAttr);
