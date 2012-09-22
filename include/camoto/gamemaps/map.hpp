@@ -63,6 +63,7 @@ class Map: virtual public Metadata
 				Integer,         ///< One number within a given range
 				Enum,            ///< One choice from a list of static values
 				Filename,        ///< A filename of the given file type
+				Text,            ///< A text string
 			};
 			Type type;         ///< What type this attribute is
 			std::string name;  ///< Short name of this attribute
@@ -95,6 +96,9 @@ class Map: virtual public Metadata
 			 * restriction on file extension.
 			 */
 			std::string filenameValidExtension;
+
+			std::string textValue; ///< Text type: the text value
+			int textMaxLength;     ///< Text type: maximum string length, in chars
 		};
 
 		/// Shared pointer to an Attribute.
