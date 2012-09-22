@@ -44,24 +44,6 @@ class BashMapType: virtual public BaseMapType
 			const std::string& filename) const;
 };
 
-class BashForegroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		BashForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-};
-
-class BashBackgroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		BashBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-};
-
 } // namespace gamemaps
 } // namespace camoto
 

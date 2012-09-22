@@ -64,52 +64,74 @@ static const char *validTypes[] = {
 
 using namespace camoto::gamegraphics;
 
-BashForegroundLayer::BashForegroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Foreground",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class BashForegroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		BashForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Foreground",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr BashForegroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
+		virtual ImagePtr imageFromCode(unsigned int code, VC_TILESET& tileset)
+		{
+			if (tileset.size() < 3) return ImagePtr(); // no tileset?!
+			unsigned int t = 1 + ((code >> 7) & 1);
+			code &= 0x7F;
+			const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
+			if (code >= images.size()) return ImagePtr(); // out of range
+			return tileset[t]->openImage(images[code]);
+		}
+};
+
+class BashBackgroundLayer: virtual public GenericMap2D::Layer
 {
-	if (tileset.size() < 3) return ImagePtr(); // no tileset?!
-	unsigned int t = 1 + ((code >> 7) & 1);
-	code &= 0x7F;
-	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[t]->openImage(images[code]);
-}
+	public:
+		BashBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
+		virtual ImagePtr imageFromCode(unsigned int code, VC_TILESET& tileset)
+		{
+			if (tileset.size() < 1) return ImagePtr(); // no tileset?!
+			code = code & 0x1FF;
+			const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
+			if (code >= images.size()) return ImagePtr(); // out of range
+			return tileset[0]->openImage(images[code]);
+		}
+};
 
-BashBackgroundLayer::BashBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class BashAttributeLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		BashAttributeLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Attributes",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr BashBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	code = code & 0x1FF;
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
-
+		virtual ImagePtr imageFromCode(unsigned int code, VC_TILESET& tileset)
+		{
+			return ImagePtr(); // no images
+		}
+};
 
 Map::FilenameVectorPtr bash_getGraphicsFilenames(const Map *map)
 {
@@ -275,18 +297,35 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	unsigned int mapHeight = mapPixelHeight / MB_TILE_HEIGHT;
 
 	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
+	Map2D::Layer::ItemPtrVectorPtr bgattributes(new Map2D::Layer::ItemPtrVector());
 	bgtiles->reserve(mapWidth * mapHeight);
+	bgattributes->reserve(mapWidth * mapHeight);
 	for (unsigned int y = 0; y < mapHeight; y++) {
 		for (unsigned int x = 0; x < mapWidth; x++) {
+			uint16_t code;
+			bg >> u16le(code);
+			lenBG -= 2;
+
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
-			uint16_t code;
-			bg >> u16le(code);
-			lenBG -= 2;
-			t->code = code;
+			t->code = code & 0x1FF;
 			bgtiles->push_back(t);
+
+			Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+			ta->type = Map2D::Layer::Item::Blocking;
+			ta->x = x;
+			ta->y = y;
+			ta->code = code >> 9;
+			ta->blockingFlags = 0;
+			if (code & (1<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
+			if (code & (2<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
+			if (code & (4<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
+			if (code & (8<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
+			if (code & (32<<9)) ta->blockingFlags |= Map2D::Layer::Item::Slant45;
+			bgattributes->push_back(ta);
+
 			if (lenBG < 2) break;
 		}
 		if (lenBG < 2) break;
@@ -294,6 +333,9 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
 	Map2D::LayerPtr bgLayer(new BashBackgroundLayer(bgtiles, validBGItems));
+
+	Map2D::Layer::ItemPtrVectorPtr validAttrItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr attrLayer(new BashAttributeLayer(bgattributes, validAttrItems));
 
 	// Read the foreground layer
 	stream::pos lenFG = fg->size();
@@ -323,6 +365,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 	layers.push_back(fgLayer);
+	layers.push_back(attrLayer);
 
 	Map2DPtr map(new GenericMap2D(
 		attributes, bash_getGraphicsFilenames,
@@ -341,7 +384,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 2)
+	if (map2d->getLayerCount() != 3)
 		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned int mapWidth, mapHeight;
@@ -387,6 +430,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 
 		boost::shared_array<uint16_t> bgdata(new uint16_t[lenBG]);
 		memset(bgdata.get(), 0, lenBG); // default background tile
+
 		Map2D::LayerPtr layer = map2d->getLayer(0);
 		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
@@ -397,6 +441,28 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 				throw stream::error("Layer has tiles outside map boundary!");
 			}
 			bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
+		}
+
+		// Merge in attribute layer
+		layer = map2d->getLayer(2);
+		const Map2D::Layer::ItemPtrVectorPtr atitems = layer->getAllItems();
+		for (Map2D::Layer::ItemPtrVector::const_iterator i = atitems->begin();
+			i != atitems->end();
+			i++
+		) {
+			const Map2D::Layer::ItemPtr& ta = (*i);
+			if ((ta->x > mapWidth) || (ta->y > mapHeight)) {
+				throw stream::error("Layer has tiles outside map boundary!");
+			}
+			if (ta->type & Map2D::Layer::Item::Blocking) {
+				uint16_t code = 0;
+				if (ta->blockingFlags & Map2D::Layer::Item::BlockLeft) code |= (1<<9);
+				if (ta->blockingFlags & Map2D::Layer::Item::BlockRight) code |= (2<<9);
+				if (ta->blockingFlags & Map2D::Layer::Item::BlockTop) code |= (4<<9);
+				if (ta->blockingFlags & Map2D::Layer::Item::BlockBottom) code |= (8<<9);
+				if (ta->blockingFlags & Map2D::Layer::Item::Slant45) code |= (32<<9);
+				bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
+			}
 		}
 
 		uint16_t mapStripe = mapHeight * (MB_TILE_WIDTH * MB_TILE_HEIGHT) + mapWidth;
