@@ -57,7 +57,7 @@ static const char *validTypes[] = {
 	"tfg",
 	"tbn",
 	"sif",
-	"spr", ///< @todo could be type 14 (unknown)
+	"pal",
 	"snd",
 	"",
 };
@@ -218,7 +218,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		"Foreground tileset",
 		"Bonus tileset",
 		"Sprite information",
-		"Main sprite",
+		"Palette",
 		"Sound effects",
 		"Unknown",
 	};
@@ -227,7 +227,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		"Filename of the first tileset to use for drawing the map foreground layer",
 		"Filename of the second tileset to use for drawing the map foreground layer",
 		"Something to do with sprite data?",
-		"Sprite of the main player?",
+		"EGA palette to use",
 		"Filename to load PC speaker sounds from",
 		"Unknown",
 	};
