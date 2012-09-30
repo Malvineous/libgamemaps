@@ -57,7 +57,7 @@ static const char *validTypes[] = {
 	"tbg",
 	"tfg",
 	"tbn",
-	"sif",
+	"sgl",
 	"pal",
 	"snd",
 	"",
