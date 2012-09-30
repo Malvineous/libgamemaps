@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
 #include "map2d-generic.hpp"
 #include "fmt-map-bash.hpp"
@@ -194,7 +195,7 @@ MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
 	if (len > 217) return MapType::DefinitelyNo;
 
 	uint8_t *d;
-	boost::shared_ptr<uint8_t> data(d = new uint8_t[len]);
+	boost::scoped_array<uint8_t> data(d = new uint8_t[len]);
 	psMap->seekg(0, stream::start);
 	psMap->read(d, len);
 	for (int n = 0; n < 7; n++) {
@@ -428,7 +429,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	{
 		const unsigned int lenBG = mapWidth * mapHeight;
 
-		boost::shared_array<uint16_t> bgdata(new uint16_t[lenBG]);
+		boost::scoped_array<uint16_t> bgdata(new uint16_t[lenBG]);
 		memset(bgdata.get(), 0, lenBG); // default background tile
 
 		Map2D::LayerPtr layer = map2d->getLayer(0);
@@ -486,7 +487,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	{
 		const unsigned int lenFG = mapWidth * mapHeight;
 
-		boost::shared_array<uint8_t> fgdata(new uint8_t[lenFG]);
+		boost::scoped_array<uint8_t> fgdata(new uint8_t[lenFG]);
 		memset(fgdata.get(), 0, lenFG); // default background tile
 		Map2D::LayerPtr layer = map2d->getLayer(1);
 		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
