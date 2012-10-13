@@ -182,6 +182,7 @@ class Map2D::Layer
 			HasOwnTileSize  = 0x04, ///< Does the layer have an independent tile size?
 			ChangeTileSize  = 0x08, ///< Can this layer's grid size be changed?
 			HasPalette      = 0x10, ///< Palette is obtained from layer instead of tileset
+			UseImageDims    = 0x20, ///< Draw each tile the size of the image itself, instead of the tile size
 		};
 
 		/// Get the layer's friendly name.
