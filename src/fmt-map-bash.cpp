@@ -145,14 +145,14 @@ Map::FilenameVectorPtr bash_getGraphicsFilenames(const Map *map)
 	gf.purpose = Map::GraphicsFilename::Tileset;
 	gf.type = "tls-bash-bg";
 	gf.filename = attributes->at(0)->filenameValue;
-	files->push_back(gf); // bg tiles
+	if (!gf.filename.empty()) files->push_back(gf); // bg tiles
 
 	gf.type = "tls-bash-fg";
 	gf.filename = attributes->at(2)->filenameValue;
-	files->push_back(gf); // bon tiles
+	if (!gf.filename.empty()) files->push_back(gf); // bon tiles
 
 	gf.filename = attributes->at(1)->filenameValue;
-	files->push_back(gf); // fg tiles
+	if (!gf.filename.empty()) files->push_back(gf); // fg tiles
 	return files;
 }
 
