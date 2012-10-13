@@ -403,8 +403,8 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	Map::AttributePtr attrBGColour(new Map::Attribute);
 	attrBGColour->type = Map::Attribute::Enum;
 	attrBGColour->name = "Background colour";
-	attrBGColour->desc = "Colour to draw where there are no tiles.  Only used if backdrop "
-		"is not set.";
+	attrBGColour->desc = "Colour to draw where there are no tiles.  Only used if "
+		"backdrop is not set.";
 	attrBGColour->enumValue = bgColour;
 	attrBGColour->enumValueNames.push_back("EGA 0 - Black");
 	attrBGColour->enumValueNames.push_back("EGA 1 - Dark blue");
@@ -427,7 +427,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	Map::AttributePtr attrTileset(new Map::Attribute);
 	attrTileset->type = Map::Attribute::Enum;
 	attrTileset->name = "Tileset";
-	attrTileset->desc = "Tileset to use for this map";
+	attrTileset->desc = "Tileset to use for this map.";
 	if (tileset > 0) tileset--; // just in case it *is* ever zero
 	attrTileset->enumValue = tileset;
 	attrTileset->enumValueNames.push_back("Desert");
@@ -443,7 +443,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	Map::AttributePtr attrBackdrop(new Map::Attribute);
 	attrBackdrop->type = Map::Attribute::Enum;
 	attrBackdrop->name = "Backdrop";
-	attrBackdrop->desc = "Image to show behind map (overrides background colour)";
+	attrBackdrop->desc = "Image to show behind map (overrides background colour.)";
 	attrBackdrop->enumValue = backdrop;
 	attrBackdrop->enumValueNames.push_back("None (use background colour)");
 	attrBackdrop->enumValueNames.push_back("Custom (drop1.wr)");
