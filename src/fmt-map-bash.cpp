@@ -205,8 +205,9 @@ MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
 	// TESTED BY: fmt_map_bash_isinstance_c02
 	if (len > 217) return MapType::DefinitelyNo;
 
-	uint8_t *d;
-	boost::scoped_array<uint8_t> data(d = new uint8_t[len]);
+	uint8_t data[218]; // 7*31+1
+	memset(data, 0, sizeof(data));
+	uint8_t *d = data;
 	psMap->seekg(0, stream::start);
 	psMap->read(d, len);
 	for (int n = 0; n < 7; n++) {
