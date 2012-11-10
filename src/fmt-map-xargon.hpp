@@ -41,6 +41,8 @@ class SweeneyMapType: virtual public BaseMapType
 		typedef boost::shared_ptr<image_map> image_map_sptr;
 
 	protected:
+		unsigned int viewportWidth;
+		unsigned int viewportHeight;
 		unsigned int lenSavedata;
 };
 

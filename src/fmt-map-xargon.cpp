@@ -194,6 +194,8 @@ class SweeneyObjectLayer: virtual public GenericMap2D::Layer
 
 JillMapType::JillMapType()
 {
+	this->viewportWidth = 232;
+	this->viewportHeight = 160;
 	this->lenSavedata = JILL_LEN_SAVEDATA;
 }
 
@@ -238,6 +240,8 @@ SuppFilenames JillMapType::getRequiredSupps(stream::input_sptr input,
 
 XargonMapType::XargonMapType()
 {
+	this->viewportWidth = 20 * XR_TILE_WIDTH;
+	this->viewportHeight = 10 * XR_TILE_HEIGHT;
 	this->lenSavedata = XR_LEN_SAVEDATA;
 }
 
@@ -526,7 +530,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
 		Map2D::HasViewport,
-		20 * XR_TILE_WIDTH, 10 * XR_TILE_HEIGHT, // viewport size
+		this->viewportWidth, this->viewportHeight,
 		XR_MAP_WIDTH, XR_MAP_HEIGHT,
 		XR_TILE_WIDTH, XR_TILE_HEIGHT,
 		layers, Map2D::PathPtrVectorPtr()
