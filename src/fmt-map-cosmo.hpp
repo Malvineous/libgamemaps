@@ -22,7 +22,6 @@
 #define _CAMOTO_GAMEMAPS_MAP_COSMO_HPP_
 
 #include "base-maptype.hpp"
-#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -42,24 +41,6 @@ class CosmoMapType: virtual public BaseMapType
 			ExpandingSuppData& suppData) const;
 		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
 			const std::string& filename) const;
-};
-
-class CosmoActorLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		CosmoActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-};
-
-class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		CosmoBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
 };
 
 } // namespace gamemaps

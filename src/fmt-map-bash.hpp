@@ -22,7 +22,6 @@
 #define _CAMOTO_GAMEMAPS_MAP_BASH_HPP_
 
 #include "base-maptype.hpp"
-#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {

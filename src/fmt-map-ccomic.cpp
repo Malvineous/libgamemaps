@@ -40,26 +40,35 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-CComicBackgroundLayer::CComicBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class CComicBackgroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		CComicBackgroundLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr CComicBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (item->code >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[item->code]);
+		}
+
+};
+
 
 std::string CComicMapType::getMapCode() const
 {

@@ -49,127 +49,143 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-SweeneyBackgroundLayer::SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
-	SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::HasPalette,
-			0, 0,   // Layer size unused
-			0, 0,
-			items, validItems
-		),
-		imgMap(imgMap)
+class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
+			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::HasPalette,
+					0, 0,   // Layer size unused
+					0, 0,
+					items, validItems
+				),
+				imgMap(imgMap)
+		{
+		}
 
-SweeneyBackgroundLayer::~SweeneyBackgroundLayer()
-{
-}
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
-ImagePtr SweeneyBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	try {
-		const Tileset::VC_ENTRYPTR& tilesets = tileset[0]->getItems();
+			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
 
-		uint16_t v = (*this->imgMap)[code & 0x0FFF];
-		uint8_t t = ((v >> 8) & 0xFF);
-		uint8_t i = v & 0xFF;
-		if (tilesets[t]->getAttr() & Tileset::EmptySlot) {
-			std::cerr << "[SweeneyBackgroundLayer] Tried to open tileset 0x"
-				<< std::hex << (int)t << std::dec << " but it's an empty slot!"
-				<< std::endl;
+			uint16_t v = (*this->imgMap)[item->code & 0x0FFF];
+			uint8_t ti = ((v >> 8) & 0xFF);
+			uint8_t i = v & 0xFF;
+			if (tilesets[ti]->getAttr() & Tileset::EmptySlot) {
+				std::cerr << "[SweeneyBackgroundLayer] Tried to open tileset 0x"
+					<< std::hex << (int)ti << std::dec << " but it's an empty slot!"
+					<< std::endl;
+				return ImagePtr();
+			}
+			TilesetPtr tls = t->second->openTileset(tilesets[ti]);
+			const Tileset::VC_ENTRYPTR& images = tls->getItems();
+			if (i >= images.size()) return ImagePtr(); // out of range
+			if (images[i]->getAttr() & Tileset::EmptySlot) {
+				std::cerr << "[SweeneyBackgroundLayer] Tried to open image " << ti << "."
+					<< i << " but it's an empty slot!" << std::endl;
+				return ImagePtr();
+			}
+			return tls->openImage(images[i]);
+		} catch (...) {
+			std::cerr << "[SweeneyBackgroundLayer] Exception trying to open image for "
+				"tile code " << code << std::endl;
 			return ImagePtr();
 		}
-		TilesetPtr tls = tileset[0]->openTileset(tilesets[t]);
-		const Tileset::VC_ENTRYPTR& images = tls->getItems();
-		if (i >= images.size()) return ImagePtr(); // out of range
-		if (images[i]->getAttr() & Tileset::EmptySlot) {
-			std::cerr << "[SweeneyBackgroundLayer] Tried to open image " << t << "."
-				<< i << " but it's an empty slot!" << std::endl;
-			return ImagePtr();
-		}
-		return tls->openImage(images[i]);
-	} catch (...) {
-		std::cerr << "[SweeneyBackgroundLayer] Exception trying to open image for "
-			"tile code " << code << std::endl;
-		return ImagePtr();
-	}
-}
 
-PaletteTablePtr SweeneyBackgroundLayer::getPalette(VC_TILESET& tileset)
-{
-	// Try (Xargon) to load the palette from tile 0.5.0
-	const Tileset::VC_ENTRYPTR& tilesets = tileset[0]->getItems();
-	if (tilesets.size() > 5) {
-		TilesetPtr tls = tileset[0]->openTileset(tilesets[5]);
-		const Tileset::VC_ENTRYPTR& images = tls->getItems();
-		if (images.size() > 0) {
-			ImagePtr img = tls->openImage(images[0]);
-			if (img->getCaps() & Image::HasPalette) {
-				return img->getPalette();
+		gamegraphics::PaletteTablePtr getPalette(
+			const TilesetCollectionPtr& tileset)
+		{
+			// Try (Xargon) to load the palette from tile 0.5.0
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return PaletteTablePtr(); // no tileset?!
+			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
+			if (tilesets.size() > 5) {
+				TilesetPtr tls = t->second->openTileset(tilesets[5]);
+				const Tileset::VC_ENTRYPTR& images = tls->getItems();
+				if (images.size() > 0) {
+					ImagePtr img = tls->openImage(images[0]);
+					if (img->getCaps() & Image::HasPalette) {
+						return img->getPalette();
+					}
+				}
 			}
-		}
-	}
 
-	// Otherwise (Jill) use the tileset's palette
-	if (tileset[0]->getCaps() & Tileset::HasPalette) {
-		return tileset[0]->getPalette();
-	}
-
-	std::cerr << "[SweeneyBackgroundLayer] Couldn't load palette from tile "
-		"0.5.0 and no palette was specified in the XML file" << std::endl;
-	return PaletteTablePtr();
-}
-
-SweeneyObjectLayer::SweeneyObjectLayer(ItemPtrVectorPtr& items,
-	SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Objects",
-			Map2D::Layer::HasOwnTileSize | Map2D::Layer::HasPalette,
-			0, 0, // Layer size unused
-			1, 1,
-			items, validItems
-		),
-		imgMap(imgMap)
-{
-}
-
-SweeneyObjectLayer::~SweeneyObjectLayer()
-{
-}
-
-ImagePtr SweeneyObjectLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	return ImagePtr(); // unknown map code
-}
-
-PaletteTablePtr SweeneyObjectLayer::getPalette(VC_TILESET& tileset)
-{
-	// Try (Xargon) to load the palette from tile 0.5.0
-	const Tileset::VC_ENTRYPTR& tilesets = tileset[0]->getItems();
-	if (tilesets.size() > 5) {
-		TilesetPtr tls = tileset[0]->openTileset(tilesets[5]);
-		const Tileset::VC_ENTRYPTR& images = tls->getItems();
-		if (images.size() > 0) {
-			ImagePtr img = tls->openImage(images[0]);
-			if (img->getCaps() & Image::HasPalette) {
-				return img->getPalette();
+			// Otherwise (Jill) use the tileset's palette
+			if (t->second->getCaps() & Tileset::HasPalette) {
+				return t->second->getPalette();
 			}
+
+			std::cerr << "[SweeneyBackgroundLayer] Couldn't load palette from tile "
+				"0.5.0 and no palette was specified in the XML file" << std::endl;
+			return PaletteTablePtr();
 		}
-	}
 
-	// Otherwise (Jill) use the tileset's palette
-	if (tileset[0]->getCaps() & Tileset::HasPalette) {
-		return tileset[0]->getPalette();
-	}
+	protected:
+		SweeneyMapType::image_map_sptr imgMap;
+};
 
-	std::cerr << "[SweeneyObjectLayer] Couldn't load palette from tile "
-		"0.5.0 and no palette was specified in the XML file" << std::endl;
-	return PaletteTablePtr();
-}
+class SweeneyObjectLayer: virtual public GenericMap2D::Layer
+{
+	public:
+		SweeneyObjectLayer(ItemPtrVectorPtr& items,
+			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Objects",
+					Map2D::Layer::HasOwnTileSize | Map2D::Layer::HasPalette,
+					0, 0, // Layer size unused
+					1, 1,
+					items, validItems
+				),
+				imgMap(imgMap)
+		{
+		}
+
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			return ImagePtr(); // unknown map code
+		}
+
+		gamegraphics::PaletteTablePtr getPalette(
+			const TilesetCollectionPtr& tileset)
+		{
+			// Try (Xargon) to load the palette from tile 0.5.0
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return PaletteTablePtr(); // no tileset?!
+			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
+			if (tilesets.size() > 5) {
+				TilesetPtr tls = t->second->openTileset(tilesets[5]);
+				const Tileset::VC_ENTRYPTR& images = tls->getItems();
+				if (images.size() > 0) {
+					ImagePtr img = tls->openImage(images[0]);
+					if (img->getCaps() & Image::HasPalette) {
+						return img->getPalette();
+					}
+				}
+			}
+
+			// Otherwise (Jill) use the tileset's palette
+			if (t->second->getCaps() & Tileset::HasPalette) {
+				return t->second->getPalette();
+			}
+
+			std::cerr << "[SweeneyObjectLayer] Couldn't load palette from tile "
+				"0.5.0 and no palette was specified in the XML file" << std::endl;
+			return PaletteTablePtr();
+		}
+
+	protected:
+		SweeneyMapType::image_map_sptr imgMap;
+};
+
+
 
 
 //

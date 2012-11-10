@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <camoto/error.hpp>
 #include <camoto/metadata.hpp>
+#include <camoto/gamegraphics/tileset.hpp>
 
 namespace camoto {
 namespace gamemaps {
@@ -33,6 +34,31 @@ namespace gamemaps {
 /// Generic "invalid map format" exception.
 class EInvalidFormat: virtual public error {
 };
+
+/// What an image or tileset is used for.
+enum ImagePurpose {
+	GenericTileset = 0,
+	BackgroundTileset,
+	ForegroundTileset1,
+	ForegroundTileset2,
+	SpriteTileset,
+	FontTileset1,
+	FontTileset2,
+	BackgroundImage = 0x10,
+	TilesetPurposeCount // must always be last
+};
+
+/// Is this ImagePurpose for an Image?
+#define IMAGEPURPOSE_IS_IMAGE(p) ((p) & 0x10)
+
+/// Is this ImagePurpose for an Tileset?
+#define IMAGEPURPOSE_IS_TILESET(p) (((p) & 0x10) == 0)
+
+/// List of Tileset shared pointers.
+typedef std::map<ImagePurpose, gamegraphics::TilesetPtr> TilesetCollection;
+
+/// Shared pointer to a Tileset collection.
+typedef boost::shared_ptr<TilesetCollection> TilesetCollectionPtr;
 
 /// Primary interface to a map file.
 /**
@@ -118,16 +144,15 @@ class Map: virtual public Metadata
 
 		/// Information about a graphics file used to render this map.
 		struct GraphicsFilename {
-			enum Purpose {
-				Tileset,             ///< Normal tileset
-				BackgroundImage,     ///< Image to appear behind all tiles
-			};
-			Purpose purpose;
 			std::string filename;  ///< Actual filename
 			std::string type;      ///< Type code (e.g. "tls-blah")
 		};
-		typedef std::vector<GraphicsFilename> FilenameVector;
-		typedef boost::shared_ptr<FilenameVector> FilenameVectorPtr;
+
+		/// List of Tileset shared pointers.
+		typedef std::map<ImagePurpose, GraphicsFilename> GraphicsFilenames;
+
+		/// Shared pointer to a list of image filenames.
+		typedef boost::shared_ptr<GraphicsFilenames> GraphicsFilenamesPtr;
 
 		/// Get a list of additional files needed to render the map.
 		/**
@@ -135,7 +160,7 @@ class Map: virtual public Metadata
 		 * render the map.  Tilesets, background images, etc.  These values may
 		 * change as map attributes are altered.
 		 */
-		virtual FilenameVectorPtr getGraphicsFilenames() const = 0;
+		virtual GraphicsFilenamesPtr getGraphicsFilenames() const = 0;
 };
 
 /// Shared pointer to a Map.

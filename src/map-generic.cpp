@@ -44,10 +44,10 @@ const Map::AttributePtrVectorPtr GenericMap::getAttributes() const
 	return this->attributes;
 }
 
-Map::FilenameVectorPtr GenericMap::getGraphicsFilenames() const
+Map::GraphicsFilenamesPtr GenericMap::getGraphicsFilenames() const
 {
 	if (this->fnGfxFiles) return this->fnGfxFiles(this);
-	return Map::FilenameVectorPtr();
+	return Map::GraphicsFilenamesPtr();
 }
 
 } // namespace gamemaps

@@ -22,7 +22,6 @@
 #define _CAMOTO_GAMEMAPS_MAP_HARRY_HPP_
 
 #include "base-maptype.hpp"
-#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -42,25 +41,6 @@ class HarryMapType: virtual public BaseMapType
 			ExpandingSuppData& suppData) const;
 		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
 			const std::string& filename) const;
-};
-
-class HarryActorLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-};
-
-class HarryBackgroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
 };
 
 } // namespace gamemaps

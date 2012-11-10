@@ -22,7 +22,6 @@
 #define _CAMOTO_GAMEMAPS_MAP_WORDRESC_HPP_
 
 #include "base-maptype.hpp"
-#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -42,40 +41,6 @@ class WordRescueMapType: virtual public BaseMapType
 			ExpandingSuppData& suppData) const;
 		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
 			const std::string& filename) const;
-};
-
-class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-};
-
-class WordRescueObjectLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		WordRescueObjectLayer(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCount);
-};
-
-class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		WordRescueAttributeLayer(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCount);
 };
 
 } // namespace gamemaps

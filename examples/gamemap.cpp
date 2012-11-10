@@ -166,15 +166,15 @@ finishTesting:
  * @param map
  *   Map file to export.
  *
- * @param gfxFile
- *   Filename of the tileset to use.
+ * @param allTilesets
+ *   Collection of tilesets to use when rendering the map.
  *
  * @param destFile
  *   Filename of destination (including ".png")
  *
  * @throw stream::error on error
  */
-void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
+void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 	const std::string& destFile)
 {
 	unsigned int outWidth, outHeight; // in pixels
@@ -187,20 +187,27 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 	png::image<png::index_pixel> png(outWidth, outHeight);
 
 	bool useMask;
-	if (tileset->getCaps() & gg::Tileset::HasPalette) {
-		gg::PaletteTablePtr srcPal = tileset->getPalette();
-		png::palette pal(srcPal->size());
-		int j = 0;
-		//pal[ 0] = png::color(0xFF, 0x00, 0xFF); // transparent
-		for (gg::PaletteTable::iterator i = srcPal->begin();
-			i != srcPal->end();
-			i++, j++
-		) {
-			pal[j] = png::color(i->red, i->green, i->blue);
+	bool gotPal = false;
+	for (gm::TilesetCollection::const_iterator
+		     i = allTilesets->begin(); i != allTilesets->end(); i++
+	) {
+		if (i->second->getCaps() & gg::Tileset::HasPalette) {
+			gg::PaletteTablePtr srcPal = i->second->getPalette();
+			png::palette pal(srcPal->size());
+			int j = 0;
+			//pal[ 0] = png::color(0xFF, 0x00, 0xFF); // transparent
+			for (gg::PaletteTable::iterator
+				i = srcPal->begin(); i != srcPal->end(); i++, j++
+			) {
+				pal[j] = png::color(i->red, i->green, i->blue);
+			}
+			png.set_palette(pal);
+			useMask = false; // not enough room in the palette for transparent entry
+			gotPal = true;
+			break;
 		}
-		png.set_palette(pal);
-		useMask = false; // not enough room in the palette for transparent entry
-	} else {
+	}
+	if (!gotPal) {
 		// standard EGA palette
 		png::palette pal(17);
 		pal[ 0] = png::color(0xFF, 0x00, 0xFF); // transparent
@@ -239,9 +246,6 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 
 		// Prepare tileset
 		std::vector<CachedTile> cache;
-		//const gg::Tileset::VC_ENTRYPTR& allTiles = tileset->getItems();
-		gg::VC_TILESET allTilesets;
-		allTilesets.push_back(tileset);
 
 		// Run through all items in the layer and render them one by one
 		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
@@ -264,7 +268,7 @@ void map2dToPng(gm::Map2DPtr map, gg::TilesetPtr tileset,
 			}
 			if (!found) {
 				// Tile hasn't been cached yet, load it from the tileset
-				gg::ImagePtr img = layer->imageFromCode(tileCode, allTilesets);
+				gg::ImagePtr img = layer->imageFromCode(*t, allTilesets);
 				//gg::ImagePtr img = tileset->openImage(allTiles[tileCode]);
 				if (img) {
 					thisTile.data = img->toStandard();
@@ -724,29 +728,31 @@ finishTesting:
 				}
 
 				std::cout << (bScript ? "gfx_filename_count=" : "Number of graphics filenames: ");
-				gm::Map::FilenameVectorPtr gfxFilenames = pMap->getGraphicsFilenames();
+				gm::Map::GraphicsFilenamesPtr gfxFilenames = pMap->getGraphicsFilenames();
 				if (gfxFilenames) {
 					std::cout << gfxFilenames->size() << "\n";
 					int fileNum = 0;
-					for (gm::Map::FilenameVector::const_iterator
+					for (gm::Map::GraphicsFilenames::const_iterator
 						i = gfxFilenames->begin(); i != gfxFilenames->end(); i++
 					) {
-						const gm::Map::GraphicsFilename *a = &(*i);
+						const gm::Map::GraphicsFilename *a = &(i->second);
 
 						if (bScript) {
 							std::cout << "gfx_file" << fileNum << "_name=" << a->filename << "\n";
 							std::cout << "gfx_file" << fileNum << "_type=" << a->type << "\n";
-							std::cout << "gfx_file" << fileNum << "_purpose=" << a->purpose << "\n";
+							std::cout << "gfx_file" << fileNum << "_purpose=" << i->first << "\n";
 						} else {
 							std::cout << "Graphics file " << fileNum+1 << ": " << a->filename
 								<< " [";
-							switch (a->purpose) {
-								case gm::Map::GraphicsFilename::Tileset:
-									std::cout << "tileset";
-									break;
-								case gm::Map::GraphicsFilename::BackgroundImage:
-									std::cout << "background image";
-									break;
+							switch (i->first) {
+								case gm::GenericTileset:     std::cout << "Generic tileset"; break;
+								case gm::BackgroundImage:    std::cout << "Background image"; break;
+								case gm::BackgroundTileset:  std::cout << "Background tileset"; break;
+								case gm::ForegroundTileset1: std::cout << "Foreground tileset 1"; break;
+								case gm::ForegroundTileset2: std::cout << "Foreground tileset 2"; break;
+								case gm::SpriteTileset:      std::cout << "Sprite tileset"; break;
+								case gm::FontTileset1:       std::cout << "Font tileset 1"; break;
+								case gm::FontTileset2:       std::cout << "Font tileset 2"; break;
 								default:
 									std::cout << "Unknown purpose <fix this>";
 									break;
@@ -935,8 +941,10 @@ finishTesting:
 
 				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {
-					gg::TilesetPtr tileset = openTileset(strGraphics, strGraphicsType);
-					map2dToPng(map2d, tileset, i->value[0]);
+					gm::TilesetCollectionPtr allTilesets(new gm::TilesetCollection);
+					/// @todo Load more than one tileset
+					allTilesets->at(gm::BackgroundTileset) = openTileset(strGraphics, strGraphicsType);
+					map2dToPng(map2d, allTilesets, i->value[0]);
 				}
 
 			// Ignore --type/-t

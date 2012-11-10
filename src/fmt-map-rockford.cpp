@@ -46,30 +46,39 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-RockfordBackgroundLayer::RockfordBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class RockfordBackgroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		RockfordBackgroundLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr RockfordBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
-	// Special case for one image!
-	if (code == 3) code++;
+			unsigned int index = item->code;
 
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
+			// Special case for one image!
+			if (index == 3) index++;
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
+		}
+};
+
 
 std::string RockfordMapType::getMapCode() const
 {

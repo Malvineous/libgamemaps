@@ -47,24 +47,30 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-CCavesBackgroundLayer::CCavesBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
-{
-}
 
-ImagePtr CCavesBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
+class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
 {
-	// TODO
-	return ImagePtr();
-}
+	public:
+		CCavesBackgroundLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
+
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			// TODO
+			return ImagePtr();
+		}
+};
 
 
 std::string CCavesMapType::getMapCode() const

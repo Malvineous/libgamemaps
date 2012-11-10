@@ -90,15 +90,16 @@ const Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getAllItems()
 	return this->items;
 }
 
-gamegraphics::ImagePtr GenericMap2D::Layer::imageFromCode(unsigned int code,
-	gamegraphics::VC_TILESET& tileset)
+gamegraphics::ImagePtr GenericMap2D::Layer::imageFromCode(
+	const Map2D::Layer::ItemPtr& item,
+	const TilesetCollectionPtr& tileset)
 {
 	// Default implementation to return an empty tile.
 	return gamegraphics::ImagePtr();
 }
 
-bool GenericMap2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
-	unsigned int y, unsigned int *maxCount)
+bool GenericMap2D::Layer::tilePermittedAt(const Map2D::Layer::ItemPtr& item,
+	unsigned int x, unsigned int y, unsigned int *maxCount)
 {
 	assert(maxCount);
 
@@ -108,7 +109,7 @@ bool GenericMap2D::Layer::tilePermittedAt(unsigned int code, unsigned int x,
 }
 
 gamegraphics::PaletteTablePtr GenericMap2D::Layer::getPalette(
-	camoto::gamegraphics::VC_TILESET& tileset)
+	const TilesetCollectionPtr& tileset)
 {
 	assert(this->getCaps() & HasPalette);
 	std::cerr << "BUG: GenericMap2D::Layer reported having a palette but didn't "

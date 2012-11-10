@@ -22,7 +22,6 @@
 #define _CAMOTO_GAMEMAPS_MAP_CCAVES_HPP_
 
 #include "base-maptype.hpp"
-#include "map2d-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -42,16 +41,6 @@ class CCavesMapType: virtual public BaseMapType
 			ExpandingSuppData& suppData) const;
 		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
 			const std::string& filename) const;
-};
-
-class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		CCavesBackgroundLayer(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems);
-
-		virtual gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
 };
 
 } // namespace gamemaps

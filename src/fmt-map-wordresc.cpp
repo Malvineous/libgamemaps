@@ -5,7 +5,7 @@
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Word_Rescue
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2012 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,142 +83,162 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-WordRescueBackgroundLayer::WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+
+class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr WordRescueBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (item->code >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[item->code]);
+		}
+};
+
+class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 {
-	if (tileset.size() <= 0) return ImagePtr();
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
+	public:
+		WordRescueObjectLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Items",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			ImagePurpose purpose;
+			unsigned int index;
+			switch (item->code) {
+				case WR_CODE_GRUZZLE:  purpose = SpriteTileset;    index = 15; break;
+				case WR_CODE_SLIME:    purpose = BackgroundTileset; index = 238; break;
+				case WR_CODE_BOOK:     purpose = BackgroundTileset; index = 239; break;
+				case WR_CODE_LETTER1:
+				case WR_CODE_LETTER2:
+				case WR_CODE_LETTER3:
+				case WR_CODE_LETTER4:
+				case WR_CODE_LETTER5:
+				case WR_CODE_LETTER6:
+				case WR_CODE_LETTER7:
+					purpose = ForegroundTileset1;
+					index = item->code - WR_CODE_LETTER;
+					break;
+				default: return ImagePtr();
+			}
 
-WordRescueObjectLayer::WordRescueObjectLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Items",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+			TilesetCollection::const_iterator t = tileset->find(purpose);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
+		}
+
+		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
+			unsigned int x, unsigned int y, unsigned int *maxCount)
+		{
+			if ((item->code == WR_CODE_ENTRANCE) || (item->code == WR_CODE_EXIT)) {
+				*maxCount = 1; // only one level entrance/exit permitted
+			} else {
+				*maxCount = 0; // unlimited
+			}
+			return true; // anything can be placed anywhere
+		}
+};
+
+class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		WordRescueAttributeLayer(ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Attributes",
+					Map2D::Layer::HasOwnTileSize,
+					0, 0,
+					WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr WordRescueObjectLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	unsigned int t;
-	switch (code) {
-		case WR_CODE_GRUZZLE:  t = 1; code = 15; break;
-		case WR_CODE_SLIME:    t = 0; code = 238; break;
-		case WR_CODE_BOOK:     t = 0; code = 239; break;
-		case WR_CODE_LETTER1:
-		case WR_CODE_LETTER2:
-		case WR_CODE_LETTER3:
-		case WR_CODE_LETTER4:
-		case WR_CODE_LETTER5:
-		case WR_CODE_LETTER6:
-		case WR_CODE_LETTER7:
-			t = 2;
-			code -= WR_CODE_LETTER;
-			break;
-		default: return ImagePtr();
-	}
-	if (tileset.size() <= t) return ImagePtr();
-	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[t]->openImage(images[code]);
-}
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			ImagePurpose purpose;
+			unsigned int index;
+			switch (item->code) {
+				case WR_CODE_ENTRANCE: purpose = SpriteTileset; index = 1; break;
+				case WR_CODE_EXIT:     purpose = SpriteTileset; index = 3; break;
+				case 0x0000: purpose = SpriteTileset; index = 0; break; // first question mark box
+				case 0x0001: purpose = SpriteTileset; index = 0; break;
+				case 0x0002: purpose = SpriteTileset; index = 0; break;
+				case 0x0003: purpose = SpriteTileset; index = 0; break;
+				case 0x0004: purpose = SpriteTileset; index = 0; break;
+				case 0x0005: purpose = SpriteTileset; index = 0; break;
+				case 0x0006: purpose = SpriteTileset; index = 0; break; // last question mark box
+				case 0x0073: purpose = BackgroundTileset; index = 50; break; // solid
+				case 0x0074: purpose = BackgroundTileset; index = 91; break; // jump up through/climb
+				case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
+				default: return ImagePtr();
+			}
+			TilesetCollection::const_iterator t = tileset->find(purpose);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
-bool WordRescueObjectLayer::tilePermittedAt(unsigned int code,
-	unsigned int x, unsigned int y, unsigned int *maxCodes)
-{
-	if ((code == WR_CODE_ENTRANCE) || (code == WR_CODE_EXIT)) {
-		*maxCodes = 1; // only one level entrance/exit permitted
-	} else {
-		*maxCodes = 0; // unlimited
-	}
-	return true; // anything can be placed anywhere
-}
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
+		}
 
+		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
+			unsigned int x, unsigned int y, unsigned int *maxCount)
+		{
+			if (x == 0) return false; // can't place tiles in this column
+			return true; // otherwise unrestricted
+		}
+};
 
-WordRescueAttributeLayer::WordRescueAttributeLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Attributes",
-			Map2D::Layer::HasOwnTileSize,
-			0, 0,
-			WR_ATTILE_WIDTH, WR_ATTILE_HEIGHT,
-			items, validItems
-		)
-{
-}
-
-ImagePtr WordRescueAttributeLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	unsigned int t;
-	switch (code) {
-		case WR_CODE_ENTRANCE: t = 1; code = 1; break;
-		case WR_CODE_EXIT:     t = 1; code = 3; break;
-		case 0x0000: t = 1; code = 0; break; // first question mark box
-		case 0x0001: t = 1; code = 0; break;
-		case 0x0002: t = 1; code = 0; break;
-		case 0x0003: t = 1; code = 0; break;
-		case 0x0004: t = 1; code = 0; break;
-		case 0x0005: t = 1; code = 0; break;
-		case 0x0006: t = 1; code = 0; break; // last question mark box
-		case 0x0073: t = 0; code = 50; break; // solid
-		case 0x0074: t = 0; code = 91; break; // jump up through/climb
-		case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
-		default: return ImagePtr();
-	}
-	if (tileset.size() <= t) return ImagePtr();
-	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[t]->openImage(images[code]);
-}
-
-bool WordRescueAttributeLayer::tilePermittedAt(unsigned int code,
-	unsigned int x, unsigned int y, unsigned int *maxCodes)
-{
-	if (x == 0) return false; // can't place tiles in this column
-	return true; // otherwise unrestricted
-}
-
-
-Map::FilenameVectorPtr wr_getGraphicsFilenames(const Map *map)
+Map::GraphicsFilenamesPtr wr_getGraphicsFilenames(const Map *map)
 {
 	Map::AttributePtrVectorPtr attributes = map->getAttributes();
 	assert(attributes); // this map format always has attributes
 	assert(attributes->size() == 3);
 
-	Map::FilenameVectorPtr files(new Map::FilenameVector);
+	Map::GraphicsFilenamesPtr files(new Map::GraphicsFilenames);
 	Map::GraphicsFilename gf;
-	gf.purpose = Map::GraphicsFilename::Tileset;
 	gf.type = "tls-wordresc";
 	gf.filename = createString("back" << (int)(attributes->at(1)->enumValue + 1)
 		<< ".wr");
-	files->push_back(gf); // bg tiles
+	if (!gf.filename.empty()) (*files)[BackgroundTileset] = gf;
 
 	unsigned int dropNum = attributes->at(2)->enumValue;
 	if (dropNum > 0) {
-		gf.purpose = Map::GraphicsFilename::BackgroundImage;
 		gf.filename = createString("drop" << dropNum << ".wr");
-		files->push_back(gf); // fg tiles
+		if (!gf.filename.empty()) (*files)[BackgroundImage] = gf;
 	}
 
 	return files;

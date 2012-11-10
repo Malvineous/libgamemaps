@@ -49,48 +49,60 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-HarryActorLayer::HarryActorLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Actors",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class HarryActorLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Actors",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr HarryActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(SpriteTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (item->code >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[item->code]);
+		}
+};
+
+class HarryBackgroundLayer: virtual public GenericMap2D::Layer
 {
-	// TODO
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
+	public:
+		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					name,
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
-HarryBackgroundLayer::HarryBackgroundLayer(const std::string& name,
-	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			name,
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
-{
-}
-
-ImagePtr HarryBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (item->code >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[item->code]);
+		}
+};
 
 
 std::string HarryMapType::getMapCode() const

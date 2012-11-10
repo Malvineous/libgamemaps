@@ -32,7 +32,7 @@ namespace gamemaps {
  * This is used as a convenience function, to avoid having to derive from
  * GenericMap and implement getGraphicsFilenames().
  */
-typedef boost::function<Map::FilenameVectorPtr(const Map *)> GraphicsFilenamesCallback;
+typedef boost::function<Map::GraphicsFilenamesPtr(const Map *)> GraphicsFilenamesCallback;
 
 /// Value to use when there is no callback to get the list of graphics filenames
 #define NO_GFX_CALLBACK ((GraphicsFilenamesCallback)NULL)
@@ -47,7 +47,7 @@ class GenericMap: virtual public Map
 
 		virtual AttributePtrVectorPtr getAttributes();
 		virtual const AttributePtrVectorPtr getAttributes() const;
-		virtual FilenameVectorPtr getGraphicsFilenames() const;
+		virtual GraphicsFilenamesPtr getGraphicsFilenames() const;
 
 	protected:
 		/// Vector holding the current attributes

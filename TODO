@@ -12,3 +12,4 @@ Outstanding tasks
  - Write Halloween Harry palette and tile flags
  - Use try_read in all isInstance calls to avoid exceptions on short files
  - Word Rescue: Handle animated tiles
+ - gamemap: Allow more than one tileset to be loaded

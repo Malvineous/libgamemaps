@@ -58,26 +58,33 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-HocusBackgroundLayer::HocusBackgroundLayer(const std::string& name,
-	ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			name,
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class HocusBackgroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		HocusBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					name,
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr HocusBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[code]);
-}
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (item->code >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[item->code]);
+		}
+};
 
 
 std::string HocusMapType::getMapCode() const

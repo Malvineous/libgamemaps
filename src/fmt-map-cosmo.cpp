@@ -55,59 +55,74 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-CosmoActorLayer::CosmoActorLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Actors",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
-{
-}
 
-ImagePtr CosmoActorLayer::imageFromCode(unsigned int code, VC_TILESET& tileset)
+class CosmoActorLayer: virtual public GenericMap2D::Layer
 {
-	// TODO
-	if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-	const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[0]->openImage(images[0]);
-}
-
-
-CosmoBackgroundLayer::CosmoBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Background",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
-{
-}
-
-ImagePtr CosmoBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	if (tileset.size() < 2) return ImagePtr(); // no tileset?!
-	unsigned int i = code >> 3; // divide by 8
-	unsigned int t = 0;
-	if (i >= 2000) {
-		i -= 2000;
-		i /= 5;
-		t++; // masked tile
-		if (i >= 1000) {
-			// out of range!
-			return ImagePtr();
+	public:
+		CosmoActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Actors",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
 		}
-	}
-	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-	if (i >= images.size()) return ImagePtr(); // out of range
-	return tileset[t]->openImage(images[i]);
-}
+
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			TilesetCollection::const_iterator t = tileset->find(SpriteTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			// TODO
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (item->code >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[item->code]);
+		}
+};
+
+class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
+{
+	public:
+		CosmoBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Background",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
+
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			unsigned int index = item->code >> 3; // divide by 8
+			ImagePurpose purpose;
+			if (index >= 2000) {
+				index -= 2000;
+				index /= 5;
+				/*if (index >= 1000) {
+					// out of range!
+					return ImagePtr();
+				}*/
+				purpose = ForegroundTileset1;
+			} else {
+				purpose = BackgroundTileset;
+			}
+			TilesetCollection::const_iterator t = tileset->find(purpose);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
+		}
+};
 
 
 std::string CosmoMapType::getMapCode() const

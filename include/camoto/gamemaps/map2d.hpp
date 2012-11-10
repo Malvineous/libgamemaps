@@ -255,11 +255,11 @@ class Map2D::Layer
 
 		/// Convert a map code into an image.
 		/**
-		 * @param code
-		 *   Map2D::Layer::Item::code obtained from getAllItems().
+		 * @param item
+		 *   Pointer to a Map2D::Layer::Item obtained from getAllItems().
 		 *
 		 * @param tileset
-		 *   Vector of Tileset instances used to obtain the Image to return.
+		 *   Tileset instances used to obtain the Image to return.
 		 *   Which tilesets to actually pass in is beyond the scope of this
 		 *   library, and must be obtained by some caller defined method.
 		 *   Camoto Studio reads this information from XML files distributed
@@ -269,8 +269,9 @@ class Map2D::Layer
 		 *   return value of a null pointer will result in some sort of
 		 *   unknown/question mark tile being used.
 		 */
-		virtual camoto::gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			gamegraphics::VC_TILESET& tileset) = 0;
+		virtual camoto::gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset) = 0;
 
 		/// Is the given tile permitted at the specified location?
 		/**
@@ -292,8 +293,8 @@ class Map2D::Layer
 		 * @return true if the tile is permitted at the current position (instance
 		 *  limits notwithstanding) or false if the tile cannot be placed here.
 		 */
-		virtual bool tilePermittedAt(unsigned int code, unsigned int x,
-			unsigned int y, unsigned int *maxCount) = 0;
+		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
+			unsigned int x, unsigned int y, unsigned int *maxCount) = 0;
 
 		/// Get the palette to use with this layer.
 		/**
@@ -306,7 +307,7 @@ class Map2D::Layer
 		 * @return Shared pointer to a PaletteTable.
 		 */
 		virtual gamegraphics::PaletteTablePtr getPalette(
-			gamegraphics::VC_TILESET& tileset) = 0;
+			const TilesetCollectionPtr& tileset) = 0;
 
 		/// Get a list of all possible items that can be placed in the layer.
 		/**

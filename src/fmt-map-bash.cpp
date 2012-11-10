@@ -79,14 +79,19 @@ class BashForegroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual ImagePtr imageFromCode(unsigned int code, VC_TILESET& tileset)
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
 		{
-			if (tileset.size() < 3) return ImagePtr(); // no tileset?!
-			unsigned int t = 1 + ((code >> 7) & 1);
-			code &= 0x7F;
-			const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-			if (code >= images.size()) return ImagePtr(); // out of range
-			return tileset[t]->openImage(images[code]);
+			ImagePurpose purpose = ((item->code >> 7) & 1) ?
+				ForegroundTileset1 : ForegroundTileset2;
+			TilesetCollection::const_iterator t = tileset->find(purpose);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			unsigned int index = item->code & 0x7F;
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
 		}
 };
 
@@ -104,13 +109,17 @@ class BashBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual ImagePtr imageFromCode(unsigned int code, VC_TILESET& tileset)
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
 		{
-			if (tileset.size() < 1) return ImagePtr(); // no tileset?!
-			code = code & 0x1FF;
-			const Tileset::VC_ENTRYPTR& images = tileset[0]->getItems();
-			if (code >= images.size()) return ImagePtr(); // out of range
-			return tileset[0]->openImage(images[code]);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			unsigned int index = item->code & 0x1FF;
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
 		}
 };
 
@@ -128,31 +137,33 @@ class BashAttributeLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual ImagePtr imageFromCode(unsigned int code, VC_TILESET& tileset)
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
 		{
 			return ImagePtr(); // no images
 		}
 };
 
-Map::FilenameVectorPtr bash_getGraphicsFilenames(const Map *map)
+Map::GraphicsFilenamesPtr bash_getGraphicsFilenames(const Map *map)
 {
 	Map::AttributePtrVectorPtr attributes = map->getAttributes();
 	assert(attributes); // this map format always has attributes
 	assert(attributes->size() == MB_NUM_ATTRIBUTES);
 
-	Map::FilenameVectorPtr files(new Map::FilenameVector);
+	Map::GraphicsFilenamesPtr files(new Map::GraphicsFilenames);
 	Map::GraphicsFilename gf;
-	gf.purpose = Map::GraphicsFilename::Tileset;
 	gf.type = "tls-bash-bg";
 	gf.filename = attributes->at(0)->filenameValue;
-	if (!gf.filename.empty()) files->push_back(gf); // bg tiles
+	if (!gf.filename.empty()) (*files)[BackgroundTileset] = gf; // bg tiles
 
 	gf.type = "tls-bash-fg";
-	gf.filename = attributes->at(2)->filenameValue;
-	if (!gf.filename.empty()) files->push_back(gf); // bon tiles
-
 	gf.filename = attributes->at(1)->filenameValue;
-	if (!gf.filename.empty()) files->push_back(gf); // fg tiles
+	if (!gf.filename.empty()) (*files)[ForegroundTileset1] = gf; // fg tiles
+
+	gf.filename = attributes->at(2)->filenameValue;
+	if (!gf.filename.empty()) (*files)[ForegroundTileset2] = gf; // bon tiles
+
 	return files;
 }
 

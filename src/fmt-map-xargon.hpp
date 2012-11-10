@@ -72,37 +72,6 @@ class XargonMapType: virtual public SweeneyMapType
 			const std::string& filename) const;
 };
 
-
-class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
-			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems);
-		virtual ~SweeneyBackgroundLayer();
-
-		gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset);
-
-	protected:
-		SweeneyMapType::image_map_sptr imgMap;
-};
-
-class SweeneyObjectLayer: virtual public GenericMap2D::Layer
-{
-	public:
-		SweeneyObjectLayer(ItemPtrVectorPtr& items,
-			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems);
-		virtual ~SweeneyObjectLayer();
-
-		gamegraphics::ImagePtr imageFromCode(unsigned int code,
-			camoto::gamegraphics::VC_TILESET& tileset);
-		gamegraphics::PaletteTablePtr getPalette(gamegraphics::VC_TILESET& tileset);
-
-	protected:
-		SweeneyMapType::image_map_sptr imgMap;
-};
-
 } // namespace gamemaps
 } // namespace camoto
 

@@ -25,6 +25,7 @@
 #include <math.h>
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/util.hpp>
+#include "map2d-generic.hpp"
 #include "fmt-map-wacky.hpp"
 
 #define WW_MAP_WIDTH            64
@@ -53,28 +54,37 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-WackyBackgroundLayer::WackyBackgroundLayer(ItemPtrVectorPtr& items,
-	ItemPtrVectorPtr& validItems)
-	:	GenericMap2D::Layer(
-			"Surface",
-			Map2D::Layer::NoCaps,
-			0, 0,
-			0, 0,
-			items, validItems
-		)
+class WackyBackgroundLayer: virtual public GenericMap2D::Layer
 {
-}
+	public:
+		WackyBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Surface",
+					Map2D::Layer::NoCaps,
+					0, 0,
+					0, 0,
+					items, validItems
+				)
+		{
+		}
 
-ImagePtr WackyBackgroundLayer::imageFromCode(unsigned int code,
-	VC_TILESET& tileset)
-{
-	unsigned int t = code / WW_TILES_PER_TILESET;
-	code = code % WW_TILES_PER_TILESET;
-	if (tileset.size() < t) return ImagePtr();
-	const Tileset::VC_ENTRYPTR& images = tileset[t]->getItems();
-	if (code >= images.size()) return ImagePtr(); // out of range
-	return tileset[t]->openImage(images[code]);
-}
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset)
+		{
+			unsigned int ti = item->code / WW_TILES_PER_TILESET;
+			unsigned int index = item->code % WW_TILES_PER_TILESET;
+
+			TilesetCollection::const_iterator t =
+				tileset->find((ImagePurpose)(BackgroundTileset + ti));
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			if (index >= images.size()) return ImagePtr(); // out of range
+			return t->second->openImage(images[index]);
+		}
+};
+
 
 std::string WackyMapType::getMapCode() const
 {
