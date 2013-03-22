@@ -144,22 +144,22 @@ class MapType
 		 * supplementary files, so the caller can open them and pass them along
 		 * to the map manipulation classes.
 		 *
-		 * Note to format implementors: This function only needs to be overridden
-		 * if there is supplementary data, otherwise the default implementation
-		 * returns an empty vector, indicating there is no supp data.
+		 * @param input
+		 *   Actual data of the map file being opened.  This is needed because some
+		 *   file formats internally store filenames of other map layers, tilesets
+		 *   and other details.
 		 *
-		 * @param  filenameMap  The filename of the map (no path.)  This is
-		 *         for supplemental files which share the same base name as the
-		 *         map, but a different filename extension.
-		 *         This can be empty for embedded map files with no filenames.
+		 * @param filename
+		 *   The filename of the map (no path.)  This is for supplemental files
+		 *   which share the same base name as the map, but a different filename
+		 *   extension.  This can be empty for embedded map files with no filenames.
 		 *
 		 * @return A (possibly empty) map associating required supplemental file
-		 *         types with their filenames.  For each returned value the file
-		 *         should be opened and placed in a SuppItem instance.  The
-		 *         SuppItem is then added to an \ref SuppData map where it can
-		 *         be passed to newMap() or open().  Note that the filenames
-		 *         returned can have relative paths, and may even have an absolute
-		 *         path, if one was passed in with filenameMap.
+		 *   types with their filenames.  For each returned value the file should be
+		 *   opened and added to a \ref SuppData map, where it can be passed to
+		 *   create() or open().  Note that the filenames returned can have
+		 *   relative paths, and may even have an absolute path, if one was passed
+		 *   in.
 		 */
 		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
 			const std::string& filename) const = 0;

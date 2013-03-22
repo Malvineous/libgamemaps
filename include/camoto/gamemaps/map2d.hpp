@@ -275,8 +275,8 @@ class Map2D::Layer
 
 		/// Is the given tile permitted at the specified location?
 		/**
-		 * @param code
-		 *   Map2D::Layer::Item::code obtained from getAllItems().
+		 * @param item
+		 *   Map2D::Layer::Item obtained from getAllItems().
 		 *
 		 * @param x
 		 *   Proposed X coordinate, in tiles.
