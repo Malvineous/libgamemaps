@@ -76,7 +76,7 @@ class WackyBackgroundLayer: virtual public GenericMap2D::Layer
 			unsigned int index = item->code % WW_TILES_PER_TILESET;
 
 			TilesetCollection::const_iterator t =
-				tileset->find((ImagePurpose)(BackgroundTileset + ti));
+				tileset->find((ImagePurpose)(BackgroundTileset1 + ti));
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();

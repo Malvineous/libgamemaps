@@ -37,11 +37,12 @@ class EInvalidFormat: virtual public error {
 
 /// What an image or tileset is used for.
 enum ImagePurpose {
-	GenericTileset = 0,
-	BackgroundTileset,
+	GenericTileset1 = 0,
+	BackgroundTileset1,
+	BackgroundTileset2,
 	ForegroundTileset1,
 	ForegroundTileset2,
-	SpriteTileset,
+	SpriteTileset1,
 	FontTileset1,
 	FontTileset2,
 	BackgroundImage = 0x10,

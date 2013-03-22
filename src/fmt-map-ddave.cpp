@@ -71,7 +71,7 @@ class DDaveBackgroundLayer: virtual public GenericMap2D::Layer
 			const Map2D::Layer::ItemPtr& item,
 			const TilesetCollectionPtr& tileset)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();

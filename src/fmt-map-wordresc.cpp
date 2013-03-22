@@ -103,7 +103,7 @@ class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
 			const Map2D::Layer::ItemPtr& item,
 			const TilesetCollectionPtr& tileset)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
@@ -134,9 +134,9 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 			ImagePurpose purpose;
 			unsigned int index;
 			switch (item->code) {
-				case WR_CODE_GRUZZLE:  purpose = SpriteTileset;    index = 15; break;
-				case WR_CODE_SLIME:    purpose = BackgroundTileset; index = 238; break;
-				case WR_CODE_BOOK:     purpose = BackgroundTileset; index = 239; break;
+				case WR_CODE_GRUZZLE:  purpose = SpriteTileset1;     index = 15; break;
+				case WR_CODE_SLIME:    purpose = BackgroundTileset1; index = 238; break;
+				case WR_CODE_BOOK:     purpose = BackgroundTileset1; index = 239; break;
 				case WR_CODE_LETTER1:
 				case WR_CODE_LETTER2:
 				case WR_CODE_LETTER3:
@@ -192,17 +192,17 @@ class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 			ImagePurpose purpose;
 			unsigned int index;
 			switch (item->code) {
-				case WR_CODE_ENTRANCE: purpose = SpriteTileset; index = 1; break;
-				case WR_CODE_EXIT:     purpose = SpriteTileset; index = 3; break;
-				case 0x0000: purpose = SpriteTileset; index = 0; break; // first question mark box
-				case 0x0001: purpose = SpriteTileset; index = 0; break;
-				case 0x0002: purpose = SpriteTileset; index = 0; break;
-				case 0x0003: purpose = SpriteTileset; index = 0; break;
-				case 0x0004: purpose = SpriteTileset; index = 0; break;
-				case 0x0005: purpose = SpriteTileset; index = 0; break;
-				case 0x0006: purpose = SpriteTileset; index = 0; break; // last question mark box
-				case 0x0073: purpose = BackgroundTileset; index = 50; break; // solid
-				case 0x0074: purpose = BackgroundTileset; index = 91; break; // jump up through/climb
+				case WR_CODE_ENTRANCE: purpose = SpriteTileset1; index = 1; break;
+				case WR_CODE_EXIT:     purpose = SpriteTileset1; index = 3; break;
+				case 0x0000: purpose = SpriteTileset1; index = 0; break; // first question mark box
+				case 0x0001: purpose = SpriteTileset1; index = 0; break;
+				case 0x0002: purpose = SpriteTileset1; index = 0; break;
+				case 0x0003: purpose = SpriteTileset1; index = 0; break;
+				case 0x0004: purpose = SpriteTileset1; index = 0; break;
+				case 0x0005: purpose = SpriteTileset1; index = 0; break;
+				case 0x0006: purpose = SpriteTileset1; index = 0; break; // last question mark box
+				case 0x0073: purpose = BackgroundTileset1; index = 50; break; // solid
+				case 0x0074: purpose = BackgroundTileset1; index = 91; break; // jump up through/climb
 				case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
 				default: return ImagePtr();
 			}
@@ -233,7 +233,7 @@ Map::GraphicsFilenamesPtr wr_getGraphicsFilenames(const Map *map)
 	gf.type = "tls-wordresc";
 	gf.filename = createString("back" << (int)(attributes->at(1)->enumValue + 1)
 		<< ".wr");
-	if (!gf.filename.empty()) (*files)[BackgroundTileset] = gf;
+	if (!gf.filename.empty()) (*files)[BackgroundTileset1] = gf;
 
 	unsigned int dropNum = attributes->at(2)->enumValue;
 	if (dropNum > 0) {

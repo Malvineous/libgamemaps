@@ -745,12 +745,13 @@ finishTesting:
 							std::cout << "Graphics file " << fileNum+1 << ": " << a->filename
 								<< " [";
 							switch (i->first) {
-								case gm::GenericTileset:     std::cout << "Generic tileset"; break;
+								case gm::GenericTileset1:    std::cout << "Generic tileset 1"; break;
 								case gm::BackgroundImage:    std::cout << "Background image"; break;
-								case gm::BackgroundTileset:  std::cout << "Background tileset"; break;
+								case gm::BackgroundTileset1: std::cout << "Background tileset 1"; break;
+								case gm::BackgroundTileset2: std::cout << "Background tileset 2"; break;
 								case gm::ForegroundTileset1: std::cout << "Foreground tileset 1"; break;
 								case gm::ForegroundTileset2: std::cout << "Foreground tileset 2"; break;
-								case gm::SpriteTileset:      std::cout << "Sprite tileset"; break;
+								case gm::SpriteTileset1:     std::cout << "Sprite tileset 1"; break;
 								case gm::FontTileset1:       std::cout << "Font tileset 1"; break;
 								case gm::FontTileset2:       std::cout << "Font tileset 2"; break;
 								default:
@@ -943,7 +944,7 @@ finishTesting:
 				if (map2d) {
 					gm::TilesetCollectionPtr allTilesets(new gm::TilesetCollection);
 					/// @todo Load more than one tileset
-					allTilesets->at(gm::BackgroundTileset) = openTileset(strGraphics, strGraphicsType);
+					(*allTilesets)[gm::BackgroundTileset1] = openTileset(strGraphics, strGraphicsType);
 					map2dToPng(map2d, allTilesets, i->value[0]);
 				}
 

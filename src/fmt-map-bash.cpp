@@ -113,7 +113,7 @@ class BashBackgroundLayer: virtual public GenericMap2D::Layer
 			const Map2D::Layer::ItemPtr& item,
 			const TilesetCollectionPtr& tileset)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
 			unsigned int index = item->code & 0x1FF;
@@ -155,7 +155,7 @@ Map::GraphicsFilenamesPtr bash_getGraphicsFilenames(const Map *map)
 	Map::GraphicsFilename gf;
 	gf.type = "tls-bash-bg";
 	gf.filename = attributes->at(0)->filenameValue;
-	if (!gf.filename.empty()) (*files)[BackgroundTileset] = gf; // bg tiles
+	if (!gf.filename.empty()) (*files)[BackgroundTileset1] = gf; // bg tiles
 
 	gf.type = "tls-bash-fg";
 	gf.filename = attributes->at(1)->filenameValue;

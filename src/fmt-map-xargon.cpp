@@ -69,7 +69,7 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 			const Map2D::Layer::ItemPtr& item,
 			const TilesetCollectionPtr& tileset)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
@@ -102,7 +102,7 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 			const TilesetCollectionPtr& tileset)
 		{
 			// Try (Xargon) to load the palette from tile 0.5.0
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return PaletteTablePtr(); // no tileset?!
 			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
 			if (tilesets.size() > 5) {
@@ -157,7 +157,7 @@ class SweeneyObjectLayer: virtual public GenericMap2D::Layer
 			const TilesetCollectionPtr& tileset)
 		{
 			// Try (Xargon) to load the palette from tile 0.5.0
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset);
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return PaletteTablePtr(); // no tileset?!
 			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
 			if (tilesets.size() > 5) {

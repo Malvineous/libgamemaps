@@ -74,7 +74,7 @@ class CosmoActorLayer: virtual public GenericMap2D::Layer
 			const Map2D::Layer::ItemPtr& item,
 			const TilesetCollectionPtr& tileset)
 		{
-			TilesetCollection::const_iterator t = tileset->find(SpriteTileset);
+			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
 			// TODO
@@ -113,7 +113,7 @@ class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
 				}*/
 				purpose = ForegroundTileset1;
 			} else {
-				purpose = BackgroundTileset;
+				purpose = BackgroundTileset1;
 			}
 			TilesetCollection::const_iterator t = tileset->find(purpose);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
