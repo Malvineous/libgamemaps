@@ -2,7 +2,7 @@
  * @file   test-map-wordresc.cpp
  * @brief  Test code for Word Rescue maps.
  *
- * Copyright (C) 2010-2011 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2013 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
