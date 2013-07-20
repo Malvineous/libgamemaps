@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iomanip>
 #include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
 #include "map2d-generic.hpp"
@@ -41,6 +42,9 @@
 
 /// Height of map view during gameplay, in pixels
 #define CC_VIEWPORT_HEIGHT      192
+
+/// Create a tile number from a tileset number and an index into the tileset.
+#define MAKE_TILE(tileset, tile) (((tileset) << 8) | (tile))
 
 namespace camoto {
 namespace gamemaps {
@@ -67,8 +71,18 @@ class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
 			const Map2D::Layer::ItemPtr& item,
 			const TilesetCollectionPtr& tileset)
 		{
-			// TODO
-			return ImagePtr();
+			unsigned int ti, i;
+			ti = item->code >> 8;
+			i = item->code & 0xFF;
+
+			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			const Tileset::VC_ENTRYPTR& ts = t->second->getItems();
+			TilesetPtr tsub = t->second->openTileset(ts[ti]);
+			const Tileset::VC_ENTRYPTR& images = tsub->getItems();
+			if (i >= images.size()) return ImagePtr(); // out of range
+			return tsub->openImage(images[i]);
 		}
 };
 
@@ -157,25 +171,842 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	unsigned int height = lenMap / (CC_MAP_WIDTH + 1);
 
+	//unsigned int fgtile = MAKE_TILE(21, 20); // solid cyan
+	//unsigned int fgtile = MAKE_TILE(19, 20); // blue rock
+	//unsigned int fgtile = MAKE_TILE(22, 12); // solid blue
+	//unsigned int fgtile = MAKE_TILE(21, 12); // wavy green
+	unsigned int fgtile = MAKE_TILE(21, 32); // solid brown
+	//unsigned int ibeam_tile = MAKE_TILE(19,  3); // blue
+	unsigned int ibeam_tile = MAKE_TILE(19,  6); // red
+	unsigned int underscore_tile = MAKE_TILE(19,  0); // blue
+
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(CC_MAP_WIDTH * height);
+	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
+	unsigned long c = 0;
 	for (unsigned int y = 0; y < height; y++) {
 		bg++; // skip row length byte
 		for (unsigned int x = 0; x < CC_MAP_WIDTH; x++) {
+			// Skip all empty tiles
+			if (*bg == 0x20) {
+				bg++;
+				continue;
+			}
+			switch (*bg++) {
+				case 0x0C: c = fgtile + 5; break; // same tile as 0x67, what's the difference?
+				case 0x21: c = MAKE_TILE(13,  0); break; // blue dripping pipe
+				case 0x22: c = MAKE_TILE(12, 30); break; // green stuff hanging down from block 2
+				case 0x23: c = MAKE_TILE( 2, 24); break; // spider
+				case 0x24: { // air compressor
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17, 14); // air compressor bottom
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					c = MAKE_TILE(17, 10); // red-door top
+					break;
+				}
+
+				case 0x25: c = MAKE_TILE(10, 39); break; // green pipe, vert
+				case 0x26: c = MAKE_TILE(13, 12); break; // robot enemy
+				case 0x28: c = MAKE_TILE( 3, 34); break; // brown stalactites 1
+				case 0x29: c = MAKE_TILE( 3, 35); break; // brown stalactites 2
+				case 0x2A: c = MAKE_TILE( 2,  4); break; // brown walking ball enemy
+				case 0x2B: c = MAKE_TILE(12,  1); break; // yellow gem
+				case 0x2C: c = MAKE_TILE(10, 37); break; // green pipe, down exit, left join
+				case 0x2D: c = MAKE_TILE(10, 36); break; // green pipe, horiz
+				case 0x2E: c = MAKE_TILE(10, 38); break; // green pipe, down exit, right join
+				case 0x2F: c = MAKE_TILE( 9, 31); break; // flying bone enemy
+
+				// untested - case 0x31: c = fgtile + 4; break;
+				case 0x32: c = fgtile + 5; break;
+				// untested - case 0x33: c = fgtile + 6; break;
+				case 0x34: c = fgtile + 8; break;
+				case 0x35: c = fgtile + 9; break;
+				case 0x36: c = fgtile + 10; break;
+				case 0x38: c = MAKE_TILE( 0, 34); break; // large chain
+				case 0x39: c = MAKE_TILE( 1, 46); break; // mine cart
+				case 0x3A: c = MAKE_TILE(12, 29); break; // green stuff hanging down from block 1
+
+				case 0x3D: c = MAKE_TILE(13, 44); break; // purple wall enemy, attacking to left
+
+				case 0x3F: c = MAKE_TILE( 1, 12); break; // green stripy enemy
+
+				case 0x41: c = MAKE_TILE(17, 32); break; // green fish enemy
+				case 0x42: c = MAKE_TILE( 0,  6); break; // ice block  @todo could be 0,19 also, tiles are identical
+				case 0x43: c = MAKE_TILE(21,  0); break; // random concrete blocks  @todo indicate randomness somehow
+				case 0x44: c = ibeam_tile; break; // I-beam left
+				case 0x45: c = MAKE_TILE(13, 35); break; // purple wall enemy, attacking to right
+				case 0x46: c = MAKE_TILE( 9, 22); break; // flame
+				case 0x47: c = MAKE_TILE( 5, 48); break; // gun/ammo
+				case 0x48: c = MAKE_TILE(11, 40); break; // horiz moving platform
+				case 0x49: c = MAKE_TILE( 4, 37); break; // popup floor spike
+				case 0x4A: c = MAKE_TILE( 9,  3); break; // flame tower
+				case 0x4B: c = MAKE_TILE(21,  0); break; // concrete block 0
+				case 0x4C: c = MAKE_TILE(21,  1); break; // concrete block 1
+				case 0x4D: c = MAKE_TILE( 6,  0); break; // emu enemy
+				case 0x4E: c = MAKE_TILE(12,  9); break; // moon
+
+				case 0x52: c = MAKE_TILE(12,  0); break; // red gem
+				case 0x53: c = MAKE_TILE( 3,  4); break; // purple snake enemy
+				case 0x54: c = MAKE_TILE( 9, 24); break; // hammer guide
+				case 0x55: { // hammer top
+					c = MAKE_TILE( 9, 10);
+
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE( 9, 14); // hammer bottom-left
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					next = bg + CC_MAP_WIDTH + 1;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x + 1;
+						t->y = y + 1;
+						t->code = MAKE_TILE( 9, 15); // hammer bottom-right
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0x56: c = MAKE_TILE(11, 44); break; // vert moving platform
+				case 0x57: { // exhaust vacuum
+					unsigned int c2 = 0;
+					switch (*bg) {
+						case 0x4C:
+							c = MAKE_TILE( 3, 29); // wind lines
+							c2 = MAKE_TILE( 3,  2); // left-facing sucker
+							break;
+						case 0x52:
+							c = MAKE_TILE( 3,  0); // right-facing sucker
+							c2 = MAKE_TILE( 3, 29); // wind lines
+							break;
+						default:
+							std::cout << "Unknown vacuum type " << std::hex << std::setfill('0')
+								<< std::setw(2) << (int)*(bg-1) << " in Crystal Caves map."
+								<< std::dec << std::endl;
+							continue;
+					}
+					Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+					t->type = Map2D::Layer::Item::Default;
+					t->x = x;
+					t->y = y;
+					t->code = c;
+					tiles->push_back(t);
+					*bg++ = 0x20; // already handled this one
+					c = c2;
+					x++;
+					break;
+				}
+				case 0x58: { // level exit
+					c = MAKE_TILE(11, 12); // top-left exit door tile
+
+					uint8_t *next = bg;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x + 1;
+						t->y = y;
+						t->code = MAKE_TILE(11, 20); // top-right exit door tile
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE(11, 16); // bottom-left exit door tile
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					next = bg + CC_MAP_WIDTH + 1;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x + 1;
+						t->y = y + 1;
+						t->code = MAKE_TILE(11, 24); // bottom-right exit door tile
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0x59: c = MAKE_TILE( 5,  0); break;
+				case 0x5A: c = MAKE_TILE( 4, 32); break; // random map horizon/hill/light
+				case 0x5B: { // sign
+					x++;
+					unsigned int c2 = 0;
+					switch (*bg++) {
+						case 0x23: { // air vent
+							c = MAKE_TILE(14,  0); // air vent grill
+							c2 = c + 1;
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE(14,  4); // bottom-left air vent grill
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE(14,  5); // bottom-right air vent grill
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x2A: { // cog
+							c = MAKE_TILE( 8, 32); // top-left
+							c2 = c + 1; // top-right
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 36); // bottom-left air vent grill
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 37); // bottom-right air vent grill
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x2D: // brown metal supports holding red I-beam
+							c = MAKE_TILE( 1, 40); // left
+							c2 = c + 1; // right
+							break;
+						case 0x32: // low gravity
+							c = MAKE_TILE( 9,  6);
+							c2 = c + 1;
+							break;
+						case 0x33: // kilroy was here
+							c = MAKE_TILE( 9, 12);
+							c2 = c + 1;
+							break;
+						case 0x34:
+							c = MAKE_TILE( 9,  0); // win (ners, don't)
+							c2 = c + 1;
+							break;
+						case 0x3A:
+							c = MAKE_TILE(21,  4); // mario-style funnel top
+							c2 = c + 1;
+							break;
+						case 0x3B:
+							c = MAKE_TILE(21,  8); // mario-style funnel shaft
+							c2 = c + 1;
+							break;
+						case 0x3D:
+							c = MAKE_TILE(16, 24); // red dinosaur head
+							c2 = MAKE_TILE(16, 31); // red dinosaur mid
+							break;
+						case 0x44: // danger sign (falling?)
+							c = MAKE_TILE( 9,  8); // dan (ger)
+							c2 = c + 1;
+							break;
+						case 0x45: { // wide-eyed green enemy
+							c = MAKE_TILE(20,  8); // left eye
+							c2 = MAKE_TILE(20,  0); // mouth
+							if (*bg == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x + 1;
+								t->y = y;
+								t->code = MAKE_TILE(20, 16); // bottom-left corner
+								tiles->push_back(t);
+								*bg = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x50: // spiky green multi-segment caterpillar enemy
+							c = MAKE_TILE(14, 28); // last tail segment
+							c2 = c + 1; // second-last tail segment
+							// typically followed by two 0x6E to +1 for next two segments
+							break;
+						case 0x54: { // funnel tube
+							c = MAKE_TILE( 7, 38); // top-left
+							c2 = MAKE_TILE( 7, 37); // top-mid
+
+							uint8_t *next = bg;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x + 1;
+								t->y = y;
+								t->code = MAKE_TILE( 7, 39); // top-right
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 7, 36); // bottom-mid
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x5E: // ^ shaped brown metal supports
+							c = MAKE_TILE( 1, 42); // left
+							c2 = c + 1; // right
+							break;
+						case 0x62: { // green wood box with yellow frame, 4x2
+							c = MAKE_TILE( 8,  0); // top-left corner
+							c2 = c + 1;
+							// third segment on top level will be handled by 0x6E
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8,  4); // bottom-left corner
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8,  5); // bottom-middle segment
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH + 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x + 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8,  6); // bottom-right segment
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH + 2;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x + 2;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8,  7); // bottom-right segment
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x63: { // yellow/black hazard box
+							c = MAKE_TILE( 6, 36); // top-left
+							c2 = c + 1; // top-right
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 6, 40); // bottom-left
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 6, 41); // bottom-right
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x64: // danger sign
+							c = MAKE_TILE( 9,  8); // dan (ger)
+							c2 = c + 1;
+							break;
+						case 0x66: // falling rocks sign
+							c = MAKE_TILE( 2, 42); // fall (ing)
+							c2 = c + 1;
+							break;
+						case 0x67: { // green wood box with yellow frame, 3x2
+							c = MAKE_TILE( 8,  0); // top-left corner
+							c2 = c + 2; // second top-middle segment
+							// top-right corner
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 4); // bottom-left corner
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 6); // bottom-middle segment
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH + 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x + 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 7); // bottom-right segment
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x6D: // mine-> sign
+							c = MAKE_TILE( 4, 43); // min (e->)
+							c2 = c + 1;
+							break;
+						case 0x72:
+							c = MAKE_TILE( 2, 40); // boarded up box (left)
+							c2 = c + 1; // boarded up box (right)
+							break;
+						case 0x78: { // grey X box
+							c = MAKE_TILE( 3, 36); // top-left
+							c2 = c + 1; // top-right
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 3, 38); // bottom-left
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 3, 39); // bottom-right
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x79: { // green wood box with yellow frame, 2x2
+							c = MAKE_TILE( 8,  0); // top-left corner
+							c2 = c + 3; // top-right corner
+
+							uint8_t *next = bg + CC_MAP_WIDTH - 1;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x - 1;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 4); // bottom-left corner
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							next = bg + CC_MAP_WIDTH;
+							if (*next == 0x6E) {
+								Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+								t->type = Map2D::Layer::Item::Default;
+								t->x = x;
+								t->y = y + 1;
+								t->code = MAKE_TILE( 8, 7); // bottom-right corner
+								tiles->push_back(t);
+								*next = 0x20; // already handled this one
+							}
+							break;
+						}
+						case 0x7C: // || shaped brown metal supports
+							c = MAKE_TILE( 0, 17); // left
+							c2 = c + 1; // right
+							break;
+						default:
+							std::cout << "Unknown sign type " << std::hex << std::setfill('0')
+								<< std::setw(2) << (int)*(bg-1) << " in Crystal Caves map."
+								<< std::dec << std::endl;
+							continue;
+					}
+					Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+					t->type = Map2D::Layer::Item::Default;
+					t->x = x - 1;
+					t->y = y;
+					t->code = c;
+					tiles->push_back(t);
+					c = c2;
+					break;
+				}
+				case 0x5D: c = MAKE_TILE( 5, 49); break; // P powerup
+				case 0x5E: c = MAKE_TILE( 4,  5); break; // bird enemy
+				case 0x5F: c = underscore_tile; break; // underscore platform (colour dependent on level)
+				case 0x61: c = MAKE_TILE(11,  9); break; // right-facing laser, moving vertically @todo more obvious icon to highlight motion
+				case 0x62: c = MAKE_TILE(12,  2); break; // green gem
+				case 0x63: c = MAKE_TILE(12,  3); break; // blue gem
+				case 0x64: c = ibeam_tile + 1; break; // I-beam mid
+
+				case 0x66: c = fgtile + 4; break;
+				case 0x67: c = fgtile + 5; break;
+				case 0x68: c = fgtile + 6; break;
+				case 0x69: {
+					c = MAKE_TILE(13, 24); // stop sign face
+
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE(13, 25); // stop sign pole
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0x6A: c = MAKE_TILE(12,  5); break; // inverted rubble pile, mid
+				case 0x6B: c = MAKE_TILE(21,  2); break;
+				case 0x6C: c = MAKE_TILE(21,  3); break;
+				case 0x6D: c = MAKE_TILE(12,  8); break; // earth
+				case 0x6E:
+					if (*(bg + CC_MAP_WIDTH) == 0x87) {
+						// The next line is a purple vine, so this probably is too.  0x6E is
+						// supposed to mean the previous tile + 1, but CC only looks at
+						// background tiles when calculating this.  So the previous tile
+						// could actually be a gem, but since that's a foreground tile, CC
+						// will still treat it as a -1 background tile, so adding 1 to that
+						// gives tileset 0, index 0, or the purple vine.  Instead of
+						// treating the background and foreground layers differently, we'll
+						// just check the tile below and hope that there is never a vine
+						// only one tile high...
+						c = MAKE_TILE( 0,  0);
+					} else if (*(bg - 2) == 0x44) {
+						// Prev tile was start of I-beam, so this is actually the end
+						c = ibeam_tile + 2;
+					} else if (*(bg - 2) == 0x70) {
+						// Prev tile was start of inverted rubble pile, so this is actually the end
+						c = MAKE_TILE(12,  6);
+					} else if (*(bg + CC_MAP_WIDTH) == 0x86) {
+						// first part of hanging double-chain start with this for some reason
+						c = MAKE_TILE( 8, 22); // hanging double-chain mid
+					} else if (*(bg + CC_MAP_WIDTH) == 0x88) {
+						// first part of green vines start with this for some reason
+						c = MAKE_TILE( 0,  1); // green vine mid
+					} else {
+						c++; // next tile following previous one
+					}
+					break;
+				case 0x6F: c = MAKE_TILE( 2,  0); break; // dormant brown walking ball enemy
+
+				case 0x70: c = MAKE_TILE(12,  4); break; // inverted rubble pile, left
+				case 0x71: c = MAKE_TILE(11, 10); break; // left-facing laser, static @todo same as 0x82
+				case 0x72: c = fgtile + 0; break;
+				case 0x73: c = MAKE_TILE(11,  9); break; // right-facing laser, moving vertically @todo more obvious icon to highlight motion
+				case 0x74: c = fgtile + 1; break;
+				case 0x75: c = MAKE_TILE(14, 20); break; // volcano eruption
+				case 0x76: c = MAKE_TILE(11, 30); break; // horizontal switch, off
+				case 0x77: c = MAKE_TILE(11,  9); break; // right-facing laser, static
+				case 0x78: c = MAKE_TILE( 0, 12); break; // level entrance
+				case 0x79: c = fgtile + 2; break;
+				case 0x7A: c = MAKE_TILE(20, 45); break; // invisible blocking tile (made up mapping)
+				case 0x7C: c = MAKE_TILE( 3, 34); break; // brown stalactites 1 (same as 0x28) - maybe these fall?
+				case 0x7E: c = MAKE_TILE( 4, 12); break; // bat enemy
+
+				case 0x80: { // sector alpha sign
+					c = MAKE_TILE(17,  8); // top-left
+					// 0x6E will handle next part
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17, 12); // bottom-left
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					next = bg + CC_MAP_WIDTH + 1;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x + 1;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17, 13); // bottom-right
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+
+				case 0x82: c = MAKE_TILE(11, 10); break; // left-facing laser, static @todo same as 0x71
+				case 0x84: c = MAKE_TILE(11,  9); break; // right-facing laser, switched @todo more obvious icon to highlight switch
+				case 0x86:
+					if (*(bg + CC_MAP_WIDTH) == 0x86) c = MAKE_TILE( 8, 22); // hanging double-chain mid
+					else c = MAKE_TILE( 8, 23); // hanging double-chain end
+					break;
+				case 0x87:
+					if (*(bg + CC_MAP_WIDTH) == 0x87) c = MAKE_TILE( 0,  0); // purple vine mid
+					else c = MAKE_TILE( 0,  4); // purple vine end
+					break;
+				case 0x88:
+					if (*(bg + CC_MAP_WIDTH) == 0x88) c = MAKE_TILE( 0,  1); // green vine mid
+					else c = MAKE_TILE( 0,  5); // green vine end
+					break;
+				case 0x89: c = MAKE_TILE(11,  8); break; // tear revealing horizontal bar
+				case 0x8A: c = MAKE_TILE(11,  4); break; // tear revealing vertical bar
+				case 0x8B: c = MAKE_TILE( 0,  3); break; // candle
+				case 0x8C: c = MAKE_TILE(11, 37); break; // G powerup
+				case 0x8E: c = MAKE_TILE(14,  9); break; // volcano top
+				case 0x8F: c = MAKE_TILE(14, 12); break; // volcano bottom
+				case 0x90: c = MAKE_TILE( 7, 36); break; // funnel tube stem
+
+				case 0x98: { // hidden gem in I-beam left-end
+					Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+					t->type = Map2D::Layer::Item::Default;
+					t->x = x;
+					t->y = y;
+					t->code = MAKE_TILE(12, 36); // transparent gem
+					fgtiles->push_back(t);
+					c = ibeam_tile;
+					break;
+				}
+				case 0x99: { // hidden gem in I-beam midsection
+					Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+					t->type = Map2D::Layer::Item::Default;
+					t->x = x;
+					t->y = y;
+					t->code = MAKE_TILE(12, 36); // transparent gem
+					fgtiles->push_back(t);
+					c = ibeam_tile + 1;
+					break;
+				}
+				case 0x9A: { // hidden gem in I-beam right-end
+					Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+					t->type = Map2D::Layer::Item::Default;
+					t->x = x;
+					t->y = y;
+					t->code = MAKE_TILE(12, 36); // transparent gem
+					fgtiles->push_back(t);
+					c = ibeam_tile + 2;
+					break;
+				}
+
+				case 0xA0: c = MAKE_TILE( 8, 16); break; // red switch
+				case 0xA1: c = MAKE_TILE( 8, 20); break; // green switch
+				case 0xA2: c = MAKE_TILE( 8, 18); break; // blue switch
+				case 0xA3: { // red door
+					c = MAKE_TILE( 8, 24); // red-door top
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE( 8, 28); // red-door bottom
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0xA4: { // green door
+					c = MAKE_TILE( 8, 26); // green-door top
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE( 8, 30); // green-door bottom
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0xA5: { // blue door
+					c = MAKE_TILE( 8, 25); // blue-door top
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE( 8, 29); // blue-door bottom
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0xA6: c = MAKE_TILE( 8, 14); break; // vertical switch, on
+				case 0xA7: c = MAKE_TILE(12, 49); break; // treasure chest
+				case 0xA8: c = MAKE_TILE(12, 43); break; // key for treasure chest
+				case 0xA9: c = MAKE_TILE(12, 46); break; // purple-spotted white egg
+				case 0xAA: c = MAKE_TILE(12, 48); break; // blue mushroom
+				case 0xAB: c = MAKE_TILE(12, 44); break; // red mushroom
+				case 0xAC: c = MAKE_TILE(12, 45); break; // green mushroom
+				case 0xB0: c = MAKE_TILE( 0,  2); break; // hidden block revealed by head-butting
+				case 0xB1: c = MAKE_TILE(11, 48); break; // thick horizontal wooden post
+				case 0xB2: c = MAKE_TILE(11, 36); break; // thick vertical wooden post
+				case 0xB3: c = MAKE_TILE(17,  6); break; // vertical thin wooden post (left)
+				case 0xBA: c = MAKE_TILE(11, 33); break; // vertical thick metal support, middle
+				case 0xBB: c = MAKE_TILE(11, 38); break; // purple mushroom
+				case 0xBD: c = MAKE_TILE(11, 29); break; // \ ledge
+				case 0xBE: c = MAKE_TILE(11, 28); break; // / ledge
+				case 0xBF: c = MAKE_TILE(10, 40); break; // green pipe, left/down join
+				case 0xC0: c = MAKE_TILE(10, 44); break; // green pipe, top/right join
+				case 0xC1: c = MAKE_TILE(10, 46); break; // green pipe, top/left/right join
+				case 0xC2: c = MAKE_TILE(10, 47); break; // green pipe, bottom/left/right join
+
+				case 0xC5: c = MAKE_TILE(10, 39); break; // green pipe, top/bottom/left/right join @todo proper pic
+				case 0xC6: c = MAKE_TILE( 8, 42); break; // down arrow
+				case 0xC7: c = MAKE_TILE( 8, 43); break; // up arrow
+				case 0xC8: c = MAKE_TILE(16, 48); break; // barrier to contain green fish thing
+				case 0xCA: c = MAKE_TILE(11, 34); break; // vertical thick metal support, bottom
+				case 0xCB: c = MAKE_TILE(11, 32); break; // vertical thick metal support, top
+				case 0xCE: c = MAKE_TILE(21,  6); break; // low grass
+				case 0xCF: c = MAKE_TILE(10, 43); break; // green pipe, bottom exit
+				case 0xD0: c = MAKE_TILE(11,  7); break; // control panel
+				case 0xD1: c = MAKE_TILE(10, 42); break; // green pipe, top exit
+
+				case 0xD5: c = MAKE_TILE(12, 39); break; // flame
+
+				case 0xD7: c = MAKE_TILE(11, 47); break; // switched vert moving platform
+				case 0xD8: c = MAKE_TILE(11, 31); break; // horizontal switch, on
+				case 0xD9: c = MAKE_TILE(10, 45); break; // green pipe, top/left join
+				case 0xDA: c = MAKE_TILE(10, 41); break; // green pipe, right/down join
+
+				case 0xE0: { // on/off funnel machine
+					c = MAKE_TILE(17,  0); // top-left
+					// 0x6E will handle next part
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17,  4); // bottom-left
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					next = bg + CC_MAP_WIDTH + 1;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x + 1;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17,  5); // bottom-right
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+
+				case 0xE8: c = MAKE_TILE( 7, 44); break; // corrugated pipe vert
+				case 0xE9: c = MAKE_TILE( 7, 45); break; // corrugated pipe horiz
+				case 0xEA: c = MAKE_TILE( 7, 46); break; // corrugated pipe L-bend
+				case 0xEB: c = MAKE_TILE( 7, 47); break; // corrugated pipe backwards-L-bend
+				case 0xEC: c = MAKE_TILE( 7, 48); break; // corrugated pipe backwards-r-bend
+				case 0xED: c = MAKE_TILE( 7, 49); break; // corrugated pipe r-bend
+				case 0xF0: c = MAKE_TILE(17,  2); break; // wooden Y beam (left)
+				case 0xF2: c = MAKE_TILE(19, 32); break; // dinosaur enemy (feet)
+				case 0xF3: c = MAKE_TILE(20, 44); break; // blue ball enemy
+				case 0xF4: c = MAKE_TILE( 0,  8); break; // pick
+				case 0xF5: c = MAKE_TILE( 0, 10); break; // shovel
+				case 0xF6: c = MAKE_TILE( 3, 32); break; // stalagmite 1
+				case 0xF7: c = MAKE_TILE( 3, 33); break; // stalagmite 2
+				case 0xF8: { // round glass thing
+					c = MAKE_TILE(17, 16); // top-left exit door tile
+					// 0x6E will handle next part
+					uint8_t *next = bg + CC_MAP_WIDTH;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17, 20); // bottom-left exit door tile
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					next = bg + CC_MAP_WIDTH + 1;
+					if (*next == 0x6E) {
+						Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+						t->type = Map2D::Layer::Item::Default;
+						t->x = x + 1;
+						t->y = y + 1;
+						t->code = MAKE_TILE(17, 21); // bottom-right exit door tile
+						tiles->push_back(t);
+						*next = 0x20; // already handled this one
+					}
+					break;
+				}
+				case 0xF9: c = MAKE_TILE(11,  3); break; // clean barrel
+				case 0xFA: c = MAKE_TILE(11, 11); break; // barrel leaking with green
+				case 0xFB: c = MAKE_TILE(11, 35); break; // exploded barrel with red
+				default:
+					std::cout << "Unknown tile " << std::hex << std::setfill('0')
+						<< std::setw(2) << (int)*(bg-1) << " in Crystal Caves map." << std::dec
+						<< std::endl;
+					continue;
+			}
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
-			t->code = *bg++;
-			if (t->code != 0x20) tiles->push_back(t);
+			t->code = c;
+			tiles->push_back(t);
 		}
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
 	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer(tiles, validBGItems));
 
+	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
+	Map2D::LayerPtr fgLayer(new CCavesBackgroundLayer(fgtiles, validFGItems));
+
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
+	layers.push_back(fgLayer);
 
 	Map2DPtr map(new GenericMap2D(
 		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
