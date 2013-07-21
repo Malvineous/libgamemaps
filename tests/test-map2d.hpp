@@ -243,13 +243,22 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 			i++
 		) {
 			switch (l) {
-#ifdef MAP_FIRST_CODE_L1
+#if MAP_LAYER_COUNT >= 1
+#ifndef MAP_FIRST_CODE_L1
+#error MAP_FIRST_CODE_L1 must be defined for this map format
+#endif
 CHECK_FIRST_TILE_IN_LAYER(1)
 #endif
-#ifdef MAP_FIRST_CODE_L2
+#if MAP_LAYER_COUNT >= 2
+#ifndef MAP_FIRST_CODE_L2
+#error MAP_FIRST_CODE_L2 must be defined for this map format
+#endif
 CHECK_FIRST_TILE_IN_LAYER(2)
 #endif
-#ifdef MAP_FIRST_CODE_L3
+#if MAP_LAYER_COUNT >= 3
+#ifndef MAP_FIRST_CODE_L3
+#error MAP_FIRST_CODE_L3 must be defined for this map format
+#endif
 CHECK_FIRST_TILE_IN_LAYER(3)
 #endif
 			}
