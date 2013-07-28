@@ -62,7 +62,7 @@ class Map2D: virtual public Map
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual int getCaps() = 0;
+		virtual int getCaps() const = 0;
 
 		/// Retrieve the size of the in-game viewport.
 		/**
@@ -77,7 +77,7 @@ class Map2D: virtual public Map
 		 * @param y
 		 *   Pointer to store layer height, in pixels.
 		 */
-		virtual void getViewport(unsigned int *x, unsigned int *y) = 0;
+		virtual void getViewport(unsigned int *x, unsigned int *y) const = 0;
 
 		/// Retrieve the size of the map.
 		/**
@@ -91,7 +91,7 @@ class Map2D: virtual public Map
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getMapSize(unsigned int *x, unsigned int *y) = 0;
+		virtual void getMapSize(unsigned int *x, unsigned int *y) const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -115,7 +115,7 @@ class Map2D: virtual public Map
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y) = 0;
+		virtual void getTileSize(unsigned int *x, unsigned int *y) const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -133,7 +133,7 @@ class Map2D: virtual public Map
 		/**
 		 * @return Number of layers.  All maps have at least one layer.
 		 */
-		virtual unsigned int getLayerCount() = 0;
+		virtual unsigned int getLayerCount() const = 0;
 
 		/// Get access to the given layer.
 		/**
@@ -189,13 +189,13 @@ class Map2D::Layer
 		/**
 		 * @return A string containing a name suitable for display to the user.
 		 */
-		virtual const std::string& getTitle() = 0;
+		virtual const std::string& getTitle() const = 0;
 
 		/// Get the capabilities of this layer.
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual int getCaps() = 0;
+		virtual int getCaps() const = 0;
 
 		/// Retrieve the size of the layer.
 		/**
@@ -208,7 +208,7 @@ class Map2D::Layer
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getLayerSize(unsigned int *x, unsigned int *y) = 0;
+		virtual void getLayerSize(unsigned int *x, unsigned int *y) const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -233,7 +233,7 @@ class Map2D::Layer
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y) = 0;
+		virtual void getTileSize(unsigned int *x, unsigned int *y) const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -251,7 +251,7 @@ class Map2D::Layer
 		/**
 		 * @return Vector of all tiles.  The tiles are in any order.
 		 */
-		virtual const ItemPtrVectorPtr getAllItems() = 0;
+		virtual ItemPtrVectorPtr getAllItems() = 0;
 
 		/// Convert a map code into an image.
 		/**
@@ -271,7 +271,7 @@ class Map2D::Layer
 		 */
 		virtual camoto::gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) = 0;
+			const TilesetCollectionPtr& tileset) const = 0;
 
 		/// Is the given tile permitted at the specified location?
 		/**
@@ -294,7 +294,7 @@ class Map2D::Layer
 		 *  limits notwithstanding) or false if the tile cannot be placed here.
 		 */
 		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
-			unsigned int x, unsigned int y, unsigned int *maxCount) = 0;
+			unsigned int x, unsigned int y, unsigned int *maxCount) const = 0;
 
 		/// Get the palette to use with this layer.
 		/**
@@ -307,7 +307,7 @@ class Map2D::Layer
 		 * @return Shared pointer to a PaletteTable.
 		 */
 		virtual gamegraphics::PaletteTablePtr getPalette(
-			const TilesetCollectionPtr& tileset) = 0;
+			const TilesetCollectionPtr& tileset) const = 0;
 
 		/// Get a list of all possible items that can be placed in the layer.
 		/**
@@ -319,7 +319,7 @@ class Map2D::Layer
 		 *
 		 * @return Vector of all items.
 		 */
-		virtual const ItemPtrVectorPtr getValidItemList() = 0;
+		virtual const ItemPtrVectorPtr getValidItemList() const = 0;
 };
 
 /// Item within the layer (a tile)

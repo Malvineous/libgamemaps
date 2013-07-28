@@ -70,7 +70,7 @@ class WackyBackgroundLayer: virtual public GenericMap2D::Layer
 
 		virtual gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			unsigned int ti = item->code / WW_TILES_PER_TILESET;
 			unsigned int index = item->code % WW_TILES_PER_TILESET;

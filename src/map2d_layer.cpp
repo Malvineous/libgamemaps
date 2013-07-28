@@ -39,17 +39,17 @@ GenericMap2D::Layer::~Layer()
 {
 }
 
-const std::string& GenericMap2D::Layer::getTitle()
+const std::string& GenericMap2D::Layer::getTitle() const
 {
 	return this->title;
 }
 
-int GenericMap2D::Layer::getCaps()
+int GenericMap2D::Layer::getCaps() const
 {
 	return this->caps;
 }
 
-void GenericMap2D::Layer::getLayerSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::Layer::getLayerSize(unsigned int *x, unsigned int *y) const
 {
 	assert(this->getCaps() & HasOwnSize);
 
@@ -67,7 +67,7 @@ void GenericMap2D::Layer::setLayerSize(unsigned int x, unsigned int y)
 	return;
 }
 
-void GenericMap2D::Layer::getTileSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::Layer::getTileSize(unsigned int *x, unsigned int *y) const
 {
 	assert(this->getCaps() & HasOwnTileSize);
 
@@ -85,21 +85,21 @@ void GenericMap2D::Layer::setTileSize(unsigned int x, unsigned int y)
 	return;
 }
 
-const Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getAllItems()
+Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getAllItems()
 {
 	return this->items;
 }
 
 gamegraphics::ImagePtr GenericMap2D::Layer::imageFromCode(
 	const Map2D::Layer::ItemPtr& item,
-	const TilesetCollectionPtr& tileset)
+	const TilesetCollectionPtr& tileset) const
 {
 	// Default implementation to return an empty tile.
 	return gamegraphics::ImagePtr();
 }
 
 bool GenericMap2D::Layer::tilePermittedAt(const Map2D::Layer::ItemPtr& item,
-	unsigned int x, unsigned int y, unsigned int *maxCount)
+	unsigned int x, unsigned int y, unsigned int *maxCount) const
 {
 	assert(maxCount);
 
@@ -109,7 +109,7 @@ bool GenericMap2D::Layer::tilePermittedAt(const Map2D::Layer::ItemPtr& item,
 }
 
 gamegraphics::PaletteTablePtr GenericMap2D::Layer::getPalette(
-	const TilesetCollectionPtr& tileset)
+	const TilesetCollectionPtr& tileset) const
 {
 	assert(this->getCaps() & HasPalette);
 	std::cerr << "BUG: GenericMap2D::Layer reported having a palette but didn't "
@@ -117,7 +117,7 @@ gamegraphics::PaletteTablePtr GenericMap2D::Layer::getPalette(
 	return gamegraphics::PaletteTablePtr();
 }
 
-const Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getValidItemList()
+const Map2D::Layer::ItemPtrVectorPtr GenericMap2D::Layer::getValidItemList() const
 {
 	return this->validItems;
 }

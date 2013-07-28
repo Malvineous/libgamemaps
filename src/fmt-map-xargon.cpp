@@ -67,7 +67,7 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 
 		virtual gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
@@ -99,7 +99,7 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 		}
 
 		gamegraphics::PaletteTablePtr getPalette(
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			// Try (Xargon) to load the palette from tile 0.5.0
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
@@ -148,13 +148,13 @@ class SweeneyObjectLayer: virtual public GenericMap2D::Layer
 
 		virtual gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			return ImagePtr(); // unknown map code
 		}
 
 		gamegraphics::PaletteTablePtr getPalette(
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			// Try (Xargon) to load the palette from tile 0.5.0
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);

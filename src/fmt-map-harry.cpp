@@ -65,7 +65,7 @@ class HarryActorLayer: virtual public GenericMap2D::Layer
 
 		virtual gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
@@ -93,7 +93,7 @@ class HarryBackgroundLayer: virtual public GenericMap2D::Layer
 
 		virtual gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!

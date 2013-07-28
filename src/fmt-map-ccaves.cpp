@@ -69,7 +69,7 @@ class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
 
 		virtual gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset)
+			const TilesetCollectionPtr& tileset) const
 		{
 			unsigned int ti, i;
 			ti = item->code >> 8;

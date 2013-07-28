@@ -47,12 +47,12 @@ GenericMap2D::~GenericMap2D()
 {
 }
 
-int GenericMap2D::getCaps()
+int GenericMap2D::getCaps() const
 {
 	return this->caps;
 }
 
-void GenericMap2D::getViewport(unsigned int *x, unsigned int *y)
+void GenericMap2D::getViewport(unsigned int *x, unsigned int *y) const
 {
 	assert(this->getCaps() & HasViewport);
 
@@ -61,7 +61,7 @@ void GenericMap2D::getViewport(unsigned int *x, unsigned int *y)
 	return;
 }
 
-void GenericMap2D::getMapSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::getMapSize(unsigned int *x, unsigned int *y) const
 {
 	*x = this->width;
 	*y = this->height;
@@ -77,7 +77,7 @@ void GenericMap2D::setMapSize(unsigned int x, unsigned int y)
 	return;
 }
 
-void GenericMap2D::getTileSize(unsigned int *x, unsigned int *y)
+void GenericMap2D::getTileSize(unsigned int *x, unsigned int *y) const
 {
 	*x = this->tileWidth;
 	*y = this->tileHeight;
@@ -93,7 +93,7 @@ void GenericMap2D::setTileSize(unsigned int x, unsigned int y)
 	return;
 }
 
-unsigned int GenericMap2D::getLayerCount()
+unsigned int GenericMap2D::getLayerCount() const
 {
 	return this->layers.size();
 }

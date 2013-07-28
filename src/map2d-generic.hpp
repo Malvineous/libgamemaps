@@ -105,7 +105,7 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual int getCaps();
+		virtual int getCaps() const;
 
 		/// Retrieve the size of the in-game viewport.
 		/**
@@ -120,7 +120,7 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		 * @param y
 		 *   Pointer to store layer height, in pixels.
 		 */
-		virtual void getViewport(unsigned int *x, unsigned int *y);
+		virtual void getViewport(unsigned int *x, unsigned int *y) const;
 
 		/// Retrieve the size of the map.
 		/**
@@ -134,7 +134,7 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		 * @param y
 		 *   Pointer to store layer height, as number of tiles.
 		 */
-		virtual void getMapSize(unsigned int *x, unsigned int *y);
+		virtual void getMapSize(unsigned int *x, unsigned int *y) const;
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -158,7 +158,7 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		 * @param y
 		 *   Pointer to store tile height in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y);
+		virtual void getTileSize(unsigned int *x, unsigned int *y) const;
 
 		/// Change the size of each cell in the layer.
 		/**
@@ -176,7 +176,7 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		/**
 		 * @return Number of layers.  All maps have at least one layer.
 		 */
-		virtual unsigned int getLayerCount();
+		virtual unsigned int getLayerCount() const;
 
 		/// Get access to the given layer.
 		/**
@@ -251,21 +251,21 @@ class GenericMap2D::Layer: virtual public Map2D::Layer
 		/// Destructor.
 		virtual ~Layer();
 
-		virtual const std::string& getTitle();
-		virtual int getCaps();
-		virtual void getLayerSize(unsigned int *x, unsigned int *y);
+		virtual const std::string& getTitle() const;
+		virtual int getCaps() const;
+		virtual void getLayerSize(unsigned int *x, unsigned int *y) const;
 		virtual void setLayerSize(unsigned int x, unsigned int y);
-		virtual void getTileSize(unsigned int *x, unsigned int *y);
+		virtual void getTileSize(unsigned int *x, unsigned int *y) const;
 		virtual void setTileSize(unsigned int x, unsigned int y);
-		virtual const ItemPtrVectorPtr getAllItems();
+		virtual ItemPtrVectorPtr getAllItems();
 		virtual camoto::gamegraphics::ImagePtr imageFromCode(
 			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset);
+			const TilesetCollectionPtr& tileset) const;
 		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
-			unsigned int x, unsigned int y, unsigned int *maxCount);
+			unsigned int x, unsigned int y, unsigned int *maxCount) const;
 		virtual gamegraphics::PaletteTablePtr getPalette(
-			const TilesetCollectionPtr& tileset);
-		virtual const ItemPtrVectorPtr getValidItemList();
+			const TilesetCollectionPtr& tileset) const;
+		virtual const ItemPtrVectorPtr getValidItemList() const;
 
 	protected:
 		std::string title;       ///< Layer's friendly name
