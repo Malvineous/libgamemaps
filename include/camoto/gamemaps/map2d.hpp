@@ -361,6 +361,10 @@ class Map2D::Layer::Item
 		};
 		unsigned int movementFlags;       ///< One or more of MovementFlags
 
+		/// Set movementDist* to this value to indicate movement in the
+		/// specified direction, of an indeterminate nature.
+		const static unsigned int DistIndeterminate = (unsigned int)-1;
+
 		unsigned int movementDistLeft;    ///< How far left the item can go, in grid units
 		unsigned int movementDistRight;   ///< How far right the item can go, in grid units
 		unsigned int movementDistUp;      ///< How far up the item can go, in grid units

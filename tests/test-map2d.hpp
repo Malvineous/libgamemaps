@@ -307,3 +307,31 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+#define TEST_CONVERSION(name, data_in, data_out)	\
+	BOOST_FIXTURE_TEST_CASE(readwrite_ ## name, FIXTURE_NAME) \
+{ \
+	BOOST_TEST_MESSAGE("Read+write map codes"); \
+\
+	this->base->truncate(0); \
+	this->base << makeString(data_in); \
+\
+	BOOST_REQUIRE_NO_THROW( \
+		gm::ManagerPtr pManager = gm::getManager(); \
+		this->pTestType = pManager->getMapTypeByCode(MAP_TYPE); \
+	); \
+	BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE); \
+\
+	this->map = this->pTestType->open(this->base, this->suppData); \
+	this->map2d = boost::dynamic_pointer_cast<gm::Map2D>(this->map); \
+	BOOST_REQUIRE_MESSAGE(this->map2d, "Could not create map class"); \
+\
+	this->base->truncate(0); \
+\
+	this->pTestType->write(this->map, this->base, this->suppData); \
+\
+	BOOST_CHECK_MESSAGE( \
+		is_equal(makeString(data_out)), \
+		"Error writing map - data is different to expected" \
+	); \
+}

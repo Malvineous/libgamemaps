@@ -20,7 +20,7 @@ libgamemaps_la_SOURCES += util.cpp
 
 EXTRA_libgamemaps_la_SOURCES  = base-maptype.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-bash.hpp
-EXTRA_libgamemaps_la_SOURCES += fmt-map-ccaves.hpp
+EXTRA_libgamemaps_la_SOURCES += fmt-map-ccaves.hpp fmt-map-ccaves-mapping.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ccomic.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-cosmo.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ddave.hpp
