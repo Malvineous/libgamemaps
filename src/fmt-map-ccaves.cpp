@@ -105,6 +105,40 @@ class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
+/// Convert the CCTF_* flags into Map2D flags
+void setFlags(Map2D::Layer::ItemPtr& item, unsigned int flags)
+{
+	switch (flags) {
+		case CCTF_MV_NONE:
+			break;
+		case CCTF_MV_VERT:
+			item->type |= Map2D::Layer::Item::Movement;
+			item->movementFlags = Map2D::Layer::Item::DistanceLimit;
+			item->movementDistLeft = 0;
+			item->movementDistRight = 0;
+			item->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
+			item->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+			break;
+		case CCTF_MV_HORZ:
+			item->type |= Map2D::Layer::Item::Movement;
+			item->movementFlags = Map2D::Layer::Item::DistanceLimit;
+			item->movementDistLeft = Map2D::Layer::Item::DistIndeterminate;
+			item->movementDistRight = Map2D::Layer::Item::DistIndeterminate;
+			item->movementDistUp = 0;
+			item->movementDistDown = 0;
+			break;
+		case CCTF_MV_DROP:
+			item->type |= Map2D::Layer::Item::Movement;
+			item->movementFlags = Map2D::Layer::Item::DistanceLimit;
+			item->movementDistLeft = 0;
+			item->movementDistRight = 0;
+			item->movementDistUp = 0;
+			item->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+			break;
+	}
+	return;
+}
+
 std::string CCavesMapType::getMapCode() const
 {
 	return "map-ccaves";
@@ -394,6 +428,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 			item->type = Map2D::Layer::Item::Default;
 			item->code = m.tileIndexBG[j];
+			if (j == 0) setFlags(item, m.flags);
 			validBGItems->push_back(item);
 		}
 	}
@@ -414,34 +449,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			} else {
 				item->code = m.tileIndexBG[j];
 			}
-			switch (m.flags) {
-				case CCTF_MV_NONE:
-					break;
-				case CCTF_MV_VERT:
-					item->type |= Map2D::Layer::Item::Movement;
-					item->movementFlags = Map2D::Layer::Item::DistanceLimit;
-					item->movementDistLeft = 0;
-					item->movementDistRight = 0;
-					item->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
-					item->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
-					break;
-				case CCTF_MV_HORZ:
-					item->type |= Map2D::Layer::Item::Movement;
-					item->movementFlags = Map2D::Layer::Item::DistanceLimit;
-					item->movementDistLeft = Map2D::Layer::Item::DistIndeterminate;
-					item->movementDistRight = Map2D::Layer::Item::DistIndeterminate;
-					item->movementDistUp = 0;
-					item->movementDistDown = 0;
-					break;
-				case CCTF_MV_DROP:
-					item->type |= Map2D::Layer::Item::Movement;
-					item->movementFlags = Map2D::Layer::Item::DistanceLimit;
-					item->movementDistLeft = 0;
-					item->movementDistRight = 0;
-					item->movementDistUp = 0;
-					item->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
-					break;
-			}
+			if (j == 0) setFlags(item, m.flags);
 			validBGItems->push_back(item);
 		}
 		if (m.tileIndexFG != ___________) {
@@ -460,6 +468,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 			item->type = Map2D::Layer::Item::Default;
 			item->code = m.tileIndexBG[j];
+			if (j == 0) setFlags(item, m.flags);
 			validBGItems->push_back(item);
 		}
 	}
