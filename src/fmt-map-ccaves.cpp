@@ -591,12 +591,11 @@ void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 #define IF_REL(x, y, t, c) \
 	if ( \
 		(t != ___________) \
-		&& ((x) < mapWidth) \
-		&& ((y) < mapHeight) \
+		&& ((unsigned)(inbg - bgsrc + (y) * mapWidth + (x)) < lenBG) \
 		&& (REL((x), (y)) == (unsigned)t) \
 	) { \
 		PUT((x), (y), (c)); \
-		(*(inbg + ((y) * mapWidth) + (x))) = (unsigned int)-1; \
+		REL((x), (y)) = (unsigned int)0x20; \
 	}
 
 	for (unsigned int j = 0; j < lenBG; j++, inbg++, inattr++, infg++, out++) {
@@ -659,6 +658,7 @@ void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			matched = true;
 			PUT(0, 0, m.code1);
 			PUT(1, 0, m.code2);
+			REL(1, 0) = (unsigned int)0x20; // handled this code
 			IF_REL(2, 0, m.tileIndexBG[2], CCT_NEXT);
 			IF_REL(3, 0, m.tileIndexBG[3], CCT_NEXT);
 			IF_REL(0, 1, m.tileIndexBG[4], CCT_NEXT);

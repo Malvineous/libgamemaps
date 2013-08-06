@@ -453,10 +453,20 @@ TILE_MAP_SIGN tileMapSign[] = {
 // 0x5B: 0x5F invalid
 // 0x5B: 0x60 invalid
 // 0x5B: 0x61 invalid
+/*
 	{0x5B, 0x62, {CCT( 8,  0), CCT( 8,  1), CCT( 8,  2), CCT( 8,  3),
 	              CCT( 8,  4), CCT( 8,  5), CCT( 8,  6), CCT( 8,  7),
 	              ___________, ___________, ___________, ___________,
 	              ___________, ___________, ___________, ___________}, CCTF_MV_NONE}, // green wood box with yellow frame, 4x2
+*/
+	// The one above is correct, but this one avoids using two different tiles in
+	// the middle.  Because they look identical, it's hard to get them in the
+	// right order, so this avoids the problem.
+	{0x5B, 0x62, {CCT( 8,  0), CCT( 8,  1), CCT( 8,  1), CCT( 8,  3),
+	              CCT( 8,  4), CCT( 8,  5), CCT( 8,  5), CCT( 8,  7),
+	              ___________, ___________, ___________, ___________,
+	              ___________, ___________, ___________, ___________}, CCTF_MV_NONE}, // green wood box with yellow frame, 4x2
+
 	{0x5B, 0x63, {CCT( 6, 36), CCT( 6, 37), ___________, ___________,
 	              CCT( 6, 40), CCT( 6, 41), ___________, ___________,
 	              ___________, ___________, ___________, ___________,
@@ -470,8 +480,8 @@ TILE_MAP_SIGN tileMapSign[] = {
 	              ___________, ___________, ___________, ___________,
 	              ___________, ___________, ___________, ___________,
 	              ___________, ___________, ___________, ___________}, CCTF_MV_NONE}, // falling rocks sign
-	{0x5B, 0x67, {CCT( 8,  0), CCT( 8,  2), CCT( 8,  3), ___________,
-	              CCT( 8,  4), CCT( 8,  6), CCT( 8,  7), ___________,
+	{0x5B, 0x67, {CCT( 8,  0), CCT( 8,  1), CCT( 8,  3), ___________,
+	              CCT( 8,  4), CCT( 8,  5), CCT( 8,  7), ___________,
 	              ___________, ___________, ___________, ___________,
 	              ___________, ___________, ___________, ___________}, CCTF_MV_NONE}, // green wood box with yellow frame, 3x2
 // 0x5B: 0x68 invalid
