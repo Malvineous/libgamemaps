@@ -235,7 +235,28 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 		lenMap -= 2;
 	}
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i < 2000; i++) {
+		// Background tiles first
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i << 3;
+		validBGItems->push_back(t);
+	}
+	for (unsigned int i = 0; i < 1000; i++) {
+		// Then foreground tiles
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = (2000 + i * 5) << 3;
+		validBGItems->push_back(t);
+	}
+
+	// Create the map structures
 	Map2D::LayerPtr bgLayer(new CosmoBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;

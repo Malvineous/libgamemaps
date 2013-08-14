@@ -73,16 +73,20 @@
 	\
 	"\x01\x00" "\x00\x00" "\x00\x00" \
 	\
-	"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00" \
-	"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00" \
+	"\x00\x00\x08\x00\x10\x00\x18\x00\x20\x00\x28\x00\x30\x00\x38\x00" \
+	"\x40\x00\x48\x00\x50\x00\x58\x00\x60\x00\x68\x00\x70\x00\x78\x00" \
 	empty_16x1 empty_16x1 empty_16x1 \
 	empty_64x511
 
 #define MAP_WIDTH_PIXELS  (64*8)
 #define MAP_HEIGHT_PIXELS (512*8)
 #define MAP_LAYER_COUNT   2
-#define MAP_FIRST_CODE_L1 0x01 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_L1 0x08 // 0x00 is empty tile and thus skipped
+#define MAP_FIRST_CODE_X_L1 1
+#define MAP_FIRST_CODE_Y_L1 0
 #define MAP_FIRST_CODE_L2 0x01
+#define MAP_FIRST_CODE_X_L2 0
+#define MAP_FIRST_CODE_Y_L2 0
 
 #define MAP_CLASS fmt_map_cosmo
 #define MAP_TYPE  "map-cosmo"
