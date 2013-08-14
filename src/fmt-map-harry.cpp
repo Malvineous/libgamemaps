@@ -44,6 +44,12 @@
 /// Map code used for 'no tile'
 #define HH_DEFAULT_TILE 0xFE
 
+/// Last valid map code
+#define HH_MAX_VALID_TILECODE_BG 0xFF
+
+/// Number of sprites
+#define HH_MAX_VALID_TILECODE_ACTOR 466
+
 namespace camoto {
 namespace gamemaps {
 
@@ -279,7 +285,17 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		input->seekg(128-1-2-2, stream::cur);
 	}
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validActorItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= HH_MAX_VALID_TILECODE_ACTOR; i++) {
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validActorItems->push_back(t);
+	}
+
 	Map2D::LayerPtr actorLayer(new HarryActorLayer(actors, validActorItems));
 
 	uint16_t mapWidth, mapHeight;
@@ -301,7 +317,19 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= HH_MAX_VALID_TILECODE_BG; i++) {
+		// The default tile actually has an image, so don't exclude it
+		if (i == HH_DEFAULT_TILE) continue;
+
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validBGItems->push_back(t);
+	}
 	Map2D::LayerPtr bgLayer(new HarryBackgroundLayer("Background", bgtiles, validBGItems));
 
 	// Read the foreground layer
@@ -319,8 +347,8 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr fgLayer(new HarryBackgroundLayer("Foreground", fgtiles, validFGItems));
+	// Same items are valid in both FG and BG layers, so reuse BG list here
+	Map2D::LayerPtr fgLayer(new HarryBackgroundLayer("Foreground", fgtiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
