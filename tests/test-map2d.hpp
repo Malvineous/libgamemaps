@@ -306,6 +306,33 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 #endif
 }
 
+BOOST_AUTO_TEST_CASE(TEST_NAME(codelist))
+{
+	BOOST_TEST_MESSAGE("Checking map codes are all in allowed tile list");
+	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
+		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
+		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+		const gm::Map2D::Layer::ItemPtrVectorPtr allowed = layer->getValidItemList();
+		for (gm::Map2D::Layer::ItemPtrVector::const_iterator
+			i = items->begin(); i != items->end(); i++
+		) {
+			bool found = false;
+			for (gm::Map2D::Layer::ItemPtrVector::const_iterator
+				j = allowed->begin(); j != allowed->end(); j++
+			) {
+				if ((*i)->code == (*j)->code) {
+					found = true;
+					break;
+				}
+			}
+			BOOST_REQUIRE_MESSAGE(found == true,
+				"Map code " << std::hex << (int)(*i)->code
+				<< " was not found in the list of permitted tiles for layer "
+				<< std::dec << l);
+		}
+	}
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 #define TEST_CONVERSION(name, data_in, data_out)	\
