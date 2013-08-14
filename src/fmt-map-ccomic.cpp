@@ -113,17 +113,16 @@ MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
 
 	// Read in the map and make sure all the tile codes are within range
 	uint8_t *bg = new uint8_t[mapLen];
+	boost::scoped_array<uint8_t> scoped_bg(bg);
 	stream::len r = psMap->try_read(bg, mapLen);
 	if (r != mapLen) return MapType::DefinitelyNo; // read error
 	for (unsigned int i = 0; i < mapLen; i++) {
 		// Make sure each tile is within range
 		// TESTED BY: fmt_map_ccomic_isinstance_c03
 		if (bg[i] > CC_MAX_VALID_TILECODE) {
-			delete[] bg;
 			return MapType::DefinitelyNo;
 		}
 	}
-	delete[] bg;
 
 	// TESTED BY: fmt_map_ccomic_isinstance_c00
 	return MapType::DefinitelyYes;
@@ -144,6 +143,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	// Read the background layer
 	uint8_t *bg = new uint8_t[mapLen];
+	boost::scoped_array<uint8_t> scoped_bg(bg);
 	input->read((char *)bg, mapLen);
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -159,9 +159,22 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = bg[i];
 		tiles->push_back(t);
 	}
-	delete[] bg;
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= CC_MAX_VALID_TILECODE; i++) {
+		// The default tile actually has an image, so don't exclude it
+		//if (i == CC_DEFAULT_BGTILE) continue;
+
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validBGItems->push_back(t);
+	}
+
+	// Create the map structures
 	Map2D::LayerPtr bgLayer(new CComicBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
