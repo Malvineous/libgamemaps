@@ -201,8 +201,8 @@ class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 				case 0x0004: purpose = SpriteTileset1; index = 0; break;
 				case 0x0005: purpose = SpriteTileset1; index = 0; break;
 				case 0x0006: purpose = SpriteTileset1; index = 0; break; // last question mark box
-				case 0x0073: purpose = BackgroundTileset1; index = 50; break; // solid
-				case 0x0074: purpose = BackgroundTileset1; index = 91; break; // jump up through/climb
+				case 0x0073: return ImagePtr(); //purpose = BackgroundTileset1; index = 50; break; // solid
+				case 0x0074: return ImagePtr(); //purpose = BackgroundTileset1; index = 91; break; // jump up through/climb
 				case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
 				default: return ImagePtr();
 			}
@@ -538,7 +538,29 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	// Skip over trailing 0x0000
 	input->seekg(2, stream::cur);
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validItemItems(new Map2D::Layer::ItemPtrVector());
+#define ADD_TILE(c) \
+	{ \
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item()); \
+		t->type = Map2D::Layer::Item::Default; \
+		t->x = 0; \
+		t->y = 0; \
+		t->code = c; \
+		validItemItems->push_back(t); \
+	}
+	ADD_TILE(WR_CODE_GRUZZLE);
+	ADD_TILE(WR_CODE_SLIME);
+	ADD_TILE(WR_CODE_BOOK);
+	ADD_TILE(WR_CODE_LETTER1);
+	ADD_TILE(WR_CODE_LETTER2);
+	ADD_TILE(WR_CODE_LETTER3);
+	ADD_TILE(WR_CODE_LETTER4);
+	ADD_TILE(WR_CODE_LETTER5);
+	ADD_TILE(WR_CODE_LETTER6);
+	ADD_TILE(WR_CODE_LETTER7);
+#undef ADD_TILE
+
 	Map2D::LayerPtr itemLayer(new WordRescueObjectLayer(items, validItemItems));
 
 	// Read the background layer
@@ -562,7 +584,20 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		}
 	}
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= WR_MAX_VALID_TILECODE; i++) {
+		// The default tile actually has an image, so don't exclude it
+		if (i == WR_DEFAULT_BGTILE) continue;
+
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validBGItems->push_back(t);
+	}
+
 	Map2D::LayerPtr bgLayer(new WordRescueBackgroundLayer(tiles, validBGItems));
 
 	// Read the attribute layer
@@ -627,7 +662,34 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		atItems->push_back(t);
 	}
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validAtItems(new Map2D::Layer::ItemPtrVector());
+
+#define ADD_TILE(ty, c, bf) \
+	{ \
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item()); \
+		t->type = ty; \
+		t->x = 0; \
+		t->y = 0; \
+		t->code = c; \
+		t->blockingFlags = bf; \
+		validAtItems->push_back(t); \
+	}
+
+	ADD_TILE(Map2D::Layer::Item::Blocking, 0x73, Map2D::Layer::Item::BlockLeft
+		| Map2D::Layer::Item::BlockRight
+		| Map2D::Layer::Item::BlockTop
+		| Map2D::Layer::Item::BlockBottom);
+
+	ADD_TILE(Map2D::Layer::Item::Blocking, 0x74, Map2D::Layer::Item::BlockTop
+		| Map2D::Layer::Item::JumpDown);
+
+	ADD_TILE(Map2D::Layer::Item::Default, WR_CODE_ENTRANCE, 0);
+	ADD_TILE(Map2D::Layer::Item::Default, WR_CODE_EXIT, 0);
+	ADD_TILE(Map2D::Layer::Item::Default, 0x0000, 0); // question mark box
+	ADD_TILE(Map2D::Layer::Item::Default, 0x00FD, 0); // unknown (see tile mapping code)
+#undef ADD_TILE
+
 	Map2D::LayerPtr atLayer(new WordRescueAttributeLayer(atItems, validAtItems));
 
 	Map2D::LayerPtrVector layers;
