@@ -158,7 +158,21 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 		tiles->push_back(t);
 	}
 
+	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= WW_MAX_VALID_TILECODE; i++) {
+		// The default tile actually has an image, so don't exclude it
+		if (i == WW_DEFAULT_BGTILE) continue;
+
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validBGItems->push_back(t);
+	}
+
+	// Create the map structures
 	Map2D::LayerPtr bgLayer(new WackyBackgroundLayer(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
