@@ -535,8 +535,9 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	input->seekg(animCount * 4, stream::cur);
 	// TODO: Figure out something with animated tiles
 
-	// Skip over trailing 0x0000
-	input->seekg(2, stream::cur);
+	uint16_t unknown2Count;
+	input >> u16le(unknown2Count);
+	input->seekg(unknown2Count * 4, stream::cur);
 
 	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validItemItems(new Map2D::Layer::ItemPtrVector());
