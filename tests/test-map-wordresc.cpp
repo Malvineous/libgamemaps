@@ -27,7 +27,8 @@
 	"\x06\x00" "\x08\x00" \
 	"\x01\x00" /* Gruzzle count */  \
 	"\x00\x00" "\x04\x00" \
-	"\x00\x00" \
+	"\x01\x00" /* Drip count */  \
+	"\x02\x00" "\x04\x00" "\x44\x00" \
 	"\x01\x00" /* Slime bucket count */  \
 	"\x01\x00" "\x04\x00" \
 	"\x02\x00" /* Book count */  \
@@ -40,8 +41,10 @@
 	"\x01\x00" "\x01\x00" \
 	"\x02\x00" "\x01\x00" \
 	"\x00\x00" "\x02\x00" \
-	"\x00\x00" /* Anim count */ \
-	"\x00\x00" /* end */ \
+	"\x01\x00" /* Anim count */ \
+	"\x01\x00" "\x01\x00" \
+	"\x01\x00" /* FG tiles */ \
+	"\x02\x00" "\x02\x00" \
 	"\x01\x02\x01\x01\x01\x00" \
 	"\x01\x12\x01\x11\x01\x10" \
 	"\x03\x22" \
@@ -56,13 +59,20 @@
 
 #define MAP_WIDTH_PIXELS  (3*16)
 #define MAP_HEIGHT_PIXELS (5*16)
-#define MAP_LAYER_COUNT   3
+#define MAP_LAYER_COUNT   4
 #define MAP_FIRST_CODE_L1 0x02
-#define MAP_FIRST_CODE_L2 0x73
-#define MAP_FIRST_CODE_L3 0x06
 
 #define MAP_FIRST_CODE_X_L2 1
 #define MAP_FIRST_CODE_Y_L2 0
+#define MAP_FIRST_CODE_L2 0x73
+
+#define MAP_FIRST_CODE_X_L3 0
+#define MAP_FIRST_CODE_Y_L3 4
+#define MAP_FIRST_CODE_L3 0x01 // WR_CODE_GRUZZLE
+
+#define MAP_FIRST_CODE_X_L4 1
+#define MAP_FIRST_CODE_Y_L4 4
+#define MAP_FIRST_CODE_L4 0x02 // WR_CODE_SLIME
 
 #define MAP_CLASS fmt_map_wordresc
 #define MAP_TYPE  "map-wordresc"

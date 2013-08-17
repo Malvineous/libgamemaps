@@ -53,14 +53,17 @@
 #define WR_CODE_GRUZZLE  1
 #define WR_CODE_SLIME    2
 #define WR_CODE_BOOK     3
-#define WR_CODE_LETTER   6
-#define WR_CODE_LETTER1  6 // same as WR_CODE_LETTER
-#define WR_CODE_LETTER2  7
-#define WR_CODE_LETTER3  8
-#define WR_CODE_LETTER4  9
-#define WR_CODE_LETTER5  10
-#define WR_CODE_LETTER6  11
-#define WR_CODE_LETTER7  12
+#define WR_CODE_DRIP     4
+#define WR_CODE_ANIM     5
+#define WR_CODE_FG       6
+#define WR_CODE_LETTER   7
+#define WR_CODE_LETTER1  7 // same as WR_CODE_LETTER
+#define WR_CODE_LETTER2  8
+#define WR_CODE_LETTER3  9
+#define WR_CODE_LETTER4  10
+#define WR_CODE_LETTER5  11
+#define WR_CODE_LETTER6  12
+#define WR_CODE_LETTER7  13
 
 #define WR_CODE_ENTRANCE 0x1001
 #define WR_CODE_EXIT     0x1002
@@ -70,12 +73,12 @@
 
 // Values used when writing items (also in isinstance)
 #define INDEX_GRUZZLE 0
-#define INDEX_UNKNOWN 1
+#define INDEX_DRIP    1
 #define INDEX_SLIME   2
 #define INDEX_BOOK    3
 #define INDEX_LETTER  4
 #define INDEX_ANIM    5
-#define INDEX_END     6
+#define INDEX_FG      6
 #define INDEX_SIZE    7
 
 namespace camoto {
@@ -115,13 +118,14 @@ class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
 class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 {
 	public:
-		WordRescueObjectLayer(ItemPtrVectorPtr& items,
+		WordRescueObjectLayer(const std::string& name, unsigned int caps,
+			unsigned int w, unsigned int h, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
-					"Items",
-					Map2D::Layer::NoCaps,
+					name,
+					caps,
 					0, 0,
-					0, 0,
+					w, h,
 					items, validItems
 				)
 		{
@@ -137,6 +141,7 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 				case WR_CODE_GRUZZLE:  purpose = SpriteTileset1;     index = 15; break;
 				case WR_CODE_SLIME:    purpose = BackgroundTileset1; index = 238; break;
 				case WR_CODE_BOOK:     purpose = BackgroundTileset1; index = 239; break;
+				case WR_CODE_DRIP:     purpose = BackgroundTileset1; index = 238; break;
 				case WR_CODE_LETTER1:
 				case WR_CODE_LETTER2:
 				case WR_CODE_LETTER3:
@@ -147,6 +152,11 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 					purpose = ForegroundTileset1;
 					index = item->code - WR_CODE_LETTER;
 					break;
+				case WR_CODE_ENTRANCE: purpose = SpriteTileset1; index = 1; break;
+				case WR_CODE_EXIT:     purpose = SpriteTileset1; index = 3; break;
+
+				case WR_CODE_ANIM: // fall through (no image)
+				case WR_CODE_FG:
 				default: return ImagePtr();
 			}
 
@@ -192,8 +202,6 @@ class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 			ImagePurpose purpose;
 			unsigned int index;
 			switch (item->code) {
-				case WR_CODE_ENTRANCE: purpose = SpriteTileset1; index = 1; break;
-				case WR_CODE_EXIT:     purpose = SpriteTileset1; index = 3; break;
 				case 0x0000: purpose = SpriteTileset1; index = 0; break; // first question mark box
 				case 0x0001: purpose = SpriteTileset1; index = 0; break;
 				case 0x0002: purpose = SpriteTileset1; index = 0; break;
@@ -201,8 +209,8 @@ class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 				case 0x0004: purpose = SpriteTileset1; index = 0; break;
 				case 0x0005: purpose = SpriteTileset1; index = 0; break;
 				case 0x0006: purpose = SpriteTileset1; index = 0; break; // last question mark box
-				case 0x0073: return ImagePtr(); //purpose = BackgroundTileset1; index = 50; break; // solid
-				case 0x0074: return ImagePtr(); //purpose = BackgroundTileset1; index = 91; break; // jump up through/climb
+				case 0x0073: return ImagePtr(); // solid
+				case 0x0074: return ImagePtr(); // jump up through/climb
 				case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
 				default: return ImagePtr();
 			}
@@ -353,20 +361,26 @@ MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
 	// Check the items are each within range
 	unsigned int minSize = WR_MIN_HEADER_SIZE;
 	for (unsigned int i = 0; i < INDEX_SIZE; i++) {
-		uint16_t count;
+		stream::len lenBlock;
 		if (i == INDEX_LETTER) {
-			psMap->seekg(WR_NUM_LETTERS * 4, stream::cur);
-			continue; // hard coded, included above
+			lenBlock = WR_NUM_LETTERS * 4;
+		} else {
+			uint16_t count;
+			psMap >> u16le(count);
+			lenBlock = count * 4;
+			if (i == INDEX_DRIP) {
+				// Extra byte for each of these
+				lenBlock += count * 2;
+			}
 		}
 
-		psMap >> u16le(count);
-		minSize += count * 4;
+		minSize += lenBlock;
 		// Don't need to count the u16le in minSize, it's in WR_MIN_HEADER_SIZE
 
 		// Make sure the item count is within range
 		// TESTED BY: fmt_map_wordresc_isinstance_c02
 		if (lenMap < minSize) return MapType::DefinitelyNo;
-		psMap->seekg(count * 4, stream::cur);
+		psMap->seekg(lenBlock, stream::cur);
 	}
 
 	// Read in the layer and make sure all the tile codes are within range
@@ -475,94 +489,168 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	attrBackdrop->enumValueNames.push_back("Custom (drop7.wr)");
 	attributes->push_back(attrBackdrop);
 
-	Map2D::Layer::ItemPtrVectorPtr items(new Map2D::Layer::ItemPtrVector());
+	Map2D::Layer::ItemPtrVectorPtr items8(new Map2D::Layer::ItemPtrVector());
+	Map2D::Layer::ItemPtrVectorPtr items16(new Map2D::Layer::ItemPtrVector());
 
 	uint16_t gruzzleCount;
 	input >> u16le(gruzzleCount);
-	items->reserve(items->size() + gruzzleCount);
 	for (unsigned int i = 0; i < gruzzleCount; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		input
 			>> u16le(t->x)
 			>> u16le(t->y)
 		;
 		t->code = WR_CODE_GRUZZLE;
-		items->push_back(t);
+		items8->push_back(t);
 	}
 
-	uint16_t unknownCount;
-	input >> u16le(unknownCount);
-	input->seekg(unknownCount * 4, stream::cur);
+	uint16_t dripCount;
+	input >> u16le(dripCount);
+	for (unsigned int i = 0; i < dripCount; i++) {
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Movement;
+		t->movementFlags = Map2D::Layer::Item::DistanceLimit;
+		t->movementDistLeft = 0;
+		t->movementDistRight = 0;
+		t->movementDistUp = 0;
+		t->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+		input
+			>> u16le(t->x)
+			>> u16le(t->y)
+			>> u16le(t->code) // discard drip freq (nowhere to save it yet)
+		;
+		t->code = WR_CODE_DRIP;
+		items8->push_back(t);
+	}
 
 	uint16_t slimeCount;
 	input >> u16le(slimeCount);
-	items->reserve(items->size() + slimeCount);
 	for (unsigned int i = 0; i < slimeCount; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		input
 			>> u16le(t->x)
 			>> u16le(t->y)
 		;
 		t->code = WR_CODE_SLIME;
-		items->push_back(t);
+		items16->push_back(t);
 	}
 
 	uint16_t bookCount;
 	input >> u16le(bookCount);
-	items->reserve(items->size() + bookCount + 7);
 	for (unsigned int i = 0; i < bookCount; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		input
 			>> u16le(t->x)
 			>> u16le(t->y)
 		;
 		t->code = WR_CODE_BOOK;
-		items->push_back(t);
+		items16->push_back(t);
 	}
 
 	for (unsigned int i = 0; i < WR_NUM_LETTERS; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		input
 			>> u16le(t->x)
 			>> u16le(t->y)
 		;
 		t->code = WR_CODE_LETTER + i;
-		items->push_back(t);
+		items16->push_back(t);
 	}
 
 	uint16_t animCount;
 	input >> u16le(animCount);
-	input->seekg(animCount * 4, stream::cur);
-	// TODO: Figure out something with animated tiles
+	for (unsigned int i = 0; i < animCount; i++) {
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		input
+			>> u16le(t->x)
+			>> u16le(t->y)
+		;
+		t->code = WR_CODE_ANIM;
+		items16->push_back(t);
+	}
 
-	uint16_t unknown2Count;
-	input >> u16le(unknown2Count);
-	input->seekg(unknown2Count * 4, stream::cur);
+	uint16_t fgCount;
+	input >> u16le(fgCount);
+	for (unsigned int i = 0; i < fgCount; i++) {
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		input
+			>> u16le(t->x)
+			>> u16le(t->y)
+		;
+		t->code = WR_CODE_FG;
+		items16->push_back(t);
+	}
+
+	// Add the map entrance and exit as special items
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Player;
+		t->x = startX;
+		t->y = startY;
+		t->playerNumber = 0;
+		t->code = WR_CODE_ENTRANCE;
+		items8->push_back(t);
+	}
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = endX;
+		t->y = endY;
+		t->code = WR_CODE_EXIT;
+		items8->push_back(t);
+	}
 
 	// Populate the list of permitted tiles
-	Map2D::Layer::ItemPtrVectorPtr validItemItems(new Map2D::Layer::ItemPtrVector());
-#define ADD_TILE(c) \
+	Map2D::Layer::ItemPtrVectorPtr validItem8Items(new Map2D::Layer::ItemPtrVector());
+	Map2D::Layer::ItemPtrVectorPtr validItem16Items(new Map2D::Layer::ItemPtrVector());
+#define ADD_TILE(n, c)	  \
 	{ \
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item()); \
 		t->type = Map2D::Layer::Item::Default; \
 		t->x = 0; \
 		t->y = 0; \
 		t->code = c; \
-		validItemItems->push_back(t); \
+		validItem ## n ## Items->push_back(t); \
 	}
-	ADD_TILE(WR_CODE_GRUZZLE);
-	ADD_TILE(WR_CODE_SLIME);
-	ADD_TILE(WR_CODE_BOOK);
-	ADD_TILE(WR_CODE_LETTER1);
-	ADD_TILE(WR_CODE_LETTER2);
-	ADD_TILE(WR_CODE_LETTER3);
-	ADD_TILE(WR_CODE_LETTER4);
-	ADD_TILE(WR_CODE_LETTER5);
-	ADD_TILE(WR_CODE_LETTER6);
-	ADD_TILE(WR_CODE_LETTER7);
+	ADD_TILE(8, WR_CODE_GRUZZLE);
+	ADD_TILE(16, WR_CODE_SLIME);
+	ADD_TILE(16, WR_CODE_BOOK);
+	ADD_TILE(16, WR_CODE_LETTER1);
+	ADD_TILE(16, WR_CODE_LETTER2);
+	ADD_TILE(16, WR_CODE_LETTER3);
+	ADD_TILE(16, WR_CODE_LETTER4);
+	ADD_TILE(16, WR_CODE_LETTER5);
+	ADD_TILE(16, WR_CODE_LETTER6);
+	ADD_TILE(16, WR_CODE_LETTER7);
+	ADD_TILE(16, WR_CODE_ANIM);
+	ADD_TILE(16, WR_CODE_FG);
+	ADD_TILE(8, WR_CODE_ENTRANCE);
+	ADD_TILE(8, WR_CODE_EXIT);
 #undef ADD_TILE
+	{
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Movement;
+		t->movementFlags = Map2D::Layer::Item::DistanceLimit;
+		t->movementDistLeft = 0;
+		t->movementDistRight = 0;
+		t->movementDistUp = 0;
+		t->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+		t->x = 0;
+		t->y = 0;
+		t->code = WR_CODE_DRIP;
+		validItem8Items->push_back(t);
+	}
 
-	Map2D::LayerPtr itemLayer(new WordRescueObjectLayer(items, validItemItems));
+	Map2D::LayerPtr item8Layer(new WordRescueObjectLayer(
+		"Fine items", Map2D::Layer::HasOwnTileSize, 8, 8, items8, validItem8Items));
+	Map2D::LayerPtr item16Layer(new WordRescueObjectLayer(
+		"Coarse items", Map2D::Layer::NoCaps, 0, 0, items16, validItem16Items));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -608,7 +696,12 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	atItems->reserve(atWidth * atHeight);
 	for (int i = 0; i < atWidth * atHeight; ) {
 		uint8_t num, code;
-		input >> u8(num) >> u8(code);
+		try {
+			input >> u8(num) >> u8(code);
+		} catch (const stream::incomplete_read& e) {
+			// Some level files seem to be truncated (maybe for efficiency)
+			break;
+		}
 		if (code == WR_DEFAULT_ATTILE) {
 			i += num;
 		} else {
@@ -644,25 +737,6 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		}
 	}
 
-	// Add the map entrance and exit as special items
-	{
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Player;
-		t->x = startX;
-		t->y = startY;
-		t->playerNumber = 0;
-		t->code = WR_CODE_ENTRANCE;
-		atItems->push_back(t);
-	}
-	{
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = endX;
-		t->y = endY + (DOOR_HEIGHT / WR_ATTILE_HEIGHT) - 1;
-		t->code = WR_CODE_EXIT;
-		atItems->push_back(t);
-	}
-
 	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validAtItems(new Map2D::Layer::ItemPtrVector());
 
@@ -685,9 +759,10 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	ADD_TILE(Map2D::Layer::Item::Blocking, 0x74, Map2D::Layer::Item::BlockTop
 		| Map2D::Layer::Item::JumpDown);
 
-	ADD_TILE(Map2D::Layer::Item::Default, WR_CODE_ENTRANCE, 0);
-	ADD_TILE(Map2D::Layer::Item::Default, WR_CODE_EXIT, 0);
-	ADD_TILE(Map2D::Layer::Item::Default, 0x0000, 0); // question mark box
+	for (int i = 0; i < 7; i++) {
+		ADD_TILE(Map2D::Layer::Item::Default, 0x0000 + i, 0); // question mark box
+	}
+
 	ADD_TILE(Map2D::Layer::Item::Default, 0x00FD, 0); // unknown (see tile mapping code)
 #undef ADD_TILE
 
@@ -696,7 +771,8 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 	layers.push_back(atLayer);
-	layers.push_back(itemLayer);
+	layers.push_back(item8Layer);
+	layers.push_back(item16Layer);
 
 	Map2DPtr map(new GenericMap2D(
 		attributes, wr_getGraphicsFilenames,
@@ -715,7 +791,7 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 3)
+	if (map2d->getLayerCount() != 4)
 		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned int mapWidth, mapHeight;
@@ -760,13 +836,30 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	uint16_t endY = 0;
 
 	Map2D::LayerPtr layer = map2d->getLayer(2);
-	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-		i != items->end();
-		i++
+	const Map2D::Layer::ItemPtrVectorPtr items8 = layer->getAllItems();
+	for (Map2D::Layer::ItemPtrVector::const_iterator
+		i = items8->begin(); i != items8->end(); i++
 	) {
 		switch ((*i)->code) {
 			case WR_CODE_GRUZZLE: itemLocations[INDEX_GRUZZLE].push_back(point((*i)->x, (*i)->y)); break;
+			case WR_CODE_DRIP:    itemLocations[INDEX_DRIP].push_back(point((*i)->x, (*i)->y)); break;
+			case WR_CODE_ENTRANCE:
+				startX = (*i)->x;
+				startY = (*i)->y;
+				break;
+			case WR_CODE_EXIT:
+				endX = (*i)->x;
+				endY = (*i)->y;
+				break;
+		}
+	}
+
+	layer = map2d->getLayer(3);
+	const Map2D::Layer::ItemPtrVectorPtr items16 = layer->getAllItems();
+	for (Map2D::Layer::ItemPtrVector::const_iterator
+		i = items16->begin(); i != items16->end(); i++
+	) {
+		switch ((*i)->code) {
 			case WR_CODE_SLIME:   itemLocations[INDEX_SLIME].push_back(point((*i)->x, (*i)->y)); break;
 			case WR_CODE_BOOK:    itemLocations[INDEX_BOOK].push_back(point((*i)->x, (*i)->y)); break;
 			case WR_CODE_LETTER1: itemLocations[INDEX_LETTER][0] = point((*i)->x, (*i)->y); break;
@@ -776,24 +869,8 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			case WR_CODE_LETTER5: itemLocations[INDEX_LETTER][4] = point((*i)->x, (*i)->y); break;
 			case WR_CODE_LETTER6: itemLocations[INDEX_LETTER][5] = point((*i)->x, (*i)->y); break;
 			case WR_CODE_LETTER7: itemLocations[INDEX_LETTER][6] = point((*i)->x, (*i)->y); break;
-		}
-	}
-
-	layer = map2d->getLayer(1);
-	const Map2D::Layer::ItemPtrVectorPtr items1 = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = items1->begin();
-		i != items1->end();
-		i++
-	) {
-		switch ((*i)->code) {
-			case WR_CODE_ENTRANCE:
-				startX = (*i)->x;
-				startY = (*i)->y;
-				break;
-			case WR_CODE_EXIT:
-				endX = (*i)->x;
-				endY = (*i)->y - (DOOR_HEIGHT / WR_ATTILE_HEIGHT) + 1;
-				break;
+			case WR_CODE_ANIM:    itemLocations[INDEX_ANIM].push_back(point((*i)->x, (*i)->y)); break;
+			case WR_CODE_FG:      itemLocations[INDEX_FG].push_back(point((*i)->x, (*i)->y)); break;
 		}
 	}
 
@@ -826,6 +903,10 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 				<< u16le(j->first)
 				<< u16le(j->second)
 			;
+			if (i == INDEX_DRIP) {
+				// Add an extra value for the drip frequency
+				output << u16le(0x44); // continuous dripping
+			}
 		}
 	}
 
@@ -864,12 +945,6 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	) {
 		uint16_t code = (*i)->code;
 
-		// Ignore these internal codes
-		switch (code) {
-			case WR_CODE_ENTRANCE:
-			case WR_CODE_EXIT:
-				continue;
-		}
 		if (((*i)->type & Map2D::Layer::Item::Blocking) && (*i)->blockingFlags) {
 			if ((*i)->blockingFlags & Map2D::Layer::Item::JumpDown) {
 				code = 0x74;
