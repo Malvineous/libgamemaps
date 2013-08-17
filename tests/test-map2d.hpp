@@ -63,6 +63,11 @@ namespace gm = camoto::gamemaps;
 #define MAP_FIRST_CODE_Y_L3 0
 #endif
 
+#ifndef MAP_FIRST_CODE_X_L4
+#define MAP_FIRST_CODE_X_L4 0
+#define MAP_FIRST_CODE_Y_L4 0
+#endif
+
 // Add a new constant as a supplementary data item
 #define ADD_SUPPITEM(suppitem) \
 	{ \
@@ -225,6 +230,8 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 	BOOST_TEST_MESSAGE("Reading map codes");
 #define CHECK_FIRST_TILE_IN_LAYER(LAYER) \
 	case (LAYER-1): \
+		targetX = MAP_FIRST_CODE_X_L ## LAYER; \
+		targetY = MAP_FIRST_CODE_Y_L ## LAYER; \
 		if ( \
 			((*i)->x == MAP_FIRST_CODE_X_L ## LAYER) \
 			&& ((*i)->y == MAP_FIRST_CODE_Y_L ## LAYER) \
@@ -238,6 +245,7 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(read))
 		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
 		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 		bool foundFirstTile = false;
+		unsigned int targetX = -1, targetY = -1;
 		for (gm::Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
 			(i != items->end()) && (!foundFirstTile);
 			i++
@@ -261,10 +269,18 @@ CHECK_FIRST_TILE_IN_LAYER(2)
 #endif
 CHECK_FIRST_TILE_IN_LAYER(3)
 #endif
+#if MAP_LAYER_COUNT >= 4
+#ifndef MAP_FIRST_CODE_L4
+#error MAP_FIRST_CODE_L4 must be defined for this map format
+#endif
+CHECK_FIRST_TILE_IN_LAYER(4)
+#endif
 			}
 		}
-		BOOST_REQUIRE_EQUAL(foundFirstTile, true);
-		BOOST_TEST_MESSAGE("Found first tile in this layer");
+		BOOST_REQUIRE_MESSAGE(foundFirstTile == true,
+			"Unable to find first tile in layer " << l << " at position "
+			<< targetX << "," << targetY);
+		BOOST_TEST_MESSAGE("Found first tile in layer " << l);
 	}
 }
 
