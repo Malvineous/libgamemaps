@@ -360,6 +360,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	for (unsigned int y = 0; y < mapHeight; y++) {
 		for (unsigned int x = 0; x < mapWidth; x++) {
 			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+			t->type = Map2D::Layer::Item::Default;
 			t->x = x;
 			t->y = y;
 			uint8_t code;
