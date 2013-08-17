@@ -92,10 +92,6 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 				return ImagePtr();
 			}
 			return tls->openImage(images[i]);
-		} catch (...) {
-			std::cerr << "[SweeneyBackgroundLayer] Exception trying to open image for "
-				"tile code " << code << std::endl;
-			return ImagePtr();
 		}
 
 		gamegraphics::PaletteTablePtr getPalette(
