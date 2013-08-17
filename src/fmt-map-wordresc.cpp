@@ -648,9 +648,9 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	}
 
 	Map2D::LayerPtr item8Layer(new WordRescueObjectLayer(
-		"Fine items", Map2D::Layer::HasOwnTileSize, 8, 8, items8, validItem8Items));
+		"Fine items", Map2D::Layer::HasOwnTileSize | Map2D::Layer::UseImageDims, 8, 8, items8, validItem8Items));
 	Map2D::LayerPtr item16Layer(new WordRescueObjectLayer(
-		"Coarse items", Map2D::Layer::NoCaps, 0, 0, items16, validItem16Items));
+		"Coarse items", Map2D::Layer::UseImageDims, 0, 0, items16, validItem16Items));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
