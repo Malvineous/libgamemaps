@@ -355,6 +355,8 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 		// Add to list of valid tiles
 		v.reset(new Map2D::Layer::Item());
 		v->type = Map2D::Layer::Item::Default;
+		v->x = 0;
+		v->y = 0;
 		v->code = mapCode;
 		validBGItems->push_back(v);
 
@@ -499,17 +501,23 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::Layer::ItemPtrVectorPtr validObjItems(new Map2D::Layer::ItemPtrVector());
 	v.reset(new Map2D::Layer::Item());
 	v->type = Map2D::Layer::Item::Default;
+	v->x = 0;
+	v->y = 0;
 	v->code = 0x33; // Clouds
 	validObjItems->push_back(v);
 
 	v.reset(new Map2D::Layer::Item);
 	v->type = Map2D::Layer::Item::Text;
+	v->x = 0;
+	v->y = 0;
 	v->textFont = 0;
 	v->textContent = "Small text";
 	validObjItems->push_back(v);
 
 	v.reset(new Map2D::Layer::Item);
 	v->type = Map2D::Layer::Item::Text;
+	v->x = 0;
+	v->y = 0;
 	v->textFont = 0;
 	v->textContent = "Large text";
 	validObjItems->push_back(v);

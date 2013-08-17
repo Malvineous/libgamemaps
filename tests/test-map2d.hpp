@@ -349,6 +349,26 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(codelist))
 	}
 }
 
+BOOST_AUTO_TEST_CASE(TEST_NAME(codelist_valid))
+{
+	BOOST_TEST_MESSAGE("Checking allowed tile list is set up correctly");
+	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
+		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
+		const gm::Map2D::Layer::ItemPtrVectorPtr allowed = layer->getValidItemList();
+		for (gm::Map2D::Layer::ItemPtrVector::const_iterator
+			i = allowed->begin(); i != allowed->end(); i++
+		) {
+			// Coordinates must be zero, otherwise UI selections from the tile list
+			// will be off
+			BOOST_REQUIRE_EQUAL((*i)->x, 0);
+			BOOST_REQUIRE_EQUAL((*i)->y, 0);
+
+			// Type must be a valid Map2D::Layer::Item::Type value
+			BOOST_REQUIRE_LE((*i)->type, 0x000F);
+		}
+	}
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 #define TEST_CONVERSION(name, data_in, data_out)	\

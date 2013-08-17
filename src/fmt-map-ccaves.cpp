@@ -411,11 +411,15 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 		Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 		item->type = Map2D::Layer::Item::Default;
+		item->x = 0; // required for selections to work
+		item->y = 0;
 		item->code = m.tileIndexMid;
 		validBGItems->push_back(item);
 
 		item.reset(new Map2D::Layer::Item());
 		item->type = Map2D::Layer::Item::Default;
+		item->x = 0; // required for selections to work
+		item->y = 0;
 		item->code = m.tileIndexEnd;
 		validBGItems->push_back(item);
 	}
@@ -427,6 +431,8 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			if (m.tileIndexBG[j] == ___________) continue;
 			Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 			item->type = Map2D::Layer::Item::Default;
+			item->x = 0; // required for selections to work
+			item->y = 0;
 			item->code = m.tileIndexBG[j];
 			if (j == 0) setFlags(item, m.flags);
 			validBGItems->push_back(item);
@@ -440,6 +446,8 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			if (m.tileIndexBG[j] == ___________) continue;
 			Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 			item->type = Map2D::Layer::Item::Default;
+			item->x = 0; // required for selections to work
+			item->y = 0;
 			if (IS_IBEAM(m.tileIndexBG[j])) {
 				item->code = CCT_IBEAM(ibeam_tile, m.tileIndexBG[j]);
 			} else if (IS_BLOCK(m.tileIndexBG[j])) {
@@ -455,6 +463,8 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 		if (m.tileIndexFG != ___________) {
 			Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 			item->type = Map2D::Layer::Item::Default;
+			item->x = 0; // required for selections to work
+			item->y = 0;
 			item->code = m.tileIndexFG;
 			validFGItems->push_back(item);
 		}
@@ -467,6 +477,8 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 			if (m.tileIndexBG[j] == ___________) continue;
 			Map2D::Layer::ItemPtr item(new Map2D::Layer::Item());
 			item->type = Map2D::Layer::Item::Default;
+			item->x = 0; // required for selections to work
+			item->y = 0;
 			item->code = m.tileIndexBG[j];
 			if (j == 0) setFlags(item, m.flags);
 			validBGItems->push_back(item);
