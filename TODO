@@ -40,6 +40,9 @@ Crystal Caves:
  - Vines will go through some tiles, insert a solid block at the top of the vine
    to prevent this.
 
+Duke Nukem II:
+ - Add support for Actor tiles
+
 Dangerous Dave:
  - Enemy paths are in the wrong location in later levels
 

@@ -28,6 +28,7 @@
 #include "fmt-map-cosmo.hpp"
 #include "fmt-map-harry.hpp"
 #include "fmt-map-hocus.hpp"
+#include "fmt-map-nukem2.hpp"
 #include "fmt-map-rockford.hpp"
 #include "fmt-map-wacky.hpp"
 #include "fmt-map-wordresc.hpp"
@@ -64,6 +65,7 @@ ActualManager::ActualManager()
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HocusMapType()));
+	this->vcTypes.push_back(MapTypePtr(new Nukem2MapType()));
 	this->vcTypes.push_back(MapTypePtr(new JillMapType()));
 	this->vcTypes.push_back(MapTypePtr(new RockfordMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
