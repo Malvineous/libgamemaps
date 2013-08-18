@@ -50,6 +50,12 @@
 /// Number of tiles in the map
 #define CCA_NUM_TILES_BG (CCA_LAYER_LEN_BG / 2)
 
+/// Number of tiles in the solid tileset
+#define CCA_NUM_SOLID_TILES 2000
+
+/// Number of tiles in the masked tileset
+#define CCA_NUM_MASKED_TILES 1000
+
 namespace camoto {
 namespace gamemaps {
 
@@ -104,8 +110,8 @@ class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 			unsigned int index = item->code >> 3; // divide by 8
 			ImagePurpose purpose;
-			if (index >= 2000) {
-				index -= 2000;
+			if (index >= CCA_NUM_SOLID_TILES) {
+				index -= CCA_NUM_SOLID_TILES;
 				index /= 5;
 				/*if (index >= 1000) {
 					// out of range!
@@ -237,7 +243,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	// Populate the list of permitted tiles
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i < 2000; i++) {
+	for (unsigned int i = 0; i < CCA_NUM_SOLID_TILES; i++) {
 		// Background tiles first
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		t->type = Map2D::Layer::Item::Default;
@@ -246,13 +252,13 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = i << 3;
 		validBGItems->push_back(t);
 	}
-	for (unsigned int i = 0; i < 1000; i++) {
+	for (unsigned int i = 0; i < CCA_NUM_MASKED_TILES; i++) {
 		// Then foreground tiles
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
 		t->type = Map2D::Layer::Item::Default;
 		t->x = 0;
 		t->y = 0;
-		t->code = (2000 + i * 5) << 3;
+		t->code = (CCA_NUM_SOLID_TILES + i * 5) << 3;
 		validBGItems->push_back(t);
 	}
 
