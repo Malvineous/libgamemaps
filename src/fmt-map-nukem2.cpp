@@ -213,7 +213,7 @@ MapType::Certainty Nukem2MapType::isInstance(stream::input_sptr psMap) const
 	psMap >> u16le(numActorInts);
 
 	// TESTED BY: fmt_map_nukem2_isinstance_c03
-	if (2+13*3+6 + numActorInts * 3 + 2+DN2_LAYER_LEN_BG > lenMap) return MapType::DefinitelyNo; // too many actors
+	if (2+13*3+6 + numActorInts * 2 + 2+DN2_LAYER_LEN_BG > lenMap) return MapType::DefinitelyNo; // too many actors
 
 	psMap->seekg(bgOffset + 2+DN2_LAYER_LEN_BG, stream::start);
 	uint16_t lenExtra;
