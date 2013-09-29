@@ -68,7 +68,7 @@ class CosmoActorLayer: virtual public GenericMap2D::Layer
 		CosmoActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Actors",
-					Map2D::Layer::NoCaps,
+					Map2D::Layer::UseImageDims,
 					0, 0,
 					0, 0,
 					items, validItems
@@ -83,10 +83,22 @@ class CosmoActorLayer: virtual public GenericMap2D::Layer
 			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
 			if (t == tileset->end()) return ImagePtr(); // no tileset?!
 
-			// TODO
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[item->code]);
+
+			unsigned int index = item->code - 31;
+			unsigned int num = images.size();
+			if (index >= num) return ImagePtr(); // out of range
+			while (!(images[index]->getAttr() & Tileset::SubTileset)) {
+				// Some images are duplicated, but libgamegraphics reports these as
+				// empty tilesets.  So if we encounter an empty one, find the next
+				// available actor.
+				index++;
+				if (index >= num) return ImagePtr(); // out of range
+			}
+			TilesetPtr actor = t->second->openTileset(images[index]);
+			const Tileset::VC_ENTRYPTR& actorFrames = actor->getItems();
+			if (actorFrames.size() <= 0) return ImagePtr(); // out of range
+			return actor->openImage(actorFrames[0]);
 		}
 };
 
@@ -214,11 +226,23 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	actors->reserve(numActors);
 	for (unsigned int i = 0; i < numActors; i++) {
 		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
 		input
 			>> u16le(t->code)
 			>> u16le(t->x)
 			>> u16le(t->y)
 		;
+		switch (t->code) {
+			case 295: // falling star
+				t->type = Map2D::Layer::Item::Movement;
+				t->movementFlags = Map2D::Layer::Item::DistanceLimit;
+				t->movementDistLeft = 0;
+				t->movementDistRight = 0;
+				t->movementDistUp = 0;
+				t->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+				t->code = 31 + 1; // normal star image
+				break;
+		}
 		actors->push_back(t);
 	}
 	lenMap -= 6 * numActors;
@@ -309,8 +333,20 @@ void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		i++
 	) {
 		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
+		uint16_t finalCode = (*i)->code;
+
+		// Map any falling actors to the correct code
+		if (
+			((*i)->type & Map2D::Layer::Item::Movement) &&
+			((*i)->movementFlags & Map2D::Layer::Item::DistanceLimit) &&
+			((*i)->movementDistDown == Map2D::Layer::Item::DistIndeterminate)
+		) {
+			switch ((*i)->code) {
+				case 31 + 1: finalCode = 265; break; // falling star
+			}
+		}
 		output
-			<< u16le((*i)->code)
+			<< u16le(finalCode)
 			<< u16le((*i)->x)
 			<< u16le((*i)->y)
 		;
