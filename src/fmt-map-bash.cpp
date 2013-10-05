@@ -538,7 +538,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 			ta->type = Map2D::Layer::Item::Blocking;
 			ta->x = x;
 			ta->y = y;
-			ta->code = code >> 9;
+			ta->code = (code >> 9) & 0x2F; // deselect point item flag
 			ta->blockingFlags = 0;
 			if (code & (1<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
 			if (code & (2<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
@@ -752,38 +752,62 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		boost::scoped_array<uint16_t> bgdata(new uint16_t[lenBG]);
 		memset(bgdata.get(), 0, lenBG); // default background tile
 
-		Map2D::LayerPtr layer = map2d->getLayer(0);
-		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-			i != items->end();
-			i++
-		) {
-			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-				throw stream::error("Background layer has tiles outside map boundary!");
+		Map2D::LayerPtr layer;
+		{
+			layer = map2d->getLayer(0);
+			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+			for (Map2D::Layer::ItemPtrVector::const_iterator
+				i = items->begin(); i != items->end(); i++
+			) {
+				if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
+					throw stream::error("Background layer has tiles outside map boundary!");
+				}
+				bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 			}
-			bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}
 
-		// Merge in attribute layer
-		layer = map2d->getLayer(3);
-		const Map2D::Layer::ItemPtrVectorPtr atitems = layer->getAllItems();
-		for (Map2D::Layer::ItemPtrVector::const_iterator i = atitems->begin();
-			i != atitems->end();
-			i++
-		) {
-			const Map2D::Layer::ItemPtr& ta = (*i);
-			if ((ta->x > mapWidth) || (ta->y > mapHeight)) {
-				throw stream::error("Attribute layer has tiles outside map boundary!");
+		{
+			// Merge in attribute layer
+			layer = map2d->getLayer(3);
+			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+			for (Map2D::Layer::ItemPtrVector::const_iterator
+				i = items->begin(); i != items->end(); i++
+			) {
+				const Map2D::Layer::ItemPtr& ta = (*i);
+				if ((ta->x > mapWidth) || (ta->y > mapHeight)) {
+					throw stream::error("Attribute layer has tiles outside map boundary!");
+				}
+				if (ta->type & Map2D::Layer::Item::Blocking) {
+					uint16_t code = 0;
+					if (ta->blockingFlags & Map2D::Layer::Item::BlockLeft) code |= (1<<9);
+					if (ta->blockingFlags & Map2D::Layer::Item::BlockRight) code |= (2<<9);
+					if (ta->blockingFlags & Map2D::Layer::Item::BlockTop) code |= (4<<9);
+					if (ta->blockingFlags & Map2D::Layer::Item::BlockBottom) code |= (8<<9);
+					if (ta->blockingFlags & Map2D::Layer::Item::Slant45) code |= (32<<9);
+					if (code & (64<<9)) std::cerr << "FIXME: Got BG tile with unknown 0x8000 flag set!" << std::endl;
+					bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
+				}
 			}
-			if (ta->type & Map2D::Layer::Item::Blocking) {
-				uint16_t code = 0;
-				if (ta->blockingFlags & Map2D::Layer::Item::BlockLeft) code |= (1<<9);
-				if (ta->blockingFlags & Map2D::Layer::Item::BlockRight) code |= (2<<9);
-				if (ta->blockingFlags & Map2D::Layer::Item::BlockTop) code |= (4<<9);
-				if (ta->blockingFlags & Map2D::Layer::Item::BlockBottom) code |= (8<<9);
-				if (ta->blockingFlags & Map2D::Layer::Item::Slant45) code |= (32<<9);
-				if (code & (64<<9)) std::cerr << "FIXME: Got BG tile with unknown 0x8000 flag set!" << std::endl;
-				bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
+		}
+
+		{
+			// Merge in foreground layer
+			layer = map2d->getLayer(1);
+			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+			for (Map2D::Layer::ItemPtrVector::const_iterator
+				i = items->begin(); i != items->end(); i++
+			) {
+				const Map2D::Layer::ItemPtr& ta = (*i);
+				if ((ta->x > mapWidth) || (ta->y > mapHeight)) continue;
+				if (
+					((ta->code >= 0x07) && (ta->code <= 0x0A)) || // crumbling walkway
+					(ta->code == 0x7B) || // tri-shot
+					(ta->code == 0x7D) || // skull
+					((ta->code >= 0xF9) && (ta->code <= 0xFF)) // points and powerups
+				) {
+					// This is a point item, mark it as such
+					bgdata[(*i)->y * mapWidth + (*i)->x] |= 16<<9;
+				}
 			}
 		}
 
@@ -812,9 +836,8 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		memset(fgdata.get(), 0, lenFG); // default background tile
 		Map2D::LayerPtr layer = map2d->getLayer(1);
 		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-			i != items->end();
-			i++
+		for (Map2D::Layer::ItemPtrVector::const_iterator
+			i = items->begin(); i != items->end(); i++
 		) {
 			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
 				throw stream::error("Foreground layer has tiles outside map boundary!");
@@ -864,23 +887,6 @@ usedSprites.insert("rock");
 
 		Map2D::LayerPtr layer = map2d->getLayer(2);
 		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		stream::len lenSpriteLayer = 2;
-		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-			i != items->end();
-			i++
-		) {
-			if ((*i)->code < 1000000) continue;
-			unsigned int code = (*i)->code - 1000000;
-			if (code >= sizeof(spriteFilenames) / sizeof(const char *)) {
-				std::cerr << "ERROR: Tried to write out-of-range sprite to Monster Bash map\n";
-				continue;
-			}
-			std::string filename(spriteFilenames[code]);
-			int lenFilename = filename.length() + 2; // need two terminating nulls
-			uint32_t lenEntry = 4+4+4+2+4+4+22+lenFilename;
-			lenSpriteLayer += lenEntry;
-		}
-		spr->truncate(lenSpriteLayer);
 		spr->seekp(0, stream::start);
 		spr
 			<< u16le(0xFFFE) /// @todo calculate correct value
@@ -963,7 +969,6 @@ usedSprites.insert("rock");
 	}
 
 	// Write out a list of all required sprites
-	sgl->truncate(usedSprites.size() * 31);
 	sgl->seekp(0, stream::start);
 	for (std::set<std::string>::const_iterator
 		i = usedSprites.begin(); i != usedSprites.end(); i++
@@ -972,6 +977,8 @@ usedSprites.insert("rock");
 			<< nullPadded(*i, 31)
 		;
 	}
+
+	// No need to truncate as we're writing into empty expanding streams.
 
 	bg->flush();
 	fg->flush();
