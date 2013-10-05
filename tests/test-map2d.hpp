@@ -97,6 +97,9 @@ struct FIXTURE_NAME: public default_sample {
 		#ifdef MAP_HAS_SUPPDATA_LAYER2
 			ADD_SUPPITEM(Layer2);
 		#endif
+		#ifdef MAP_HAS_SUPPDATA_LAYER3
+			ADD_SUPPITEM(Layer3);
+		#endif
 		#ifdef MAP_HAS_SUPPDATA_EXTRA1
 			ADD_SUPPITEM(Extra1);
 		#endif
@@ -318,6 +321,20 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(write))
 	BOOST_CHECK_MESSAGE(
 		is_supp_equal(camoto::SuppItem::Layer2, makeString(TEST_RESULT(initialstate_Layer2))),
 		"Error writing map to a file - data is different to original in supp::layer2"
+	);
+#endif
+
+#ifdef MAP_HAS_SUPPDATA_LAYER3
+	BOOST_CHECK_MESSAGE(
+		is_supp_equal(camoto::SuppItem::Layer3, makeString(TEST_RESULT(initialstate_Layer3))),
+		"Error writing map to a file - data is different to original in supp::layer3"
+	);
+#endif
+
+#ifdef MAP_HAS_SUPPDATA_EXTRA1
+	BOOST_CHECK_MESSAGE(
+		is_supp_equal(camoto::SuppItem::Extra1, makeString(TEST_RESULT(initialstate_Extra1))),
+		"Error writing map to a file - data is different to original in supp::extra1"
 	);
 #endif
 }

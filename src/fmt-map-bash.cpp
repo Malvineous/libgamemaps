@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <set>
 #include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
 #include "map2d-generic.hpp"
@@ -39,10 +40,16 @@
 #define MB_VIEWPORT_HEIGHT     200
 
 /// Map code to write for locations with no tile set.
+#define MB_DEFAULT_BGTILE     0x00
+
+/// Map code to write for locations with no tile set.
 #define MB_DEFAULT_FGTILE     0x00
 
 /// This is the largest valid tile code in the background layer.
-#define MB_MAX_VALID_TILECODE 0x6C
+#define MB_MAX_VALID_BG_TILECODE 0x1FF
+
+/// This is the largest valid tile code in the background layer.
+#define MB_MAX_VALID_FG_TILECODE 0xFF
 
 /// Number of fields in the .mif file
 #define MB_NUM_ATTRIBUTES        7
@@ -52,6 +59,159 @@
 
 namespace camoto {
 namespace gamemaps {
+
+/// List of sprites, used to convert between names and internal map codes.
+static const char *spriteFilenames[] = {
+	"apogee_logo",
+	"arrows",
+	"axe",
+	"badguy",
+	"blank",
+	"block",
+	"blocky",
+	"bomb",
+	"bone1",
+	"bone2",
+	"bone3",
+	"border",
+	"border2",
+	"bounce",
+	"box_slide",
+	"break_screen",
+	"bshelf",
+	"cat",
+	"chunk",
+	"cloud",
+	"crack",
+	"cracked_block",
+	"crawlleft",
+	"crawlright",
+	"cursor_arm",
+	"cursor_xhair",
+	"cyc_horn_l",
+	"cyc_horn_r",
+	"cyclops_l",
+	"cyclops_r",
+	"demo",
+	"devil_l",
+	"devil_r",
+	"dirt_l",
+	"dirt_r",
+	"disolve1",
+	"disolve2",
+	"dog",
+	"drag_b",
+	"drag_eye",
+	"drag_fire",
+	"drag_l",
+	"end_gargoyle",
+	"end_gargoyle2",
+	"end_hellfire",
+	"end_main",
+	"explode",
+	"faces",
+	"fire_bit",
+	"flag",
+	"float100",
+	"glass",
+	"grenade",
+	"guage",
+	"guy_jump",
+	"hand_l",
+	"hand_r",
+	"hat",
+	"heart",
+	"horse",
+	"i_main_shoot",
+	"i_rock",
+	"i_splat",
+	"i_zombie_bot",
+	"i_zombie_hand",
+	"i_zombie_top",
+	"iman_l",
+	"iman_r",
+	"intro1",
+	"intro2",
+	"intro3",
+	"jaw_l",
+	"jaw_r",
+	"knife",
+	"knifee",
+	"knifee_ud",
+	"leaf",
+	"lightn",
+	"main_broom",
+	"main_die",
+	"main_exit",
+	"main_hat_l",
+	"main_hat_r",
+	"main_l",
+	"main_meter",
+	"main_r",
+	"main_stars",
+	"main_workout",
+	"main_workout2",
+	"main_workout3",
+	"main_workout4",
+	"mouse",
+	"msm",
+	"nemesis",
+	"numbers",
+	"pellet_h",
+	"pfork_l",
+	"pfork_r",
+	"plank",
+	"plank_r",
+	"platfall",
+	"platform",
+	"platform_v",
+	"plug",
+	"preview",
+	"rock",
+	"saw",
+	"score",
+	"score1up",
+	"skelet_l",
+	"skelet_r",
+	"skullw",
+	"smoke1",
+	"smoke_cloud",
+	"snake",
+	"spear_plat",
+	"splat",
+	"swamp2_l",
+	"swamp2_r",
+	"swamp_l",
+	"swamp_r",
+	"swamp_scum2_l",
+	"swamp_scum2_r",
+	"swamp_scum_l",
+	"swamp_scum_r",
+	"teeth_l",
+	"teeth_r",
+	"tman_bl",
+	"tman_br",
+	"tman_ld",
+	"tman_lu",
+	"tman_rd",
+	"tman_ru",
+	"tman_tl",
+	"tman_tr",
+	"vegies",
+	"visa",
+	"vulture",
+	"vulture_l",
+	"vulture_r",
+	"white",
+	"witch_eye",
+	"witch_sill",
+	"zb_l",
+	"zb_r",
+	"zbh_l",
+	"zbh_r",
+	"zhead",
+	"zhead_r",
+};
 
 static const char *validTypes[] = {
 	"tbg",
@@ -120,6 +280,48 @@ class BashBackgroundLayer: virtual public GenericMap2D::Layer
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
 			if (index >= images.size()) return ImagePtr(); // out of range
 			return t->second->openImage(images[index]);
+		}
+};
+
+class BashSpriteLayer: virtual public GenericMap2D::Layer
+{
+	public:
+		BashSpriteLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	GenericMap2D::Layer(
+					"Sprites",
+					Map2D::Layer::HasOwnTileSize | Map2D::Layer::UseImageDims,
+					0, 0,
+					1, 1,
+					items, validItems
+				)
+		{
+		}
+
+		virtual gamegraphics::ImagePtr imageFromCode(
+			const Map2D::Layer::ItemPtr& item,
+			const TilesetCollectionPtr& tileset) const
+		{
+			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
+			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+
+			if (item->code < 1000000) return ImagePtr(); // unknown sprite filename
+			if (item->code - 1000000 > sizeof(spriteFilenames) / sizeof(const char *)) return ImagePtr(); // out of range somehow
+
+			const char *img = spriteFilenames[item->code - 1000000];
+			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+			for (Tileset::VC_ENTRYPTR::const_iterator
+				i = images.begin(); i != images.end(); i++
+			) {
+				if ((*i)->getName().compare(img) == 0) {
+					TilesetPtr ts = t->second->openTileset(*i);
+					const Tileset::VC_ENTRYPTR& tiles = ts->getItems();
+					if (tiles.size() < 1) return ImagePtr(); // no images - TODO: generic 'unknown' image
+					return ts->openImage(tiles[0]);
+				}
+			}
+			std::cerr << "ERROR: Could not find image for Monster Bash sprite \""
+				<< img << "\"" << std::endl;
+			return ImagePtr();
 		}
 };
 
@@ -244,15 +446,17 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 {
 	stream::input_sptr bg = suppData[SuppItem::Layer1];
 	stream::input_sptr fg = suppData[SuppItem::Layer2];
+	stream::input_sptr spr = suppData[SuppItem::Layer3];
 	assert(bg);
 	assert(fg);
+	assert(spr);
 
 	// Read the map info file
 	static const char *attrNames[] = {
 		"Background tileset",
 		"Foreground tileset",
 		"Bonus tileset",
-		"Sprite information",
+		"Sprite list",
 		"Palette",
 		"Sound effects",
 		"Unknown",
@@ -261,7 +465,9 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		"Filename of the tileset to use for drawing the map background layer",
 		"Filename of the first tileset to use for drawing the map foreground layer",
 		"Filename of the second tileset to use for drawing the map foreground layer",
-		"Something to do with sprite data?",
+		"Filename of sprite list - where the list of sprites used in this level is "
+			"stored.  Don't change this unless you have just renamed the file in the "
+			"main .DAT.",
 		"EGA palette to use",
 		"Filename to load PC speaker sounds from",
 		"Unknown",
@@ -319,12 +525,14 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 			bg >> u16le(code);
 			lenBG -= 2;
 
-			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-			t->type = Map2D::Layer::Item::Default;
-			t->x = x;
-			t->y = y;
-			t->code = code & 0x1FF;
-			bgtiles->push_back(t);
+			if ((code & 0x1FF) != MB_DEFAULT_BGTILE) {
+				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+				t->type = Map2D::Layer::Item::Default;
+				t->x = x;
+				t->y = y;
+				t->code = code & 0x1FF;
+				bgtiles->push_back(t);
+			}
 
 			Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
 			ta->type = Map2D::Layer::Item::Blocking;
@@ -345,9 +553,42 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= MB_MAX_VALID_BG_TILECODE; i++) {
+		if (i == MB_DEFAULT_BGTILE) continue;
+
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validBGItems->push_back(t);
+	}
 	Map2D::LayerPtr bgLayer(new BashBackgroundLayer(bgtiles, validBGItems));
 
 	Map2D::Layer::ItemPtrVectorPtr validAttrItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i < 16; i++) {
+		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+		ta->type = Map2D::Layer::Item::Blocking;
+		ta->x = 0;
+		ta->y = 0;
+		ta->code = i;
+		ta->blockingFlags = 0;
+		if (i & 1) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
+		if (i & 2) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
+		if (i & 4) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
+		if (i & 8) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
+		validAttrItems->push_back(ta);
+	}
+	{
+		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+		ta->type = Map2D::Layer::Item::Blocking;
+		ta->x = 0;
+		ta->y = 0;
+		ta->code = 32;
+		ta->blockingFlags = 0;
+		ta->blockingFlags |= Map2D::Layer::Item::Slant45;
+		validAttrItems->push_back(ta);
+	}
 	Map2D::LayerPtr attrLayer(new BashAttributeLayer(bgattributes, validAttrItems));
 
 	// Read the foreground layer
@@ -374,11 +615,73 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 0; i <= MB_MAX_VALID_FG_TILECODE; i++) {
+		// The default tile actually has an image, so don't exclude it
+		if (i == MB_DEFAULT_FGTILE) continue;
+
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = i;
+		validFGItems->push_back(t);
+	}
 	Map2D::LayerPtr fgLayer(new BashForegroundLayer(fgtiles, validFGItems));
+
+	// Read the sprite layer
+	stream::pos lenSpr = spr->size();
+	spr->seekg(2, stream::start); // skip unknown field
+	lenSpr -= 2;
+
+	Map2D::Layer::ItemPtrVectorPtr sprtiles(new Map2D::Layer::ItemPtrVector());
+	while (lenSpr > 4) {
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		uint32_t lenEntry;
+		uint32_t unknown1, unknown2;
+		uint16_t unknown3;
+		spr
+			>> u32le(lenEntry)
+			>> u32le(unknown1)
+			>> u32le(unknown2)
+			>> u16le(unknown3)
+			>> u32le(t->x)
+			>> u32le(t->y)
+		;
+		if (lenEntry > lenSpr) break; // corrupted file
+		spr->seekg(22, stream::cur); // skip padding
+		std::string filename;
+		spr >> nullPadded(filename, lenEntry - (4+4+4+2+4+4+22));
+		t->code = 0;
+		for (unsigned int s = 0; s < sizeof(spriteFilenames) / sizeof(const char *); s++) {
+			if (filename.compare(spriteFilenames[s]) == 0) {
+				t->code = 1000000 + s;
+			}
+		}
+		if (t->code == 0) {
+			std::cout << "ERROR: Encounted Monster Bash sprite with unexpected name \""
+				<< filename << "\" - unable to add to map.\n";
+		}
+		sprtiles->push_back(t);
+		lenSpr -= lenEntry;
+	}
+
+	Map2D::Layer::ItemPtrVectorPtr validSprites(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int s = 0; s < sizeof(spriteFilenames) / sizeof(const char *); s++) {
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = 1000000 + s;
+		validSprites->push_back(t);
+	}
+	Map2D::LayerPtr sprLayer(new BashSpriteLayer(sprtiles, validSprites));
+
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 	layers.push_back(fgLayer);
+	layers.push_back(sprLayer);
 	layers.push_back(attrLayer);
 
 	Map2DPtr map(new GenericMap2D(
@@ -398,7 +701,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 3)
+	if (map2d->getLayerCount() != 4)
 		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned int mapWidth, mapHeight;
@@ -406,8 +709,12 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 
 	stream::output_sptr bg = suppData[SuppItem::Layer1];
 	stream::output_sptr fg = suppData[SuppItem::Layer2];
+	stream::output_sptr spr = suppData[SuppItem::Layer3];
+	stream::output_sptr sgl = suppData[SuppItem::Extra1];
 	assert(bg);
 	assert(fg);
+	assert(spr);
+	assert(sgl);
 
 	// Write map info file
 	{
@@ -452,13 +759,13 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			i++
 		) {
 			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-				throw stream::error("Layer has tiles outside map boundary!");
+				throw stream::error("Background layer has tiles outside map boundary!");
 			}
 			bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}
 
 		// Merge in attribute layer
-		layer = map2d->getLayer(2);
+		layer = map2d->getLayer(3);
 		const Map2D::Layer::ItemPtrVectorPtr atitems = layer->getAllItems();
 		for (Map2D::Layer::ItemPtrVector::const_iterator i = atitems->begin();
 			i != atitems->end();
@@ -466,7 +773,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		) {
 			const Map2D::Layer::ItemPtr& ta = (*i);
 			if ((ta->x > mapWidth) || (ta->y > mapHeight)) {
-				throw stream::error("Layer has tiles outside map boundary!");
+				throw stream::error("Attribute layer has tiles outside map boundary!");
 			}
 			if (ta->type & Map2D::Layer::Item::Blocking) {
 				uint16_t code = 0;
@@ -475,6 +782,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 				if (ta->blockingFlags & Map2D::Layer::Item::BlockTop) code |= (4<<9);
 				if (ta->blockingFlags & Map2D::Layer::Item::BlockBottom) code |= (8<<9);
 				if (ta->blockingFlags & Map2D::Layer::Item::Slant45) code |= (32<<9);
+				if (code & (64<<9)) std::cerr << "FIXME: Got BG tile with unknown 0x8000 flag set!" << std::endl;
 				bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
 			}
 		}
@@ -509,7 +817,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			i++
 		) {
 			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-				throw stream::error("Layer has tiles outside map boundary!");
+				throw stream::error("Foreground layer has tiles outside map boundary!");
 			}
 			fgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
 		}
@@ -525,8 +833,150 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		}
 	}
 
+	std::set<std::string> usedSprites;
+	// Write the sprite layer
+	{
+		// These sprites must always be present in a level
+		usedSprites.insert("arrows");
+usedSprites.insert("axe");
+		usedSprites.insert("blank");
+usedSprites.insert("bomb");
+usedSprites.insert("bone1");
+usedSprites.insert("bone2");
+usedSprites.insert("bone3");
+		usedSprites.insert("border");
+		usedSprites.insert("border2");
+		usedSprites.insert("cat");
+		usedSprites.insert("chunk");
+		usedSprites.insert("dog");
+		usedSprites.insert("flag");
+usedSprites.insert("float100");
+		usedSprites.insert("guage");
+		usedSprites.insert("heart");
+		usedSprites.insert("leaf");
+usedSprites.insert("plank");
+usedSprites.insert("plank_r");
+usedSprites.insert("rock");
+		usedSprites.insert("score");
+		usedSprites.insert("skullw"); // only needed if skulls present
+		usedSprites.insert("splat");
+		usedSprites.insert("white");
+
+		Map2D::LayerPtr layer = map2d->getLayer(2);
+		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
+		stream::len lenSpriteLayer = 2;
+		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
+			i != items->end();
+			i++
+		) {
+			if ((*i)->code < 1000000) continue;
+			unsigned int code = (*i)->code - 1000000;
+			if (code >= sizeof(spriteFilenames) / sizeof(const char *)) {
+				std::cerr << "ERROR: Tried to write out-of-range sprite to Monster Bash map\n";
+				continue;
+			}
+			std::string filename(spriteFilenames[code]);
+			int lenFilename = filename.length() + 2; // need two terminating nulls
+			uint32_t lenEntry = 4+4+4+2+4+4+22+lenFilename;
+			lenSpriteLayer += lenEntry;
+		}
+		spr->truncate(lenSpriteLayer);
+		spr->seekp(0, stream::start);
+		spr
+			<< u16le(0xFFFE) /// @todo calculate correct value
+		;
+		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
+			i != items->end();
+			i++
+		) {
+			if ((*i)->code < 1000000) continue;
+			unsigned int code = (*i)->code - 1000000;
+			if (code >= sizeof(spriteFilenames) / sizeof(const char *)) {
+				std::cerr << "ERROR: Tried to write out-of-range sprite to Monster Bash map\n";
+				continue;
+			}
+			std::string filename(spriteFilenames[code]);
+			int lenFilename = filename.length() + 2; // need two terminating nulls
+			uint32_t lenEntry = 4+4+4+2+4+4+22+lenFilename;
+			spr
+				<< u32le(lenEntry)
+				<< u32le(0)
+				<< u32le(0)
+				<< u16le(0)
+				<< u32le((*i)->x)
+				<< u32le((*i)->y)
+				<< nullPadded("", 22)
+				<< nullPadded(filename, lenFilename);
+			;
+			usedSprites.insert(filename);
+			if (
+				(filename.compare("main_l") == 0) ||
+				(filename.compare("main_r") == 0)
+			) {
+				usedSprites.insert("main_l");
+				usedSprites.insert("main_r");
+				usedSprites.insert("break_screen");
+				usedSprites.insert("crack");
+				usedSprites.insert("crawlleft");
+				usedSprites.insert("crawlright");
+				usedSprites.insert("dirt_l");
+				usedSprites.insert("dirt_r");
+				usedSprites.insert("main_die");
+				usedSprites.insert("main_exit");
+				usedSprites.insert("main_hat_l");
+				usedSprites.insert("main_hat_r");
+				usedSprites.insert("main_l");
+				usedSprites.insert("main_meter");
+				usedSprites.insert("main_r");
+				usedSprites.insert("main_stars");
+			} else if (
+				(filename.compare("hand_l") == 0) ||
+				(filename.compare("hand_r") == 0)
+			) {
+				usedSprites.insert("hand_l");
+				usedSprites.insert("hand_r");
+			} else if (
+				(filename.compare("knifee") == 0) ||
+				(filename.compare("knifee_ud") == 0)
+			) {
+				usedSprites.insert("knife");
+			} else if (
+				(filename.compare("skelet_l") == 0) ||
+				(filename.compare("skelet_r") == 0)
+			) {
+				usedSprites.insert("skelet_l");
+				usedSprites.insert("sketet_r");
+				usedSprites.insert("jaw_l");
+				usedSprites.insert("jaw_r");
+			} else if (
+				(filename.compare("zb_l") == 0) ||
+				(filename.compare("zb_r") == 0)
+			) {
+				usedSprites.insert("zb_l");
+				usedSprites.insert("zb_r");
+				usedSprites.insert("zbh_l");
+				usedSprites.insert("zbh_r");
+				usedSprites.insert("zhead");
+				usedSprites.insert("zhead_r");
+			}
+		}
+	}
+
+	// Write out a list of all required sprites
+	sgl->truncate(usedSprites.size() * 31);
+	sgl->seekp(0, stream::start);
+	for (std::set<std::string>::const_iterator
+		i = usedSprites.begin(); i != usedSprites.end(); i++
+	) {
+		sgl
+			<< nullPadded(*i, 31)
+		;
+	}
+
 	bg->flush();
 	fg->flush();
+	spr->flush();
+	sgl->flush();
 	output->flush();
 	return;
 }
@@ -538,6 +988,12 @@ SuppFilenames BashMapType::getRequiredSupps(stream::input_sptr input,
 	std::string baseName = filename.substr(0, filename.length() - 3);
 	supps[SuppItem::Layer1] = baseName + "mbg";
 	supps[SuppItem::Layer2] = baseName + "mfg";
+	supps[SuppItem::Layer3] = baseName + "msp";
+
+	input->seekg(31*3, stream::start);
+	std::string sgl;
+	input >> nullPadded(sgl, 31);
+	supps[SuppItem::Extra1] = sgl + ".sgl";
 	return supps;
 }
 

@@ -50,6 +50,10 @@ Halloween Harry:
  - Write palette and tile flags
  - Figure out mapping between actor tile codes and sprite images
 
+Monster Bash:
+ - Figure out what additional sprites the rest of the creatures require, as per
+   http://www.shikadi.net/moddingwiki/Monster_Bash_Level_Format#Sprite_list_.28.sgl.29
+
 Word Rescue:
  - Come up with suitable overlay images for tiles marked as foreground ones, as
    well as tiles marked as animated.
