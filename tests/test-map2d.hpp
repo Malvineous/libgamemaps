@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(codelist))
 			BOOST_REQUIRE_MESSAGE(found == true,
 				"Map code " << std::hex << (int)(*i)->code
 				<< " was not found in the list of permitted tiles for layer "
-				<< std::dec << l);
+				<< std::dec << (l+1));
 		}
 	}
 }
