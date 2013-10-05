@@ -427,7 +427,7 @@ TILE_MAP_SIGN tileMapSign[] = {
 	{0x5B, 0x51, {CCT( 8, 34), CCT( 8, 35), ___________, ___________,
 	              CCT( 8, 40), CCT( 8, 41), ___________, ___________,
 	              CCT( 8, 44), CCT( 8, 45), ___________, ___________,
-	              CCT( 8, 49), CCT( 8, 48), ___________, ___________}, CCTF_MV_NONE}, // large sewer outlet, with slime
+	              CCT( 8, 48), CCT( 8, 49), ___________, ___________}, CCTF_MV_NONE}, // large sewer outlet, with slime
 // 0x5B: 0x52 invalid
 // 0x5B: 0x53 invalid
 	{0x5B, 0x54, {CCT( 7, 38), CCT( 7, 37), CCT( 7, 39), ___________,

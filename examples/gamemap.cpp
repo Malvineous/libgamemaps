@@ -189,7 +189,7 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 	bool useMask;
 	bool gotPal = false;
 	for (gm::TilesetCollection::const_iterator
-		     i = allTilesets->begin(); i != allTilesets->end(); i++
+		i = allTilesets->begin(); i != allTilesets->end(); i++
 	) {
 		if (i->second->getCaps() & gg::Tileset::HasPalette) {
 			gg::PaletteTablePtr srcPal = i->second->getPalette();

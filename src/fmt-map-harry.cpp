@@ -61,7 +61,7 @@ class HarryActorLayer: virtual public GenericMap2D::Layer
 		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Actors",
-					Map2D::Layer::NoCaps,
+					Map2D::Layer::UseImageDims,
 					0, 0,
 					0, 0,
 					items, validItems
