@@ -750,7 +750,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 		const unsigned int lenBG = mapWidth * mapHeight;
 
 		boost::scoped_array<uint16_t> bgdata(new uint16_t[lenBG]);
-		memset(bgdata.get(), 0, lenBG); // default background tile
+		memset(bgdata.get(), 0, lenBG * sizeof(uint16_t)); // default background tile
 
 		Map2D::LayerPtr layer;
 		{
