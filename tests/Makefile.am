@@ -8,6 +8,7 @@ tests_SOURCES += test-map-cosmo.cpp
 tests_SOURCES += test-map-ddave.cpp
 tests_SOURCES += test-map-harry.cpp
 tests_SOURCES += test-map-nukem2.cpp
+tests_SOURCES += test-map-vinyl.cpp
 tests_SOURCES += test-map-wacky.cpp
 tests_SOURCES += test-map-wordresc.cpp
 tests_SOURCES += test-map-xargon.cpp
