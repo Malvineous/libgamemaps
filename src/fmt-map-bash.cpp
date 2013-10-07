@@ -936,16 +936,43 @@ usedSprites.insert("rock");
 				usedSprites.insert("main_r");
 				usedSprites.insert("main_stars");
 			} else if (
+				(filename.compare("cyclops_l") == 0) ||
+				(filename.compare("cyclops_r") == 0)
+			) {
+				usedSprites.insert("cyclops_l");
+				usedSprites.insert("cyclops_r");
+				usedSprites.insert("cyc_horn_l");
+				usedSprites.insert("cyc_horn_r");
+			} else if (
+				(filename.compare("devil_l") == 0) ||
+				(filename.compare("devil_r") == 0)
+			) {
+				usedSprites.insert("devil_l");
+				usedSprites.insert("devil_r");
+				usedSprites.insert("pfork_l");
+				usedSprites.insert("pfork_r");
+			} else if (
 				(filename.compare("hand_l") == 0) ||
 				(filename.compare("hand_r") == 0)
 			) {
 				usedSprites.insert("hand_l");
 				usedSprites.insert("hand_r");
 			} else if (
+				(filename.compare("iman_l") == 0) ||
+				(filename.compare("iman_r") == 0)
+			) {
+				usedSprites.insert("iman_l");
+				usedSprites.insert("iman_r");
+				usedSprites.insert("hat");
+			} else if (
 				(filename.compare("knifee") == 0) ||
 				(filename.compare("knifee_ud") == 0)
 			) {
 				usedSprites.insert("knife");
+			} else if (
+				(filename.compare("nemesis") == 0)
+			) {
+				usedSprites.insert("main_broom");
 			} else if (
 				(filename.compare("skelet_l") == 0) ||
 				(filename.compare("skelet_r") == 0)
@@ -955,13 +982,55 @@ usedSprites.insert("rock");
 				usedSprites.insert("jaw_l");
 				usedSprites.insert("jaw_r");
 			} else if (
+				(filename.compare("teeth_l") == 0) ||
+				(filename.compare("teeth_r") == 0)
+			) {
+				usedSprites.insert("teeth_l");
+				usedSprites.insert("teeth_r");
+			} else if (
+				(filename.compare("tman_bl") == 0) ||
+				(filename.compare("tman_br") == 0)
+			) {
+				usedSprites.insert("tman_bl");
+				usedSprites.insert("tman_br");
+				usedSprites.insert("pellet_h");
+			} else if (
+				(filename.compare("tman_ld") == 0) ||
+				(filename.compare("tman_lu") == 0)
+			) {
+				usedSprites.insert("tman_ld");
+				usedSprites.insert("tman_lu");
+				usedSprites.insert("pellet_h");
+			} else if (
+				(filename.compare("tman_rd") == 0) ||
+				(filename.compare("tman_ru") == 0)
+			) {
+				usedSprites.insert("tman_rd");
+				usedSprites.insert("tman_ru");
+				usedSprites.insert("pellet_h");
+			} else if (
+				(filename.compare("tman_tl") == 0) ||
+				(filename.compare("tman_tr") == 0)
+			) {
+				usedSprites.insert("tman_tl");
+				usedSprites.insert("tman_tr");
+				usedSprites.insert("pellet_h");
+			} else if (
+				(filename.compare("vulture") == 0) ||
+				(filename.compare("vulture_l") == 0) ||
+				(filename.compare("vulture_r") == 0)
+			) {
+				usedSprites.insert("vulture");
+				usedSprites.insert("vulture_l");
+				usedSprites.insert("vulture_r");
+			} else if (
 				(filename.compare("zb_l") == 0) ||
 				(filename.compare("zb_r") == 0)
 			) {
 				usedSprites.insert("zb_l");
 				usedSprites.insert("zb_r");
-				usedSprites.insert("zbh_l");
-				usedSprites.insert("zbh_r");
+				usedSprites.insert("zbh_l"); // optional unless spawning zombie (then the others are needed too)
+				usedSprites.insert("zbh_r"); // ditto
 				usedSprites.insert("zhead");
 				usedSprites.insert("zhead_r");
 			}
