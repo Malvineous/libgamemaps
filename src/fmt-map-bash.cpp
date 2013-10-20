@@ -252,6 +252,31 @@ class BashForegroundLayer: virtual public GenericMap2D::Layer
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
 			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
 			*out = t->second->openImage(images[index]);
+
+			if (
+				(purpose == ForegroundTileset1)
+				&& ((item->code & 0x7F) < 16)
+				&& ((item->code & 0x7F) > 0)
+			) {
+				// The first 16 bytes can be special if no image is set
+				StdImageDataPtr mask = (*out)->toStandardMask();
+				unsigned int width, height;
+				(*out)->getDimensions(&width, &height);
+				bool completelyInvisible = true;
+				uint8_t *pixel = mask.get();
+				for (unsigned int i = 0; i < width * height; i++) {
+					if ((*pixel++ & Image::Mask_Visibility) == Image::Mask_Vis_Opaque) {
+						completelyInvisible = false;
+						break;
+					}
+				}
+				if (completelyInvisible) {
+					// Return a number instead
+					return (Map2D::Layer::ImageType)
+						(Map2D::Layer::Digit0 + index);
+				}
+			}
+
 			return Map2D::Layer::Supplied;
 		}
 };
