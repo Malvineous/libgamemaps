@@ -75,32 +75,33 @@ class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			unsigned int ti, i;
 			ti = item->code >> 8;
 			i = item->code & 0xFF;
 
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& ts = t->second->getItems();
 			if (ti >= ts.size()) {
 				std::cerr << "[fmt-map-ccaves] Out of range tile mapping to "
 					"subtileset #" << ti << std::endl;
-				return ImagePtr();
+				return Map2D::Layer::Unknown;
 			}
 			TilesetPtr tsub = t->second->openTileset(ts[ti]);
 			if (!tsub) {
 				std::cerr << "[fmt-map-ccaves] Unable to open subtileset #"
 					<< ti << std::endl;
-				return ImagePtr();
+				return Map2D::Layer::Unknown;
 			}
 			const Tileset::VC_ENTRYPTR& images = tsub->getItems();
-			if (i >= images.size()) return ImagePtr(); // out of range
-			return tsub->openImage(images[i]);
+			if (i >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = tsub->openImage(images[i]);
+			return Map2D::Layer::Supplied;
 		}
 };
 

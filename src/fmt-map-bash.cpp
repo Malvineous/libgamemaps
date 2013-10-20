@@ -239,19 +239,20 @@ class BashForegroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			ImagePurpose purpose = ((item->code >> 7) & 1) ?
 				ForegroundTileset1 : ForegroundTileset2;
 			TilesetCollection::const_iterator t = tileset->find(purpose);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			unsigned int index = item->code & 0x7F;
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -269,17 +270,18 @@ class BashBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			unsigned int index = item->code & 0x1FF;
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -297,15 +299,17 @@ class BashSpriteLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
-			if (item->code < 1000000) return ImagePtr(); // unknown sprite filename
-			if (item->code - 1000000 > sizeof(spriteFilenames) / sizeof(const char *)) return ImagePtr(); // out of range somehow
+			if (item->code < 1000000) return Map2D::Layer::Unknown; // unknown sprite filename
+			if (item->code - 1000000 > sizeof(spriteFilenames) / sizeof(const char *)) {
+				return Map2D::Layer::Unknown; // out of range somehow
+			}
 
 			const char *img = spriteFilenames[item->code - 1000000];
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
@@ -315,13 +319,14 @@ class BashSpriteLayer: virtual public GenericMap2D::Layer
 				if ((*i)->getName().compare(img) == 0) {
 					TilesetPtr ts = t->second->openTileset(*i);
 					const Tileset::VC_ENTRYPTR& tiles = ts->getItems();
-					if (tiles.size() < 1) return ImagePtr(); // no images - TODO: generic 'unknown' image
-					return ts->openImage(tiles[0]);
+					if (tiles.size() < 1) return Map2D::Layer::Unknown; // no images
+					*out = ts->openImage(tiles[0]);
+					return Map2D::Layer::Supplied;
 				}
 			}
 			std::cerr << "ERROR: Could not find image for Monster Bash sprite \""
 				<< img << "\"" << std::endl;
-			return ImagePtr();
+			return Map2D::Layer::Unknown;
 		}
 };
 
@@ -339,11 +344,11 @@ class BashAttributeLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
-			return ImagePtr(); // no images
+			return Map2D::Layer::Blank; // no images
 		}
 };
 

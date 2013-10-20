@@ -76,29 +76,30 @@ class CosmoActorLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
 
 			unsigned int index = item->code - 31;
 			unsigned int num = images.size();
-			if (index >= num) return ImagePtr(); // out of range
+			if (index >= num) return Map2D::Layer::Unknown; // out of range
 			while (!(images[index]->getAttr() & Tileset::SubTileset)) {
 				// Some images are duplicated, but libgamegraphics reports these as
 				// empty tilesets.  So if we encounter an empty one, find the next
 				// available actor.
 				index++;
-				if (index >= num) return ImagePtr(); // out of range
+				if (index >= num) return Map2D::Layer::Unknown; // out of range
 			}
 			TilesetPtr actor = t->second->openTileset(images[index]);
 			const Tileset::VC_ENTRYPTR& actorFrames = actor->getItems();
-			if (actorFrames.size() <= 0) return ImagePtr(); // out of range
-			return actor->openImage(actorFrames[0]);
+			if (actorFrames.size() <= 0) return Map2D::Layer::Unknown; // out of range
+			*out = actor->openImage(actorFrames[0]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -116,9 +117,9 @@ class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			unsigned int index = item->code >> 3; // divide by 8
 			ImagePurpose purpose;
@@ -127,18 +128,19 @@ class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
 				index /= 5;
 				/*if (index >= 1000) {
 					// out of range!
-					return ImagePtr();
+					return Map2D::Layer::Unknown;
 				}*/
 				purpose = ForegroundTileset1;
 			} else {
 				purpose = BackgroundTileset1;
 			}
 			TilesetCollection::const_iterator t = tileset->find(purpose);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 

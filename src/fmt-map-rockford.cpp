@@ -61,12 +61,12 @@ class RockfordBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			unsigned int index = item->code;
 
@@ -74,8 +74,9 @@ class RockfordBackgroundLayer: virtual public GenericMap2D::Layer
 			if (index == 3) index++;
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 

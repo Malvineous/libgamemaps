@@ -65,12 +65,12 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
 
@@ -81,17 +81,18 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 				std::cerr << "[SweeneyBackgroundLayer] Tried to open tileset 0x"
 					<< std::hex << (int)ti << std::dec << " but it's an empty slot!"
 					<< std::endl;
-				return ImagePtr();
+				return Map2D::Layer::Unknown;
 			}
 			TilesetPtr tls = t->second->openTileset(tilesets[ti]);
 			const Tileset::VC_ENTRYPTR& images = tls->getItems();
-			if (i >= images.size()) return ImagePtr(); // out of range
+			if (i >= images.size()) return Map2D::Layer::Unknown; // out of range
 			if (images[i]->getAttr() & Tileset::EmptySlot) {
 				std::cerr << "[SweeneyBackgroundLayer] Tried to open image " << ti << "."
 					<< i << " but it's an empty slot!" << std::endl;
-				return ImagePtr();
+				return Map2D::Layer::Unknown;
 			}
-			return tls->openImage(images[i]);
+			*out = tls->openImage(images[i]);
+			return Map2D::Layer::Supplied;
 		}
 
 		gamegraphics::PaletteTablePtr getPalette(
@@ -142,11 +143,11 @@ class SweeneyObjectLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
-			return ImagePtr(); // unknown map code
+			return Map2D::Layer::Unknown; // unknown map code
 		}
 
 		gamegraphics::PaletteTablePtr getPalette(

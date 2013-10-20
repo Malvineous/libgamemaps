@@ -185,6 +185,13 @@ class Map2D::Layer
 			UseImageDims    = 0x20, ///< Draw each tile the size of the image itself, instead of the tile size
 		};
 
+		/// Return values from imageFromCode()
+		enum ImageType {
+			Supplied = 0, ///< Use the supplied image
+			Blank = 1,    ///< Don't display any image
+			Unknown = 2,  ///< Display the 'unknown tile' indicator
+		};
+
 		/// Get the layer's friendly name.
 		/**
 		 * @return A string containing a name suitable for display to the user.
@@ -265,13 +272,16 @@ class Map2D::Layer
 		 *   Camoto Studio reads this information from XML files distributed
 		 *   with the application, for example.
 		 *
-		 * @return Shared pointer to a camoto::gamegraphics::Image instance.  A
-		 *   return value of a null pointer will result in some sort of
-		 *   unknown/question mark tile being used.
+		 * @param out
+		 *   If the return value is ImageType::Supplied, this is a shared pointer
+		 *   to a camoto::gamegraphics::Image instance.  If the return value is
+		 *   anything else, this parameter is ignored.
+		 *
+		 * @return An ImageType code indicating what image to display.
 		 */
-		virtual camoto::gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const = 0;
+		virtual ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			camoto::gamegraphics::ImagePtr *out) const = 0;
 
 		/// Is the given tile permitted at the specified location?
 		/**

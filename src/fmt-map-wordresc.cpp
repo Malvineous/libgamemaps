@@ -102,16 +102,17 @@ class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[item->code]);
+			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[item->code]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -131,9 +132,9 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			ImagePurpose purpose;
 			unsigned int index;
@@ -157,15 +158,16 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 
 				case WR_CODE_ANIM: // fall through (no image)
 				case WR_CODE_FG:
-				default: return ImagePtr();
+				default: return Map2D::Layer::Unknown;
 			}
 
 			TilesetCollection::const_iterator t = tileset->find(purpose);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 
 		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
@@ -195,9 +197,9 @@ class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			ImagePurpose purpose;
 			unsigned int index;
@@ -209,17 +211,18 @@ class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
 				case 0x0004: purpose = SpriteTileset1; index = 0; break;
 				case 0x0005: purpose = SpriteTileset1; index = 0; break;
 				case 0x0006: purpose = SpriteTileset1; index = 0; break; // last question mark box
-				case 0x0073: return ImagePtr(); // solid
-				case 0x0074: return ImagePtr(); // jump up through/climb
-				case 0x00FD: return ImagePtr(); // what is this? end of layer flag?
-				default: return ImagePtr();
+				case 0x0073: return Map2D::Layer::Blank; // solid
+				case 0x0074: return Map2D::Layer::Blank; // jump up through/climb
+				case 0x00FD: return Map2D::Layer::Unknown; // what is this? end of layer flag?
+				default: return Map2D::Layer::Unknown;
 			}
 			TilesetCollection::const_iterator t = tileset->find(purpose);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 
 		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,

@@ -268,15 +268,24 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 			}
 			if (!found) {
 				// Tile hasn't been cached yet, load it from the tileset
-				gg::ImagePtr img = layer->imageFromCode(*t, allTilesets);
-				//gg::ImagePtr img = tileset->openImage(allTiles[tileCode]);
-				if (img) {
-					thisTile.data = img->toStandard();
-					thisTile.mask = img->toStandardMask();
-					img->getDimensions(&thisTile.width, &thisTile.height);
-					thisTile.code = tileCode;
-				} else {
-					thisTile.width = thisTile.height = 0;
+				gg::ImagePtr img;
+				gm::Map2D::Layer::ImageType imgType;
+				imgType = layer->imageFromCode(*t, allTilesets, &img);
+				switch (imgType) {
+					case gm::Map2D::Layer::Supplied:
+						assert(img);
+						thisTile.data = img->toStandard();
+						thisTile.mask = img->toStandardMask();
+						img->getDimensions(&thisTile.width, &thisTile.height);
+						thisTile.code = tileCode;
+						break;
+					case gm::Map2D::Layer::Blank:
+						thisTile.width = thisTile.height = 0;
+						break;
+					case gm::Map2D::Layer::Unknown:
+						// Display nothing, but could be changed to a question mark
+						thisTile.width = thisTile.height = 0;
+						break;
 				}
 				cache.push_back(thisTile);
 			}

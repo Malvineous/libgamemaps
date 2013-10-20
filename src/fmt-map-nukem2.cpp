@@ -87,17 +87,18 @@ class Nukem2ActorLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			// TODO
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[item->code]);
+			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[item->code]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -115,21 +116,22 @@ class Nukem2BackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 			const Tileset::VC_ENTRYPTR& czoneTilesets = t->second->getItems();
 
 			unsigned int index = item->code;
 			unsigned int czoneTarget = 0;
-			if (czoneTarget >= czoneTilesets.size()) return ImagePtr(); // out of range
+			if (czoneTarget >= czoneTilesets.size()) return Map2D::Layer::Unknown; // out of range
 			TilesetPtr ts = t->second->openTileset(czoneTilesets[czoneTarget]);
 			const Tileset::VC_ENTRYPTR& images = ts->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return ts->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = ts->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -147,21 +149,22 @@ class Nukem2ForegroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 			const Tileset::VC_ENTRYPTR& czoneTilesets = t->second->getItems();
 
 			unsigned int index = item->code;
 			unsigned int czoneTarget = 1;
-			if (czoneTarget >= czoneTilesets.size()) return ImagePtr(); // out of range
+			if (czoneTarget >= czoneTilesets.size()) return Map2D::Layer::Unknown; // out of range
 			TilesetPtr ts = t->second->openTileset(czoneTilesets[czoneTarget]);
 			const Tileset::VC_ENTRYPTR& images = ts->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return ts->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = ts->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 

@@ -68,20 +68,21 @@ class WackyBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			unsigned int ti = item->code / WW_TILES_PER_TILESET;
 			unsigned int index = item->code % WW_TILES_PER_TILESET;
 
 			TilesetCollection::const_iterator t =
 				tileset->find((ImagePurpose)(BackgroundTileset1 + ti));
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[index]);
+			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[index]);
+			return Map2D::Layer::Supplied;
 		}
 };
 

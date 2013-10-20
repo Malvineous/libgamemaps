@@ -69,16 +69,17 @@ class HarryActorLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[item->code]);
+			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[item->code]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
@@ -97,16 +98,17 @@ class HarryBackgroundLayer: virtual public GenericMap2D::Layer
 		{
 		}
 
-		virtual gamegraphics::ImagePtr imageFromCode(
-			const Map2D::Layer::ItemPtr& item,
-			const TilesetCollectionPtr& tileset) const
+		virtual Map2D::Layer::ImageType imageFromCode(
+			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
+			ImagePtr *out) const
 		{
 			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return ImagePtr(); // no tileset?!
+			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
 
 			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return ImagePtr(); // out of range
-			return t->second->openImage(images[item->code]);
+			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
+			*out = t->second->openImage(images[item->code]);
+			return Map2D::Layer::Supplied;
 		}
 };
 
