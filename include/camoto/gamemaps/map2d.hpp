@@ -190,6 +190,23 @@ class Map2D::Layer
 			Supplied = 0, ///< Use the supplied image
 			Blank = 1,    ///< Don't display any image
 			Unknown = 2,  ///< Display the 'unknown tile' indicator
+			Digit0,       ///< Small character '0'
+			Digit1,       ///< Small character '1'
+			Digit2,       ///< Small character '2'
+			Digit3,       ///< Small character '3'
+			Digit4,       ///< Small character '4'
+			Digit5,       ///< Small character '5'
+			Digit6,       ///< Small character '6'
+			Digit7,       ///< Small character '7'
+			Digit8,       ///< Small character '8'
+			Digit9,       ///< Small character '9'
+			DigitA,       ///< Small character 'A'
+			DigitB,       ///< Small character 'B'
+			DigitC,       ///< Small character 'C'
+			DigitD,       ///< Small character 'D'
+			DigitE,       ///< Small character 'E'
+			DigitF,       ///< Small character 'F'
+			NumImageTypes ///< Must be last
 		};
 
 		/// Get the layer's friendly name.

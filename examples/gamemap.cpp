@@ -283,6 +283,22 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 						thisTile.width = thisTile.height = 0;
 						break;
 					case gm::Map2D::Layer::Unknown:
+					case gm::Map2D::Layer::Digit0:
+					case gm::Map2D::Layer::Digit1:
+					case gm::Map2D::Layer::Digit2:
+					case gm::Map2D::Layer::Digit3:
+					case gm::Map2D::Layer::Digit4:
+					case gm::Map2D::Layer::Digit5:
+					case gm::Map2D::Layer::Digit6:
+					case gm::Map2D::Layer::Digit7:
+					case gm::Map2D::Layer::Digit8:
+					case gm::Map2D::Layer::Digit9:
+					case gm::Map2D::Layer::DigitA:
+					case gm::Map2D::Layer::DigitB:
+					case gm::Map2D::Layer::DigitC:
+					case gm::Map2D::Layer::DigitD:
+					case gm::Map2D::Layer::DigitE:
+					case gm::Map2D::Layer::DigitF:
 						// Display nothing, but could be changed to a question mark
 						thisTile.width = thisTile.height = 0;
 						break;
