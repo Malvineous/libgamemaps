@@ -30,7 +30,7 @@
 #define testdata_initialstate_Layer1 \
 	"\x10\x02" "\x20\x00" "\x00\x01" "\x20\x00" \
 	\
-	"\x01\x08" "\x00\x00" "\x02\x00" "\x03\x00" \
+	"\x01\x28" "\x00\x00" "\x02\x00" "\x03\x00" \
 	"\x04\x00" "\x05\x00" "\x06\x00" "\x07\x20" \
 	"\x08\x20" "\x09\x20" "\x0a\x20" "\x0b\x00" \
 	"\x0c\x00" "\x0d\x00" "\x0e\x00" "\x0f\x00" \
@@ -136,11 +136,12 @@
 
 #define MAP_WIDTH_PIXELS  (16*16)
 #define MAP_HEIGHT_PIXELS (2*16)
-#define MAP_LAYER_COUNT   4
+#define MAP_LAYER_COUNT   5
 #define MAP_FIRST_CODE_L1 0x01 // code at (0,0)
 #define MAP_FIRST_CODE_L2 0x01 // code at (0,0)
 #define MAP_FIRST_CODE_L3 1000085 // code at (0,0)
 #define MAP_FIRST_CODE_L4 0x04 // code at (0,0)
+#define MAP_FIRST_CODE_L5 0x01 // code at (0,0)
 
 #define MAP_HAS_SUPPDATA_LAYER1
 #define MAP_HAS_SUPPDATA_LAYER2

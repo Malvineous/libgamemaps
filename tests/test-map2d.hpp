@@ -68,6 +68,11 @@ namespace gm = camoto::gamemaps;
 #define MAP_FIRST_CODE_Y_L4 0
 #endif
 
+#ifndef MAP_FIRST_CODE_X_L5
+#define MAP_FIRST_CODE_X_L5 0
+#define MAP_FIRST_CODE_Y_L5 0
+#endif
+
 // Add a new constant as a supplementary data item
 #define ADD_SUPPITEM(suppitem) \
 	{ \
@@ -278,6 +283,12 @@ CHECK_FIRST_TILE_IN_LAYER(3)
 #endif
 CHECK_FIRST_TILE_IN_LAYER(4)
 #endif
+#if MAP_LAYER_COUNT >= 5
+#ifndef MAP_FIRST_CODE_L5
+#error MAP_FIRST_CODE_L5 must be defined for this map format
+#endif
+CHECK_FIRST_TILE_IN_LAYER(5)
+#endif
 			}
 		}
 		BOOST_REQUIRE_MESSAGE(foundFirstTile == true,
@@ -381,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TEST_NAME(codelist_valid))
 			BOOST_REQUIRE_EQUAL((*i)->y, 0);
 
 			// Type must be a valid Map2D::Layer::Item::Type value
-			BOOST_REQUIRE_LE((*i)->type, 0x000F);
+			BOOST_REQUIRE_LE((*i)->type, 0x001F);
 		}
 	}
 }

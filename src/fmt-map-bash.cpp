@@ -355,12 +355,13 @@ class BashSpriteLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class BashAttributeLayer: virtual public GenericMap2D::Layer
+class BashInvisibleLayer: virtual public GenericMap2D::Layer
 {
 	public:
-		BashAttributeLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		BashInvisibleLayer(const std::string& name, ItemPtrVectorPtr& items,
+			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
-					"Attributes",
+					name,
 					Map2D::Layer::NoCaps,
 					0, 0,
 					0, 0,
@@ -547,6 +548,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
 	Map2D::Layer::ItemPtrVectorPtr bgattributes(new Map2D::Layer::ItemPtrVector());
+	Map2D::Layer::ItemPtrVectorPtr bgpoints(new Map2D::Layer::ItemPtrVector());
 	bgtiles->reserve(mapWidth * mapHeight);
 	bgattributes->reserve(mapWidth * mapHeight);
 	for (unsigned int y = 0; y < mapHeight; y++) {
@@ -564,18 +566,30 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 				bgtiles->push_back(t);
 			}
 
-			Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-			ta->type = Map2D::Layer::Item::Blocking;
-			ta->x = x;
-			ta->y = y;
-			ta->code = (code >> 9) & 0x2F; // deselect point item flag
-			ta->blockingFlags = 0;
-			if (code & (1<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
-			if (code & (2<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
-			if (code & (4<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
-			if (code & (8<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
-			if (code & (32<<9)) ta->blockingFlags |= Map2D::Layer::Item::Slant45;
-			bgattributes->push_back(ta);
+			if ((code >> 9) & 0x2F) {
+				Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+				ta->type = Map2D::Layer::Item::Blocking;
+				ta->x = x;
+				ta->y = y;
+				ta->code = (code >> 9) & 0x2F; // deselect point item flag
+				ta->blockingFlags = 0;
+				if (code & (1<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
+				if (code & (2<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
+				if (code & (4<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
+				if (code & (8<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
+				if (code & (32<<9)) ta->blockingFlags |= Map2D::Layer::Item::Slant45;
+				bgattributes->push_back(ta);
+			}
+
+			if (code & (16<<9)) {
+				Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+				ta->type = Map2D::Layer::Item::Flags;
+				ta->x = x;
+				ta->y = y;
+				ta->code = 1;
+				ta->generalFlags = Map2D::Layer::Item::Interactive;
+				bgpoints->push_back(ta);
+			}
 
 			if (lenBG < 2) break;
 		}
@@ -619,7 +633,19 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		ta->blockingFlags |= Map2D::Layer::Item::Slant45;
 		validAttrItems->push_back(ta);
 	}
-	Map2D::LayerPtr attrLayer(new BashAttributeLayer(bgattributes, validAttrItems));
+	Map2D::LayerPtr attrLayer(new BashInvisibleLayer("Attributes", bgattributes, validAttrItems));
+
+	Map2D::Layer::ItemPtrVectorPtr validPointItems(new Map2D::Layer::ItemPtrVector());
+	{
+		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+		ta->type = Map2D::Layer::Item::Flags;
+		ta->x = 0;
+		ta->y = 0;
+		ta->code = 1;
+		ta->generalFlags = Map2D::Layer::Item::Interactive;
+		validPointItems->push_back(ta);
+	}
+	Map2D::LayerPtr pointLayer(new BashInvisibleLayer("Interactive flags", bgpoints, validPointItems));
 
 	// Read the foreground layer
 	stream::pos lenFG = fg->size();
@@ -713,6 +739,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 	layers.push_back(sprLayer);
 	layers.push_back(attrLayer);
+	layers.push_back(pointLayer);
 
 	Map2DPtr map(new GenericMap2D(
 		attributes, bash_getGraphicsFilenames,
@@ -731,7 +758,7 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
 	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 4)
+	if (map2d->getLayerCount() != 5)
 		throw stream::error("Incorrect layer count for this format.");
 
 	unsigned int mapWidth, mapHeight;
@@ -817,27 +844,27 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 					if (code & (64<<9)) std::cerr << "FIXME: Got BG tile with unknown 0x8000 flag set!" << std::endl;
 					bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
 				}
+				if (ta->type & Map2D::Layer::Item::Movement) {
+					// TEMP
+					uint16_t code = 0;
+					if (ta->movementFlags & Map2D::Layer::Item::DistanceLimit) code |= (16<<9);
+					bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
+				}
 			}
 		}
 
 		{
-			// Merge in foreground layer
-			layer = map2d->getLayer(1);
+			// Merge in interactive layer
+			layer = map2d->getLayer(4);
 			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
 			for (Map2D::Layer::ItemPtrVector::const_iterator
 				i = items->begin(); i != items->end(); i++
 			) {
 				const Map2D::Layer::ItemPtr& ta = (*i);
 				if ((ta->x > mapWidth) || (ta->y > mapHeight)) continue;
-				if (
-					((ta->code >= 0x07) && (ta->code <= 0x0A)) || // crumbling walkway
-					(ta->code == 0x7B) || // tri-shot
-					(ta->code == 0x7D) || // skull
-					((ta->code >= 0xF9) && (ta->code <= 0xFF)) // points and powerups
-				) {
-					// This is a point item, mark it as such
-					bgdata[(*i)->y * mapWidth + (*i)->x] |= 16<<9;
-				}
+
+				// This is a point item, mark it as such
+				bgdata[(*i)->y * mapWidth + (*i)->x] |= 16<<9;
 			}
 		}
 
