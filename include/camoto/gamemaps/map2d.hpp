@@ -206,6 +206,7 @@ class Map2D::Layer
 			DigitD,       ///< Small character 'D'
 			DigitE,       ///< Small character 'E'
 			DigitF,       ///< Small character 'F'
+			Interactive,  ///< Interactive item
 			NumImageTypes ///< Must be last
 		};
 
@@ -359,6 +360,7 @@ class Map2D::Layer::Item
 			Text      = 0x0002, ///< Set if text fields are valid
 			Movement  = 0x0004, ///< Set if movement fields are valid
 			Blocking  = 0x0008, ///< Set if blocking fields are valid
+			Flags     = 0x0010, ///< Set if generalFlags field is valid
 		};
 
 		unsigned int type; ///< Which fields are valid?
@@ -409,6 +411,11 @@ class Map2D::Layer::Item
 			Slant135      = 0x0040, ///< Slanted tile \, 135 degrees CCW from the horizontal
 		};
 		unsigned int blockingFlags;       ///< One or more of MovementFlags
+
+		enum GeneralFlags {
+			Interactive   = 0x0001, ///< This tile hosts an interactive item
+		};
+		GeneralFlags generalFlags;
 };
 
 /// Value to use for tilecodes that have not yet been set.

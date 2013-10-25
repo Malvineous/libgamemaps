@@ -299,6 +299,7 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 					case gm::Map2D::Layer::DigitD:
 					case gm::Map2D::Layer::DigitE:
 					case gm::Map2D::Layer::DigitF:
+					case gm::Map2D::Layer::Interactive:
 						// Display nothing, but could be changed to a question mark
 						thisTile.width = thisTile.height = 0;
 						break;
