@@ -566,18 +566,26 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 				bgtiles->push_back(t);
 			}
 
-			if ((code >> 9) & 0x2F) {
+			if ((code >> 9) & ~16) {
 				Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
 				ta->type = Map2D::Layer::Item::Blocking;
 				ta->x = x;
 				ta->y = y;
-				ta->code = (code >> 9) & 0x2F; // deselect point item flag
+				ta->code = (code >> 9) & ~16; // deselect point item flag
 				ta->blockingFlags = 0;
 				if (code & (1<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
 				if (code & (2<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
 				if (code & (4<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
 				if (code & (8<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
 				if (code & (32<<9)) ta->blockingFlags |= Map2D::Layer::Item::Slant45;
+				if (code & (64<<9)) {
+					ta->type |= Map2D::Layer::Item::Movement;
+					ta->movementFlags = Map2D::Layer::Item::DistanceLimit;
+					ta->movementDistLeft = 0;
+					ta->movementDistRight = 0;
+					ta->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
+					ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+				}
 				bgattributes->push_back(ta);
 			}
 
@@ -631,6 +639,35 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		ta->code = 32;
 		ta->blockingFlags = 0;
 		ta->blockingFlags |= Map2D::Layer::Item::Slant45;
+		validAttrItems->push_back(ta);
+	}
+	{
+		// Ladder
+		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+		ta->type = Map2D::Layer::Item::Movement;
+		ta->x = 0;
+		ta->y = 0;
+		ta->code = 64;
+		ta->movementFlags = Map2D::Layer::Item::DistanceLimit;
+		ta->movementDistLeft = 0;
+		ta->movementDistRight = 0;
+		ta->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
+		ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
+		validAttrItems->push_back(ta);
+	}
+	{
+		// Top of ladder (can stand on)
+		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
+		ta->type = Map2D::Layer::Item::Blocking | Map2D::Layer::Item::Movement;
+		ta->x = 0;
+		ta->y = 0;
+		ta->code = 64 | 4;
+		ta->blockingFlags = Map2D::Layer::Item::BlockTop;
+		ta->movementFlags = Map2D::Layer::Item::DistanceLimit;
+		ta->movementDistLeft = 0;
+		ta->movementDistRight = 0;
+		ta->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
+		ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
 		validAttrItems->push_back(ta);
 	}
 	Map2D::LayerPtr attrLayer(new BashInvisibleLayer("Attributes", bgattributes, validAttrItems));
@@ -834,22 +871,18 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 				if ((ta->x > mapWidth) || (ta->y > mapHeight)) {
 					throw stream::error("Attribute layer has tiles outside map boundary!");
 				}
+				uint16_t code = 0;
 				if (ta->type & Map2D::Layer::Item::Blocking) {
-					uint16_t code = 0;
 					if (ta->blockingFlags & Map2D::Layer::Item::BlockLeft) code |= (1<<9);
 					if (ta->blockingFlags & Map2D::Layer::Item::BlockRight) code |= (2<<9);
 					if (ta->blockingFlags & Map2D::Layer::Item::BlockTop) code |= (4<<9);
 					if (ta->blockingFlags & Map2D::Layer::Item::BlockBottom) code |= (8<<9);
 					if (ta->blockingFlags & Map2D::Layer::Item::Slant45) code |= (32<<9);
-					if (code & (64<<9)) std::cerr << "FIXME: Got BG tile with unknown 0x8000 flag set!" << std::endl;
-					bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
 				}
 				if (ta->type & Map2D::Layer::Item::Movement) {
-					// TEMP
-					uint16_t code = 0;
-					if (ta->movementFlags & Map2D::Layer::Item::DistanceLimit) code |= (16<<9);
-					bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
+					if (ta->movementFlags & Map2D::Layer::Item::DistanceLimit) code |= (64<<9);
 				}
+				bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
 			}
 		}
 
