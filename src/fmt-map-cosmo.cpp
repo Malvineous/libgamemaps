@@ -286,7 +286,8 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map::AttributePtr attrPalAnim(new Map::Attribute);
 	attrPalAnim->type = Map::Attribute::Enum;
 	attrPalAnim->name = "Palette animation";
-	attrPalAnim->desc = "Type of colour animation to use in this level.";
+	attrPalAnim->desc = "Type of colour animation to use in this level.  Only "
+		"dark magenta (EGA colour 5) is animated.";
 	attrPalAnim->enumValue = (flags >> 8) & 7;
 	attrPalAnim->enumValueNames.push_back("0 - No animation");
 	attrPalAnim->enumValueNames.push_back("1 - Lightning");
@@ -503,7 +504,7 @@ void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			((*i)->movementDistDown == Map2D::Layer::Item::DistIndeterminate)
 		) {
 			switch ((*i)->code) {
-				case 31 + 1: finalCode = 265; break; // falling star
+				case 31 + 1: finalCode = 295; break; // falling star
 			}
 		}
 		output
