@@ -69,7 +69,7 @@
 	empty_16x1 empty_16x1 empty_16x1 empty_16x1
 
 #define testdata_initialstate \
-	"\x00\x00" "\x40\x00" "\x03\x00" \
+	"\x21\x09" "\x40\x00" "\x03\x00" \
 	\
 	"\x01\x00" "\x00\x00" "\x00\x00" \
 	\

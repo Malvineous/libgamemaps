@@ -221,6 +221,109 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	;
 	lenMap -= 6;
 
+	// Set the attributes
+	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+	Map::AttributePtr attrBackdrop(new Map::Attribute);
+	attrBackdrop->type = Map::Attribute::Enum;
+	attrBackdrop->name = "Backdrop";
+	attrBackdrop->desc = "Index of backdrop to draw behind level.";
+	attrBackdrop->enumValue = flags & 0x1F;
+	attrBackdrop->enumValueNames.push_back("0 - Blank (bdblank.mni)");
+	attrBackdrop->enumValueNames.push_back("1 - Pipe (bdpipe.mni)");
+	attrBackdrop->enumValueNames.push_back("2 - Red Sky (bdredsky.mni)");
+	attrBackdrop->enumValueNames.push_back("3 - Rock (bdrocktk.mni)");
+	attrBackdrop->enumValueNames.push_back("4 - Jungle (bdjungle.mni)");
+	attrBackdrop->enumValueNames.push_back("5 - Star (bdstar.mni)");
+	attrBackdrop->enumValueNames.push_back("6 - Weird (bdwierd.mni)");
+	attrBackdrop->enumValueNames.push_back("7 - Cave (bdcave.mni)");
+	attrBackdrop->enumValueNames.push_back("8 - Ice (bdice.mni)");
+	attrBackdrop->enumValueNames.push_back("9 - Shrum (bdshrum.mni)");
+	attrBackdrop->enumValueNames.push_back("10 - Tech (bdtechms.mni)");
+	attrBackdrop->enumValueNames.push_back("11 - New sky (bdnewsky.mni)");
+	attrBackdrop->enumValueNames.push_back("12 - Star 2 (bdstar2.mni)");
+	attrBackdrop->enumValueNames.push_back("13 - Star 3 (bdstar3.mni)");
+	attrBackdrop->enumValueNames.push_back("14 - Forest (bdforest.mni)");
+	attrBackdrop->enumValueNames.push_back("15 - Mountain (bdmountn.mni)");
+	attrBackdrop->enumValueNames.push_back("16 - Guts (bdguts.mni)");
+	attrBackdrop->enumValueNames.push_back("17 - Broken Tech (bdbrktec.mni)");
+	attrBackdrop->enumValueNames.push_back("18 - Clouds (bdclouds.mni)");
+	attrBackdrop->enumValueNames.push_back("19 - Future city (bdfutcty.mni)");
+	attrBackdrop->enumValueNames.push_back("20 - Ice 2 (bdice2.mni)");
+	attrBackdrop->enumValueNames.push_back("21 - Cliff (bdcliff.mni)");
+	attrBackdrop->enumValueNames.push_back("22 - Spooky (bdspooky.mni)");
+	attrBackdrop->enumValueNames.push_back("23 - Crystal (bdcrystl.mni)");
+	attrBackdrop->enumValueNames.push_back("24 - Circuit (bdcircut.mni)");
+	attrBackdrop->enumValueNames.push_back("25 - Circuit PC (bdcircpc.mni)");
+	attributes->push_back(attrBackdrop);
+
+	Map::AttributePtr attrRain(new Map::Attribute);
+	attrRain->type = Map::Attribute::Enum;
+	attrRain->name = "Rain";
+	attrRain->desc = "Is it raining in this level?";
+	attrRain->enumValue = (flags >> 5) & 1;
+	attrRain->enumValueNames.push_back("No");
+	attrRain->enumValueNames.push_back("Yes");
+	attributes->push_back(attrRain);
+
+	Map::AttributePtr attrScrollX(new Map::Attribute);
+	attrScrollX->type = Map::Attribute::Enum;
+	attrScrollX->name = "Scroll X";
+	attrScrollX->desc = "Should the backdrop scroll horizontally?";
+	attrScrollX->enumValue = (flags >> 6) & 1;
+	attrScrollX->enumValueNames.push_back("No");
+	attrScrollX->enumValueNames.push_back("Yes");
+	attributes->push_back(attrScrollX);
+
+	Map::AttributePtr attrScrollY(new Map::Attribute);
+	attrScrollY->type = Map::Attribute::Enum;
+	attrScrollY->name = "Scroll Y";
+	attrScrollY->desc = "Should the backdrop scroll vertically?";
+	attrScrollY->enumValue = (flags >> 7) & 1;
+	attrScrollY->enumValueNames.push_back("No");
+	attrScrollY->enumValueNames.push_back("Yes");
+	attributes->push_back(attrScrollY);
+
+	Map::AttributePtr attrPalAnim(new Map::Attribute);
+	attrPalAnim->type = Map::Attribute::Enum;
+	attrPalAnim->name = "Palette animation";
+	attrPalAnim->desc = "Type of colour animation to use in this level.";
+	attrPalAnim->enumValue = (flags >> 8) & 7;
+	attrPalAnim->enumValueNames.push_back("0 - No animation");
+	attrPalAnim->enumValueNames.push_back("1 - Lightning");
+	attrPalAnim->enumValueNames.push_back("2 - Cycle: red -> yellow -> white");
+	attrPalAnim->enumValueNames.push_back("3 - Cycle: red -> green -> blue");
+	attrPalAnim->enumValueNames.push_back("4 - Cycle: black -> grey -> white");
+	attrPalAnim->enumValueNames.push_back("5 - Flashing: red -> magenta -> white");
+	attrPalAnim->enumValueNames.push_back("6 - Dark magenta -> black, bomb trigger");
+	attrPalAnim->enumValueNames.push_back("7 - Unknown/unused");
+	attributes->push_back(attrPalAnim);
+
+	Map::AttributePtr attrMusic(new Map::Attribute);
+	attrMusic->type = Map::Attribute::Enum;
+	attrMusic->name = "Music";
+	attrMusic->desc = "Index of the song to play as background music in the level.";
+	attrMusic->enumValue = flags >> 11;
+	attrMusic->enumValueNames.push_back("0 - Caves (mcaves.mni)");
+	attrMusic->enumValueNames.push_back("1 - Scarry (mscarry.mni)");
+	attrMusic->enumValueNames.push_back("2 - Boss (mboss.mni)");
+	attrMusic->enumValueNames.push_back("3 - Run Away (mrunaway.mni)");
+	attrMusic->enumValueNames.push_back("4 - Circus (mcircus.mni)");
+	attrMusic->enumValueNames.push_back("5 - Tech World (mtekwrd.mni)");
+	attrMusic->enumValueNames.push_back("6 - Easy Level (measylev.mni)");
+	attrMusic->enumValueNames.push_back("7 - Rock It (mrockit.mni)");
+	attrMusic->enumValueNames.push_back("8 - Happy (mhappy.mni)");
+	attrMusic->enumValueNames.push_back("9 - Devo (mdevo.mni)");
+	attrMusic->enumValueNames.push_back("10 - Dadoda (mdadoda.mni)");
+	attrMusic->enumValueNames.push_back("11 - Bells (mbells.mni)");
+	attrMusic->enumValueNames.push_back("12 - Drums (mdrums.mni)");
+	attrMusic->enumValueNames.push_back("13 - Banjo (mbanjo.mni)");
+	attrMusic->enumValueNames.push_back("14 - Easy 2 (measy2.mni)");
+	attrMusic->enumValueNames.push_back("15 - Tech 2 (mteck2.mni)");
+	attrMusic->enumValueNames.push_back("16 - Tech 3 (mteck3.mni)");
+	attrMusic->enumValueNames.push_back("17 - Tech 4 (mteck4.mni)");
+	attrMusic->enumValueNames.push_back("18 - ZZ Top (mzztop.mni)");
+	attributes->push_back(attrMusic);
+
 	// Read in the actor layer
 	unsigned int numActors = numActorInts / 3;
 	if (lenMap < numActors * 6) throw stream::error("Map file has been truncated!");
@@ -296,7 +399,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(actorLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
+		attributes, NO_GFX_CALLBACK,
 		Map2D::HasViewport,
 		CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
 		mapWidth, 32768 / mapWidth,
@@ -319,6 +422,62 @@ void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
 	uint16_t flags = 0;
+
+	Map::AttributePtrVectorPtr attributes = map->getAttributes();
+	if (attributes->size() != 6) {
+		throw stream::error("Cannot write map as there is an incorrect number "
+			"of attributes set.");
+	}
+	Map::Attribute *attr;
+
+	// Backdrop attribute
+	attr = attributes->at(0).get();
+	if (attr->type != Map::Attribute::Enum) {
+		throw stream::error("Cannot write map as there is an attribute of the "
+			"wrong type (backdrop != enum)");
+	}
+	flags |= attr->enumValue;
+
+	// Rain attribute
+	attr = attributes->at(1).get();
+	if (attr->type != Map::Attribute::Enum) {
+		throw stream::error("Cannot write map as there is an attribute of the "
+			"wrong type (rain != enum)");
+	}
+	flags |= attr->enumValue << 5;
+
+	// Scroll-X attribute
+	attr = attributes->at(2).get();
+	if (attr->type != Map::Attribute::Enum) {
+		throw stream::error("Cannot write map as there is an attribute of the "
+			"wrong type (scrollX != enum)");
+	}
+	flags |= attr->enumValue << 6;
+
+	// Scroll-Y attribute
+	attr = attributes->at(3).get();
+	if (attr->type != Map::Attribute::Enum) {
+		throw stream::error("Cannot write map as there is an attribute of the "
+			"wrong type (scrollY != enum)");
+	}
+	flags |= attr->enumValue << 7;
+
+	// Palette animation attribute
+	attr = attributes->at(4).get();
+	if (attr->type != Map::Attribute::Enum) {
+		throw stream::error("Cannot write map as there is an attribute of the "
+			"wrong type (palanim != enum)");
+	}
+	flags |= attr->enumValue << 8;
+
+	// Music attribute
+	attr = attributes->at(5).get();
+	if (attr->type != Map::Attribute::Enum) {
+		throw stream::error("Cannot write map as there is an attribute of the "
+			"wrong type (music != enum)");
+	}
+	flags |= attr->enumValue << 11;
+
 	output
 		<< u16le(flags)
 		<< u16le(mapWidth)
