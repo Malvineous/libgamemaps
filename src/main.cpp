@@ -34,6 +34,7 @@
 #include "fmt-map-wacky.hpp"
 #include "fmt-map-wordresc.hpp"
 #include "fmt-map-xargon.hpp"
+#include "fmt-map-zone66.hpp"
 
 namespace camoto {
 namespace gamemaps {
@@ -73,6 +74,7 @@ ActualManager::ActualManager()
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WordRescueMapType()));
 	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
+	this->vcTypes.push_back(MapTypePtr(new Zone66MapType()));
 }
 
 ActualManager::~ActualManager()

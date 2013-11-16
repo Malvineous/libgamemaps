@@ -15,6 +15,7 @@ libgamemaps_la_SOURCES += fmt-map-vinyl.cpp
 libgamemaps_la_SOURCES += fmt-map-wacky.cpp
 libgamemaps_la_SOURCES += fmt-map-wordresc.cpp
 libgamemaps_la_SOURCES += fmt-map-xargon.cpp
+libgamemaps_la_SOURCES += fmt-map-zone66.cpp
 libgamemaps_la_SOURCES += map-generic.cpp
 libgamemaps_la_SOURCES += map2d-generic.cpp
 libgamemaps_la_SOURCES += map2d_layer.cpp
@@ -34,6 +35,7 @@ EXTRA_libgamemaps_la_SOURCES += fmt-map-vinyl.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-wacky.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-wordresc.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-xargon.hpp
+EXTRA_libgamemaps_la_SOURCES += fmt-map-zone66.hpp
 EXTRA_libgamemaps_la_SOURCES += map-generic.hpp
 EXTRA_libgamemaps_la_SOURCES += map2d-generic.hpp
 
