@@ -139,6 +139,7 @@ finishTesting:
 	if (suppList.size() > 0) {
 		for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
 			try {
+				std::cerr << "Opening supplemental file " << i->second << std::endl;
 				stream::file_sptr suppStream(new stream::file());
 				suppStream->open(i->second);
 				suppData[i->first] = suppStream;
@@ -152,6 +153,8 @@ finishTesting:
 	}
 
 	// Open the graphics file
+	std::cout << "Opening tileset " << filename << " as "
+		<< pGfxType->getCode() << std::endl;
 	gg::TilesetPtr pTileset(pGfxType->open(psTileset, suppData));
 	assert(pTileset);
 
@@ -270,7 +273,12 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 				// Tile hasn't been cached yet, load it from the tileset
 				gg::ImagePtr img;
 				gm::Map2D::Layer::ImageType imgType;
-				imgType = layer->imageFromCode(*t, allTilesets, &img);
+				try {
+					imgType = layer->imageFromCode(*t, allTilesets, &img);
+				} catch (const std::exception& e) {
+					std::cerr << "Error loading image: " << e.what() << std::endl;
+					imgType = gm::Map2D::Layer::Unknown;
+				}
 				switch (imgType) {
 					case gm::Map2D::Layer::Supplied:
 						assert(img);
@@ -626,6 +634,7 @@ finishTesting:
 				i = suppList.begin(); i != suppList.end(); i++
 			) {
 				try {
+					std::cerr << "Opening supplemental file " << i->second << std::endl;
 					stream::file_sptr suppStream(new stream::file());
 					suppStream->open(i->second);
 					suppData[i->first] = suppStream;
