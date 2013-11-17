@@ -287,8 +287,7 @@ SuppFilenames Zone66MapType::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;
-	char episode = filename[3];
-	supps[SuppItem::Extra1] = std::string("map") + episode + "dat.z66";
+	supps[SuppItem::Extra1] = filename.substr(0, filename.length() - 4) + "dat.z66";
 	return supps;
 }
 
