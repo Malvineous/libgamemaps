@@ -22,10 +22,10 @@
 
 // Include all the file formats for the Manager to load
 #include "fmt-map-bash.hpp"
-#include "fmt-map-ddave.hpp"
 #include "fmt-map-ccaves.hpp"
 #include "fmt-map-ccomic.hpp"
 #include "fmt-map-cosmo.hpp"
+#include "fmt-map-ddave.hpp"
 #include "fmt-map-harry.hpp"
 #include "fmt-map-hocus.hpp"
 #include "fmt-map-nukem2.hpp"
@@ -61,10 +61,10 @@ const ManagerPtr getManager()
 ActualManager::ActualManager()
 {
 	this->vcTypes.push_back(MapTypePtr(new BashMapType()));
-	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CCavesMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CComicMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
+	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HocusMapType()));
 	this->vcTypes.push_back(MapTypePtr(new Nukem2MapType()));
