@@ -63,10 +63,10 @@ using namespace camoto::gamegraphics;
 class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
 {
 	public:
-		CCavesBackgroundLayer(ItemPtrVectorPtr& items,
+		CCavesBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
-					"Background",
+					name,
 					Map2D::Layer::NoCaps,
 					0, 0,
 					0, 0,
@@ -486,8 +486,8 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer(tiles, validBGItems));
-	Map2D::LayerPtr fgLayer(new CCavesBackgroundLayer(fgtiles, validFGItems));
+	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer("Background", tiles, validBGItems));
+	Map2D::LayerPtr fgLayer(new CCavesBackgroundLayer("Overlay", fgtiles, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
