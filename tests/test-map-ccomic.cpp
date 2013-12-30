@@ -18,57 +18,64 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define testdata_initialstate \
-	"\x03\x00" "\x05\x00" \
-	"\x02\x01\x00" \
-	"\x12\x11\x10" \
-	"\x22\x21\x20" \
-	"\x32\x31\x30" \
-	"\x42\x41\x40"
-
-#define MAP_WIDTH_PIXELS  (3*16)
-#define MAP_HEIGHT_PIXELS (5*16)
-#define MAP_LAYER_COUNT   1
-#define MAP_FIRST_CODE_L1 0x02
-
-#define MAP_CLASS fmt_map_ccomic
-#define MAP_TYPE  "map-ccomic"
 #include "test-map2d.hpp"
 
-// Test some invalid formats to make sure they're not identified as valid
-// archives.  Note that they can still be opened though (by 'force'), this
-// only checks whether they look like valid files or not.
+class test_map_ccomic: public test_map2d
+{
+	public:
+		test_map_ccomic()
+		{
+			this->type = "map-ccomic";
+			this->pxWidth = 3 * 16;
+			this->pxHeight = 5 * 16;
+			this->numLayers = 1;
+			this->mapCode[0].code = 0x02;
+		}
 
-// The "c00" test has already been performed in test-map.hpp to ensure the
-// initial state is correctly identified as a valid archive.
+		void addTests()
+		{
+			this->test_map2d::addTests();
 
-// Too short
-ISINSTANCE_TEST(c01,
-	"\x03\x00" "\x05"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c00: Initial state
+			this->isInstance(MapType::DefinitelyYes, this->initialstate());
 
-// Dimensions too large for available data
-ISINSTANCE_TEST(c02,
-	"\x03\x00" "\x06\x00"
-	"\x02\x01\x00"
-	"\x12\x11\x10"
-	"\x22\x21\x20"
-	"\x32\x31\x30"
-	"\x42\x41\x40"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c01: Too short
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x03\x00" "\x05"
+			));
 
-// First tile byte is out of range
-ISINSTANCE_TEST(c03,
-	"\x03\x00" "\x05\x00"
-	"\xFF\x01\x00"
-	"\x12\x11\x10"
-	"\x22\x21\x20"
-	"\x32\x31\x30"
-	"\x42\x41\x40"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c02: Dimensions too large for available data
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x03\x00" "\x06\x00"
+				"\x02\x01\x00"
+				"\x12\x11\x10"
+				"\x22\x21\x20"
+				"\x32\x31\x30"
+				"\x42\x41\x40"
+			));
+
+			// c03: First tile byte is out of range
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x03\x00" "\x05\x00"
+				"\xFF\x01\x00"
+				"\x12\x11\x10"
+				"\x22\x21\x20"
+				"\x32\x31\x30"
+				"\x42\x41\x40"
+			));
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"\x03\x00" "\x05\x00"
+				"\x02\x01\x00"
+				"\x12\x11\x10"
+				"\x22\x21\x20"
+				"\x32\x31\x30"
+				"\x42\x41\x40"
+			);
+		}
+};
+
+IMPLEMENT_TESTS(map_ccomic);

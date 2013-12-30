@@ -18,65 +18,63 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// 16 empty tiles in a line
-#define empty_16x1 \
-	"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20"
-
-/// 64 empty tiles in a line (one entire map row)
-#define empty_64x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-
-/// 10 empty rows
-#define empty_64x10 \
-	empty_64x1 empty_64x1 empty_64x1 empty_64x1 empty_64x1 \
-	empty_64x1 empty_64x1 empty_64x1 empty_64x1 empty_64x1
-
-/// 64x63 empty tiles (empty map except for one row)
-#define empty_64x63 \
-	empty_64x10 empty_64x10 empty_64x10 empty_64x10 empty_64x10 empty_64x10 \
-	empty_64x1 empty_64x1 empty_64x1
-
-#define testdata_initialstate \
-	"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20" \
-	empty_16x1 empty_16x1 empty_16x1 \
-	empty_64x63
-
-#define testdata_initialstate_Layer1 \
-	"\x03\x00" \
-	"\x10\x00" "\x20\x00" "\x20\x00" "\x30\x00" "\xf0\x00\x07\x00" "\x16\x00" \
-	"\x20\x00" "\x30\x00" "\x30\x00" "\x40\x00" "\xf0\x00\x07\x00" "\x16\x00" \
-	"\x30\x00" "\x40\x00" "\x00\x00" "\x10\x00" "\xb0\x04\x03\x00" "\x43\x00"
-
-#define MAP_WIDTH_PIXELS  (64*32)
-#define MAP_HEIGHT_PIXELS (64*32)
-#define MAP_LAYER_COUNT   1
-#define MAP_FIRST_CODE_L1 0x20
-
-#define MAP_HAS_SUPPDATA_LAYER1
-
-#define MAP_CLASS fmt_map_wacky
-#define MAP_TYPE  "map-wacky"
 #include "test-map2d.hpp"
 
-// Test some invalid formats to make sure they're not identified as valid
-// archives.  Note that they can still be opened though (by 'force'), this
-// only checks whether they look like valid files or not.
+class test_suppl1_map_wacky: public test_map2d
+{
+	public:
+		test_suppl1_map_wacky()
+		{
+			this->type = "map-wacky.l1";
+		}
 
-// The "c00" test has already been performed in test-map.hpp to ensure the
-// initial state is correctly identified as a valid archive.
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"\x03\x00"
+				"\x10\x00" "\x20\x00" "\x20\x00" "\x30\x00" "\xf0\x00\x07\x00" "\x16\x00"
+				"\x20\x00" "\x30\x00" "\x30\x00" "\x40\x00" "\xf0\x00\x07\x00" "\x16\x00"
+				"\x30\x00" "\x40\x00" "\x00\x00" "\x10\x00" "\xb0\x04\x03\x00" "\x43\x00"
+			);
+		}
+};
 
-// Too small
-ISINSTANCE_TEST(c01,
-	empty_64x63
-	,
-	gm::MapType::DefinitelyNo
-);
+class test_map_wacky: public test_map2d
+{
+	public:
+		test_map_wacky()
+		{
+			this->type = "map-wacky";
+			this->pxWidth = 64 * 32;
+			this->pxHeight = 64 * 32;
+			this->numLayers = 1;
+			this->mapCode[0].code = 0x20;
+			this->suppResult[SuppItem::Layer1].reset(new test_suppl1_map_wacky());
+		}
 
-// Invalid tile code
-ISINSTANCE_TEST(c02,
-	"\xFF\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20"
-	empty_16x1 empty_16x1 empty_16x1
-	empty_64x63
-	,
-	gm::MapType::DefinitelyNo
-);
+		void addTests()
+		{
+			this->test_map2d::addTests();
+
+			// c00: Initial state
+			this->isInstance(MapType::DefinitelyYes, this->initialstate());
+
+			// c01: Too small
+			this->isInstance(MapType::DefinitelyNo, std::string(64 * 63, '\x20'));
+
+			// c02: Invalid tile code
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\xFF\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20"
+				) + std::string(16 * 3 + 64 * 63, '\x20')
+			);
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20"
+			) + std::string(16 * 3 + 64 * 63, '\x20');
+		}
+};
+
+IMPLEMENT_TESTS(map_wacky);

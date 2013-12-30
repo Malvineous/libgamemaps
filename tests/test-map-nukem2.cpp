@@ -18,218 +18,154 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// 16 empty tiles in a line
-#define empty_16x1 \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-/// 64x4 empty tiles in a line (four entire map rows)
-#define empty_64x4 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-
-/// 46x1 empty tiles in a line (trailing end in 64x511 map to pad to 32750 bytes)
-#define empty_46x1 \
-	empty_16x1 empty_16x1 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-/// 510 empty map rows
-#define empty_64x510 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_46x1
-
-#define testdata_initialstate \
-	"\x35\x00" \
-	"czone1.mni  \0" \
-	"drop1.mni   \0" \
-	"demosong.imf\0" \
-	"\x01\x02\x00\x00" \
-	"\x03\x00" /* Actor ints */ \
-	"\x02\x00\x00\x00\x00\x00" \
-	"\x40\x00" /* Map width */ \
-	"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0" \
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0" \
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0" \
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0" \
-	empty_16x1 empty_16x1 \
-	empty_64x510 \
-	"\x0B\x00" /* Extra length */ \
-	"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67" \
-	"\x00\x00" \
-	"attrfile.mni\0" \
-	"tile.mni\0\0\0\0\0" \
-	"maskfile.mni\0"
-
-#define MAP_WIDTH_PIXELS  (64*8)
-#define MAP_HEIGHT_PIXELS (511*8)
-#define MAP_LAYER_COUNT   3
-#define MAP_FIRST_CODE_L1 0x01 // 0x00 is empty tile and thus skipped
-#define MAP_FIRST_CODE_X_L1 0
-#define MAP_FIRST_CODE_Y_L1 0
-#define MAP_FIRST_CODE_L2 0x70
-#define MAP_FIRST_CODE_X_L2 0
-#define MAP_FIRST_CODE_Y_L2 0
-#define MAP_FIRST_CODE_L3 0x02
-#define MAP_FIRST_CODE_X_L3 0
-#define MAP_FIRST_CODE_Y_L3 0
-
-#define MAP_CLASS fmt_map_nukem2
-#define MAP_TYPE  "map-nukem2"
 #include "test-map2d.hpp"
 
-// Test some invalid formats to make sure they're not identified as valid
-// archives.  Note that they can still be opened though (by 'force'), this
-// only checks whether they look like valid files or not.
+class test_map_nukem2: public test_map2d
+{
+	public:
+		test_map_nukem2()
+		{
+			this->type = "map-nukem2";
+			this->pxWidth = 64 * 8;
+			this->pxHeight = 511 * 8;
+			this->numLayers = 3;
+			this->mapCode[0].code = 0x01;
+			this->mapCode[1].code = 0x70;
+			this->mapCode[2].code = 0x02;
+		}
 
-// The "c00" test has already been performed in test-map.hpp to ensure the
-// initial state is correctly identified as a valid archive.
+		void addTests()
+		{
+			this->test_map2d::addTests();
 
+			// c00: Initial state
+			this->isInstance(MapType::DefinitelyYes, this->initialstate());
 
-// Too short
-ISINSTANCE_TEST(c01,
-	"\x35\x00"
-	"czone1.mni  \0"
-	"drop1.mni   \0"
-	"demosong.imf\0"
-	"\x01\x02\x00\x00"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c01: Too short
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x35\x00"
+				"czone1.mni  \0"
+				"drop1.mni   \0"
+				"demosong.imf\0"
+				"\x01\x02\x00\x00"
+			));
 
-// Offset past EOF
-ISINSTANCE_TEST(c02,
-	"\x00\xF0"
-	"czone1.mni  \0"
-	"drop1.mni   \0"
-	"demosong.imf\0"
-	"\x01\x02\x00\x00"
-	"\x03\x00" /* Actor ints */
-	"\x02\x00\x00\x00\x00\x00"
-	"\x40\x00" /* Map width */
-	"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	empty_16x1 empty_16x1
-	empty_64x510
-	"\x0B\x00" /* Extra length */
-	"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
-	"\x00\x00"
-	"attrfile.mni\0"
-	"tile.mni\0\0\0\0\0"
-	"maskfile.mni\0"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c02: Offset past EOF
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x00\xF0"
+				"czone1.mni  \0"
+				"drop1.mni   \0"
+				"demosong.imf\0"
+				"\x01\x02\x00\x00"
+				"\x03\x00" /* Actor ints */
+				"\x02\x00\x00\x00\x00\x00"
+				"\x40\x00" /* Map width */
+				"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+			) + std::string((16 * 2 + 64 * 510 + 46) * 2, '\x00') + STRING_WITH_NULLS(
+				"\x0B\x00" /* Extra length */
+				"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
+				"\x00\x00"
+				"attrfile.mni\0"
+				"tile.mni\0\0\0\0\0"
+				"maskfile.mni\0"
+			));
 
-// Actors go past EOF
-ISINSTANCE_TEST(c03,
-	"\x35\x00"
-	"czone1.mni  \0"
-	"drop1.mni   \0"
-	"demosong.imf\0"
-	"\x01\x02\x00\x00"
-	"\x00\xFF" /* Actor ints */
-	"\x02\x00\x00\x00\x00\x00"
-	"\x40\x00" /* Map width */
-	"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	empty_16x1 empty_16x1
-	empty_64x510
-	"\x0B\x00" /* Extra length */
-	"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
-	"\x00\x00"
-	"attrfile.mni\0"
-	"tile.mni\0\0\0\0\0"
-	"maskfile.mni\0"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c03: Actors go past EOF
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x35\x00"
+				"czone1.mni  \0"
+				"drop1.mni   \0"
+				"demosong.imf\0"
+				"\x01\x02\x00\x00"
+				"\x00\xFF" /* Actor ints */
+				"\x02\x00\x00\x00\x00\x00"
+				"\x40\x00" /* Map width */
+				"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+			) + std::string((16 * 2 + 64 * 510 + 46) * 2, '\x00') + STRING_WITH_NULLS(
+				"\x0B\x00" /* Extra length */
+				"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
+				"\x00\x00"
+				"attrfile.mni\0"
+				"tile.mni\0\0\0\0\0"
+				"maskfile.mni\0"
+			));
 
-// Extra data too long
-ISINSTANCE_TEST(c04,
-	"\x35\x00"
-	"czone1.mni  \0"
-	"drop1.mni   \0"
-	"demosong.imf\0"
-	"\x01\x02\x00\x00"
-	"\x03\x00" /* Actor ints */
-	"\x02\x00\x00\x00\x00\x00"
-	"\x40\x00" /* Map width */
-	"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	empty_16x1 empty_16x1
-	empty_64x510
-	"\x00\xF0" /* Extra length */
-	"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
-	"\x00\x00"
-	"attrfile.mni\0"
-	"tile.mni\0\0\0\0\0"
-	"maskfile.mni\0"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c04: Extra data too long
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x35\x00"
+				"czone1.mni  \0"
+				"drop1.mni   \0"
+				"demosong.imf\0"
+				"\x01\x02\x00\x00"
+				"\x03\x00" /* Actor ints */
+				"\x02\x00\x00\x00\x00\x00"
+				"\x40\x00" /* Map width */
+				"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+			) + std::string((16 * 2 + 64 * 510 + 46) * 2, '\x00') + STRING_WITH_NULLS(
+				"\x00\xF0" /* Extra length */
+				"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
+				"\x00\x00"
+				"attrfile.mni\0"
+				"tile.mni\0\0\0\0\0"
+				"maskfile.mni\0"
+			));
 
-// Missing optional fields
-ISINSTANCE_TEST(c05,
-	"\x35\x00"
-	"czone1.mni  \0"
-	"drop1.mni   \0"
-	"demosong.imf\0"
-	"\x01\x02\x00\x00"
-	"\x03\x00" /* Actor ints */
-	"\x02\x00\x00\x00\x00\x00"
-	"\x40\x00" /* Map width */
-	"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
-	empty_16x1 empty_16x1
-	empty_64x510
-	"\x0B\x00" /* Extra length */
-	"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
-	"\x00\x00"
-	"attrfile.mni\0"
-	"tile.mni\0\0\0\0\0"
-	,
-	gm::MapType::PossiblyYes
-);
+			// c05: Missing optional fields
+			this->isInstance(MapType::PossiblyYes, STRING_WITH_NULLS(
+				"\x35\x00"
+				"czone1.mni  \0"
+				"drop1.mni   \0"
+				"demosong.imf\0"
+				"\x01\x02\x00\x00"
+				"\x03\x00" /* Actor ints */
+				"\x02\x00\x00\x00\x00\x00"
+				"\x40\x00" /* Map width */
+				"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+			) + std::string((16 * 2 + 64 * 510 + 46) * 2, '\x00') + STRING_WITH_NULLS(
+				"\x0B\x00" /* Extra length */
+				"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
+				"\x00\x00"
+				"attrfile.mni\0"
+				"tile.mni\0\0\0\0\0"
+			));
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"\x35\x00"
+				"czone1.mni  \0"
+				"drop1.mni   \0"
+				"demosong.imf\0"
+				"\x01\x02\x00\x00"
+				"\x03\x00" /* Actor ints */
+				"\x02\x00\x00\x00\x00\x00"
+				"\x40\x00" /* Map width */
+				"\x01\xC0\x10\x00\x40\x1F\x20\x00\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+				"\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0\x01\xC0"
+			) + std::string((16 * 2 + 64 * 510 + 46) * 2, '\x00') + STRING_WITH_NULLS(
+				"\x0B\x00" /* Extra length */
+				"\xFF\x03\x02\x01\xFE\x23\x45\x03\x67"
+				"\x00\x00"
+				"attrfile.mni\0"
+				"tile.mni\0\0\0\0\0"
+				"maskfile.mni\0"
+			);
+		}
+};
+
+IMPLEMENT_TESTS(map_nukem2);

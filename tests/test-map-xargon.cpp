@@ -18,124 +18,97 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// 16 empty tiles in a line
-#define empty_16x1 \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-/// 128x1 empty tiles in a line (one entire map rows)
-#define empty_128x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-
-/// 63 empty map rows
-#define empty_128x63 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	\
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1 empty_128x1 \
-	empty_128x1 empty_128x1 empty_128x1
-
-/// 97 bytes of nothing
-#define empty_savedata \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00"
-
-#define testdata_initialstate_Extra1 \
-	"\x00\x00\x00\x00\x00\x00\x01" "0" \
-	"\x01\x00\x00\x00\x00\x00\x03" "one" \
-	"\x02\x00\x00\x00\x00\x00\x03" "two"
-
-#define testdata_initialstate \
-	"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_128x63 \
-	"\x01\x00" \
-	"\x01" "\x00\x00" "\x00\x00" \
-	"\x00\x00" "\x00\x00" \
-	"\x10\x00" "\x10\x00" /* TODO: Use real width and height */ \
-	"\x00\x00" "\x00\x00" \
-	"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00" \
-	"\x00\x00" "\x00\x00" \
-	empty_savedata
-
-#define MAP_WIDTH_PIXELS  (128*16)
-#define MAP_HEIGHT_PIXELS (64*16)
-#define MAP_LAYER_COUNT   2
-#define MAP_FIRST_CODE_L1 0x01
-#define MAP_FIRST_CODE_L2 0x01
-
-#define MAP_HAS_SUPPDATA_EXTRA1
-
-#define MAP_CLASS fmt_map_xargon
-#define MAP_TYPE  "map-xargon"
 #include "test-map2d.hpp"
 
-// Test some invalid formats to make sure they're not identified as valid
-// archives.  Note that they can still be opened though (by 'force'), this
-// only checks whether they look like valid files or not.
+class test_suppx1_map_xargon: public test_map2d
+{
+	public:
+		test_suppx1_map_xargon()
+		{
+			this->type = "map-xargon.x1";
+		}
 
-// The "c00" test has already been performed in test-map.hpp to ensure the
-// initial state is correctly identified as a valid archive.
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"\x00\x00\x00\x00\x00\x00\x01" "0"
+				"\x01\x00\x00\x00\x00\x00\x03" "one"
+				"\x02\x00\x00\x00\x00\x00\x03" "two"
+			);
+		}
+};
 
+class test_map_xargon: public test_map2d
+{
+	public:
+		test_map_xargon()
+		{
+			this->type = "map-xargon";
+			this->pxWidth = 128 * 16;
+			this->pxHeight = 64 * 16;
+			this->numLayers = 2;
+			this->mapCode[0].code = 0x01;
+			this->mapCode[1].code = 0x01;
+			this->suppResult[SuppItem::Extra1].reset(new test_suppx1_map_xargon());
+		}
 
-// Too small
-ISINSTANCE_TEST(c01,
-	"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
-	,
-	gm::MapType::DefinitelyNo
-);
+		void addTests()
+		{
+			this->test_map2d::addTests();
 
-// Exact size w/ no text section
-ISINSTANCE_TEST(c02,
-	"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-	empty_16x1 empty_16x1 empty_16x1
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-	empty_128x63
-	"\x01\x00"
-	"\x01" "\x10\x00" "\x10\x00"
-	"\x00\x00" "\x00\x00"
-	"\x00\x00" "\x00\x00"
-	"\x00\x00" "\x00\x00"
-	"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
-	"\x00\x00" "\x00\x00"
-	empty_savedata
-	,
-	gm::MapType::DefinitelyYes
-);
+			// c00: Initial state
+			this->isInstance(MapType::DefinitelyYes, this->initialstate());
 
-// Truncated object layer
-ISINSTANCE_TEST(c03,
-	"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-	empty_16x1 empty_16x1 empty_16x1
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-	empty_128x63
-	"\x01\x00"
-	"\x01"
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c01: Too short
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+			));
+
+			// c02: Exact size w/ no text section
+			this->isInstance(MapType::DefinitelyYes,
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00') + STRING_WITH_NULLS(
+					"\x01\x00"
+					"\x01" "\x10\x00" "\x10\x00"
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+				) + std::string(97, '\x00') // empty savedata
+			);
+
+			// c03: Truncated object layer
+			this->isInstance(MapType::DefinitelyNo,
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00') + STRING_WITH_NULLS(
+					"\x01\x00"
+					"\x01"
+				)
+			);
+		}
+
+		virtual std::string initialstate()
+		{
+			return
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00') + STRING_WITH_NULLS(
+					"\x01\x00"
+					"\x01" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+				) + std::string(97, '\x00') // empty savedata
+			;
+		}
+};
+
+IMPLEMENT_TESTS(map_xargon);

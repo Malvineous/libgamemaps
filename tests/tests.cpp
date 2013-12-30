@@ -19,19 +19,18 @@
  */
 
 #define BOOST_TEST_MODULE libgamemaps
+#ifndef __WIN32__
+// Dynamically link to the Boost library on non-Windows platforms.
 #define BOOST_TEST_DYN_LINK
+#endif
 #include <boost/test/unit_test.hpp>
-
-#include <iostream>
 #include <iomanip>
-
-#include <camoto/stream.hpp>
 #include <camoto/debug.hpp> // for ANSI colour constants
 #include "tests.hpp"
 
 using namespace camoto;
 
-void default_sample::printNice(boost::test_tools::predicate_result& res,
+void test_main::printNice(boost::test_tools::predicate_result& res,
 	const std::string& s, const std::string& diff)
 {
 	const char *c = CLR_YELLOW;
@@ -62,7 +61,7 @@ void default_sample::printNice(boost::test_tools::predicate_result& res,
 	return;
 }
 
-void default_sample::print_wrong(boost::test_tools::predicate_result& res,
+void test_main::print_wrong(boost::test_tools::predicate_result& res,
 	const std::string& strExpected, const std::string& strResult)
 {
 	res.message() << "\nExp: ";
@@ -74,7 +73,7 @@ void default_sample::print_wrong(boost::test_tools::predicate_result& res,
 	return;
 }
 
-boost::test_tools::predicate_result default_sample::is_equal(
+boost::test_tools::predicate_result test_main::is_equal(
 	const std::string& strExpected, const std::string& strCheck)
 {
 	if (strExpected.compare(strCheck)) {

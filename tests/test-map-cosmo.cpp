@@ -18,140 +18,82 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// 16 empty tiles in a line
-#define empty_16x1 \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-/// 64x4 empty tiles in a line (four entire map rows)
-#define empty_64x4 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-
-/// 511 empty map rows
-#define empty_64x511 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 empty_64x4 \
-	empty_64x4 empty_64x4 empty_64x4 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1 \
-	empty_16x1 empty_16x1 empty_16x1 empty_16x1
-
-#define testdata_initialstate \
-	"\x21\x09" "\x40\x00" "\x03\x00" \
-	\
-	"\x01\x00" "\x00\x00" "\x00\x00" \
-	\
-	"\x00\x00\x08\x00\x10\x00\x18\x00\x20\x00\x28\x00\x30\x00\x38\x00" \
-	"\x40\x00\x48\x00\x50\x00\x58\x00\x60\x00\x68\x00\x70\x00\x78\x00" \
-	empty_16x1 empty_16x1 empty_16x1 \
-	empty_64x511
-
-#define MAP_WIDTH_PIXELS  (64*8)
-#define MAP_HEIGHT_PIXELS (512*8)
-#define MAP_LAYER_COUNT   2
-#define MAP_FIRST_CODE_L1 0x08 // 0x00 is empty tile and thus skipped
-#define MAP_FIRST_CODE_X_L1 1
-#define MAP_FIRST_CODE_Y_L1 0
-#define MAP_FIRST_CODE_L2 0x01
-#define MAP_FIRST_CODE_X_L2 0
-#define MAP_FIRST_CODE_Y_L2 0
-
-#define MAP_CLASS fmt_map_cosmo
-#define MAP_TYPE  "map-cosmo"
 #include "test-map2d.hpp"
 
-// Test some invalid formats to make sure they're not identified as valid
-// archives.  Note that they can still be opened though (by 'force'), this
-// only checks whether they look like valid files or not.
+class test_map_cosmo: public test_map2d
+{
+	public:
+		test_map_cosmo()
+		{
+			this->type = "map-cosmo";
+			this->pxWidth = 64 * 8;
+			this->pxHeight = 512 * 8;
+			this->numLayers = 2;
+			this->mapCode[0].x = 1;
+			this->mapCode[0].y = 0;
+			this->mapCode[0].code = 0x08;
+			this->mapCode[1].x = 0;
+			this->mapCode[1].y = 0;
+			this->mapCode[1].code = 0x01;
+		}
 
-// The "c00" test has already been performed in test-map.hpp to ensure the
-// initial state is correctly identified as a valid archive.
+		void addTests()
+		{
+			this->test_map2d::addTests();
 
+			// c00: Initial state
+			this->isInstance(MapType::DefinitelyYes, this->initialstate());
 
-// Too small
-#define TOO_SHORT \
-	"\x00\x00" "\x40\x00" "\x00\x00" \
-	\
-	"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00" \
-	"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00" \
-	empty_16x1 empty_16x1 empty_16x1
-ISINSTANCE_TEST(c01a,
-	TOO_SHORT
-	,
-	gm::MapType::DefinitelyNo
-);
-// Just large enough
-ISINSTANCE_TEST(c01b,
-	TOO_SHORT empty_64x511
-	,
-	gm::MapType::DefinitelyYes
-);
-#undef TOO_SHORT
+			std::string tooShort = STRING_WITH_NULLS(
+				"\x00\x00" "\x40\x00" "\x00\x00"
 
-// Map too wide
-ISINSTANCE_TEST(c02,
-	"\x00\x00" "\x00\xf0" "\x00\x00" \
-	\
-	"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00" \
-	"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00" \
-	empty_16x1 empty_16x1 empty_16x1 \
-	empty_64x511
-	,
-	gm::MapType::DefinitelyNo
-);
+				"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00"
+				"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00"
+				) + std::string((16 * 3) * 2, '\0');
 
-// Too many actors
-ISINSTANCE_TEST(c03,
-	"\x00\x00" "\x00\x40" "\x00\xf0" \
-	\
-	"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00" \
-	"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00" \
-	empty_16x1 empty_16x1 empty_16x1 \
-	empty_64x511
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c01: Too short
+			this->isInstance(MapType::DefinitelyNo, tooShort);
 
-// More actors than space in the file
-ISINSTANCE_TEST(c04,
-	"\x00\x00" "\x00\x40" "\x00\x10" \
-	\
-	"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00" \
-	"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00" \
-	empty_16x1 empty_16x1 empty_16x1 \
-	empty_64x511
-	,
-	gm::MapType::DefinitelyNo
-);
+			// c02: Just large enough
+			this->isInstance(MapType::DefinitelyYes, tooShort
+				+ std::string((64 * 511) * 2, '\0'));
+
+			// c03: Map too wide
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x00\x00" "\x00\xf0" "\x00\x00"
+
+				"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00"
+				"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00"
+				) + std::string((16 * 3 + 64 * 511) * 2, '\0'));
+
+			// c04: Too many actors
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x00\x00" "\x00\x40" "\x00\xf0"
+
+				"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00"
+				"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00"
+				) + std::string((16 * 3 + 64 * 511) * 2, '\0'));
+
+			// c05: More actors than space in the file
+			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
+				"\x00\x00" "\x00\x40" "\x00\x10"
+
+				"\x01\x00\x00\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00"
+				"\x08\x00\x09\x00\x0a\x00\x0b\x00\x0c\x00\x0d\x00\x0e\x00\x0f\x00"
+				) + std::string((16 * 3 + 64 * 511) * 2, '\0'));
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+			"\x21\x09" "\x40\x00" "\x03\x00"
+
+				"\x01\x00" "\x00\x00" "\x00\x00"
+
+				"\x00\x00\x08\x00\x10\x00\x18\x00\x20\x00\x28\x00\x30\x00\x38\x00"
+				"\x40\x00\x48\x00\x50\x00\x58\x00\x60\x00\x68\x00\x70\x00\x78\x00"
+				) + std::string((16 * 3 + 64 * 511) * 2, '\0');
+		}
+};
+
+IMPLEMENT_TESTS(map_cosmo);

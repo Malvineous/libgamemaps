@@ -173,23 +173,23 @@ MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
-	// TESTED BY: fmt_map_cosmo_isinstance_c01/c01a
+	// TESTED BY: fmt_map_cosmo_isinstance_c01/c02
 	if (lenMap < 6 + CCA_LAYER_LEN_BG) return MapType::DefinitelyNo; // too short
 
 	uint16_t mapWidth;
 	psMap->seekg(2, stream::start);
 	psMap >> u16le(mapWidth);
 
-	// TESTED BY: fmt_map_cosmo_isinstance_c02
+	// TESTED BY: fmt_map_cosmo_isinstance_c03
 	if (mapWidth > CCA_MAX_WIDTH) return MapType::DefinitelyNo; // map too wide
 
 	uint16_t numActorInts;
 	psMap >> u16le(numActorInts);
 
-	// TESTED BY: fmt_map_cosmo_isinstance_c03
+	// TESTED BY: fmt_map_cosmo_isinstance_c04
 	if (numActorInts > (CCA_MAX_ACTORS * 3)) return MapType::DefinitelyNo; // too many actors
 
-	// TESTED BY: fmt_map_cosmo_isinstance_c04
+	// TESTED BY: fmt_map_cosmo_isinstance_c05
 	if ((unsigned)(6 + numActorInts * 3) > lenMap) {
 		// This doesn't count the BG layer, because it seems to be possible for
 		// it to be an arbitrary size - missing tiles are just left as blanks

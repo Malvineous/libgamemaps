@@ -18,411 +18,179 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/test/unit_test.hpp>
+#ifndef _CAMOTO_GAMEMAPS_TEST_MAP2D_HPP_
+#define _CAMOTO_GAMEMAPS_TEST_MAP2D_HPP_
 
+#include <map>
+#include <boost/test/unit_test.hpp>
 #include <boost/algorithm/string.hpp> // for case-insensitive string compare
 #include <boost/iostreams/copy.hpp>
 #include <boost/bind.hpp>
 #include <camoto/stream_string.hpp>
 #include <camoto/gamemaps.hpp>
-//#include <iomanip>
-
 #include "tests.hpp"
 
+// This header will only be used by test implementations.
 using namespace camoto;
-namespace gm = camoto::gamemaps;
+using namespace camoto::gamemaps;
 
-// Defines to allow code reuse
-#define COMBINE_CLASSNAME_EXP(c, n)  c ## _ ## n
-#define COMBINE_CLASSNAME(c, n)  COMBINE_CLASSNAME_EXP(c, n)
+/// Maximum number of layers the tests will handle.  Just increase this if ever
+/// a map format has more layers.
+#define MAP2D_MAX_LAYERS 5
 
-#define TEST_VAR(n)        COMBINE_CLASSNAME(MAP_CLASS, n)
-#define TEST_NAME(n)       TEST_VAR(n)
-#define TEST_RESULT(n)     testdata_ ## n
+class test_map2d: public test_main
+{
+	public:
+		/// Constructor sets some default values.
+		test_map2d();
 
-#define FIXTURE_NAME       TEST_VAR(sample)
-#define EMPTY_FIXTURE_NAME TEST_VAR(sample_empty)
-#define SUITE_NAME         TEST_VAR(suite)
-#define EMPTY_SUITE_NAME   TEST_VAR(suite_empty)
-#define INITIALSTATE_NAME  TEST_RESULT(initialstate)
+		/// Add all the standard tests.
+		/**
+		 * This can be overridden by descendent classes to add more tests for
+		 * particular file formats.  If this is done, remember to call this
+		 * function from the overridden one or the standard tests won't get run.
+		 */
+		virtual void addTests();
 
-#ifndef MAP_FIRST_CODE_X_L1
-/// Coordinates of first file.  Normally (0,0) but can be changed for maps
-/// where (0,0) is not a valid location.
-#define MAP_FIRST_CODE_X_L1 0
-#define MAP_FIRST_CODE_Y_L1 0
-#endif
+		/// Reset pMap back to a known state.
+		virtual void prepareTest();
 
-#ifndef MAP_FIRST_CODE_X_L2
-#define MAP_FIRST_CODE_X_L2 0
-#define MAP_FIRST_CODE_Y_L2 0
-#endif
+		void test_isinstance_others();
+		void test_getsize();
+		void test_read();
+		void test_write();
+		void test_codelist();
+		void test_codelist_valid();
 
-#ifndef MAP_FIRST_CODE_X_L3
-#define MAP_FIRST_CODE_X_L3 0
-#define MAP_FIRST_CODE_Y_L3 0
-#endif
+	protected:
+		/// Initial state.
+		/**
+		 * This is the base state loaded into a format handler and then
+		 * modified to produce the states checked by the functions below.
+		 */
+		virtual std::string initialstate() = 0;
 
-#ifndef MAP_FIRST_CODE_X_L4
-#define MAP_FIRST_CODE_X_L4 0
-#define MAP_FIRST_CODE_Y_L4 0
-#endif
+		/// Add a test to the suite.  Used by ADD_MAP2D_TEST().
+		void addBoundTest(boost::function<void()> fnTest,
+			boost::unit_test::const_string name);
 
-#ifndef MAP_FIRST_CODE_X_L5
-#define MAP_FIRST_CODE_X_L5 0
-#define MAP_FIRST_CODE_Y_L5 0
-#endif
+		/// Reset the map content to the initial state and run the given test.
+		/**
+		 * @param fnTest
+		 *   Function to call once map stream is back to initial state.
+		 */
+		void runTest(boost::function<void()> fnTest);
 
-// Add a new constant as a supplementary data item
-#define ADD_SUPPITEM(suppitem) \
-	{ \
-		stream::string_sptr suppSS(new stream::string()); \
-		suppSS << makeString(TEST_RESULT(initialstate_ ## suppitem)); \
-		this->suppData[camoto::SuppItem::suppitem] = suppSS; \
-	}
+		/// Add an isInstance check to run later.
+		/**
+		 * @param result
+		 *   Expected result when opening the content.
+		 *
+		 * @param content
+		 *   Content to pass as a map to Map2D::isInstance().
+		 */
+		void isInstance(MapType::Certainty result, const std::string& content);
 
-#include <camoto/gamemaps/map2d.hpp>
+		/// Perform an isInstance check now.
+		void test_isInstance(MapType::Certainty result,
+			const std::string& content, unsigned int testNumber);
 
-struct FIXTURE_NAME: public default_sample {
+		/// Add an invalidContent check to run later.
+		/**
+		 * These checks make sure files that are in the correct format
+		 * don't cause segfaults or infinite loops if the data is corrupted.
+		 *
+		 * @param content
+		 *   Content to pass as a map to Map2D::isInstance() where
+		 *   it will be reported as a valid instance, then passed to
+		 *   Map2D::read(), where an exception should be thrown.
+		 */
+		void invalidContent(const std::string& content);
 
-	stream::string_sptr base;
-	gm::MapPtr map;
-	gm::Map2DPtr map2d;
-	camoto::SuppData suppData;
-	gm::MapTypePtr pTestType;
+		/// Perform an invalidContent check now.
+		void test_invalidContent(const std::string& content,
+			unsigned int testNumber);
 
-	FIXTURE_NAME()
-		:	base(new stream::string())
-	{
-		this->base << makeString(INITIALSTATE_NAME);
+		/// Add a conversion check to run later.
+		/**
+		 * These checks make sure files that are read with certain semi-valid values
+		 * are written out with better (different) values.  These would fail the
+		 * normal read/write tests because the output won't be identical to the
+		 * input.
+		 *
+		 * @param content
+		 *   Content to pass as a map to Map2D::isInstance() where
+		 *   it will be reported as a valid instance, then passed to
+		 *   Map2D::read(), where an exception should be thrown.
+		 */
+		void conversion(const std::string& input, const std::string& output);
 
-		#ifdef MAP_HAS_SUPPDATA_LAYER1
-			ADD_SUPPITEM(Layer1);
-		#endif
-		#ifdef MAP_HAS_SUPPDATA_LAYER2
-			ADD_SUPPITEM(Layer2);
-		#endif
-		#ifdef MAP_HAS_SUPPDATA_LAYER3
-			ADD_SUPPITEM(Layer3);
-		#endif
-		#ifdef MAP_HAS_SUPPDATA_EXTRA1
-			ADD_SUPPITEM(Extra1);
-		#endif
+		/// Perform a conversion check now.
+		void test_conversion(const std::string& input, const std::string& output,
+			unsigned int testNumber);
 
-		BOOST_REQUIRE_NO_THROW(
-			gm::ManagerPtr pManager = gm::getManager();
-			this->pTestType = pManager->getMapTypeByCode(MAP_TYPE);
-		);
-		BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE);
+		/// Does the map content match the parameter?
+		boost::test_tools::predicate_result is_content_equal(const std::string& exp);
 
-		// Create an instance of the initialstate data
-		this->map = this->pTestType->open(this->base, this->suppData);
-		this->map2d = boost::dynamic_pointer_cast<gm::Map2D>(this->map);
-		BOOST_REQUIRE_MESSAGE(this->map2d, "Could not create map class");
-	}
+		/// Does the given supplementary item content match the parameter?
+		boost::test_tools::predicate_result is_supp_equal(
+			camoto::SuppItem::Type type, const std::string& strExpected);
 
-	FIXTURE_NAME(int i)
-		:	base(new stream::string())
-	{
-	}
+	protected:
+		/// Underlying data stream containing map file content.
+		stream::string_sptr base;
 
-	boost::test_tools::predicate_result is_equal(const std::string& strExpected)
-	{
-		return this->default_sample::is_equal(strExpected, this->base->str());
-	}
+		/// Factory class used to open maps in this format.
+		MapTypePtr pMapType;
 
-	boost::test_tools::predicate_result is_supp_equal(camoto::SuppItem::Type type, const std::string& strExpected)
-	{
-		stream::string_sptr ss = boost::dynamic_pointer_cast<stream::string>(this->suppData[type]);
-		assert(ss);
-		return this->default_sample::is_equal(strExpected, ss->str());
-	}
+		/// Pointer to the active map instance.
+		Map2DPtr pMap;
 
+		/// Supplementary data for the map.
+		camoto::SuppData suppData;
+
+	private:
+		/// Have we allocated pMapType yet?
+		bool init;
+
+		/// Number of isInstance tests, used to number them sequentially.
+		unsigned int numIsInstanceTests;
+
+		/// Number of invalidData tests, used to number them sequentially.
+		unsigned int numInvalidContentTests;
+
+		/// Number of conversion tests, used to number them sequentially.
+		unsigned int numConversionTests;
+
+	public:
+		/// File type code for this format.
+		std::string type;
+
+		/// Width of the entire map, in pixels.
+		int pxWidth;
+
+		/// Height of the entire map, in pixels.
+		int pxHeight;
+
+		/// Number of layers in the map.
+		int numLayers;
+
+		/// Map codes to inspect, one per layer.
+		struct {
+			int x;
+			int y;
+			int code;
+		} mapCode[MAP2D_MAX_LAYERS];
+
+		/// Link between supplementary items and the class containing the expected
+		/// content for each test case.
+		std::map<camoto::SuppItem::Type, boost::shared_ptr<test_map2d> > suppResult;
 };
 
-BOOST_FIXTURE_TEST_SUITE(SUITE_NAME, FIXTURE_NAME)
-
-// Define an ISINSTANCE_TEST macro which we use to confirm the initial state
-// is a valid instance of this format.  This is defined as a macro so the
-// format-specific code can reuse it later to test various invalid formats.
-#define ISINSTANCE_TEST(c, d, r) \
-	BOOST_AUTO_TEST_CASE(TEST_NAME(isinstance_ ## c)) \
-	{ \
-		BOOST_TEST_MESSAGE("isInstance check (" MAP_TYPE "; " #c ")"); \
-		\
-		gm::ManagerPtr pManager(gm::getManager()); \
-		gm::MapTypePtr pTestType(pManager->getMapTypeByCode(MAP_TYPE)); \
-		BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE); \
-		\
-		stream::string_sptr ss(new stream::string()); \
-		ss << makeString(d); \
-		\
-		BOOST_CHECK_EQUAL(pTestType->isInstance(ss), r); \
-	}
-
-#ifndef MAP_DETECTION_UNCERTAIN
-ISINSTANCE_TEST(c00, INITIALSTATE_NAME, gm::MapType::DefinitelyYes);
-#endif
-
-
-// Define an INVALIDDATA_TEST macro which we use to confirm the reader correctly
-// rejects a file with invalid data.  This is defined as a macro so the
-// format-specific code can reuse it later to test various invalid formats.
-#ifdef HAS_FAT
-#	define INVALIDDATA_FATCODE(d) \
-	{ \
-		boost::shared_ptr<std::stringstream> suppSS(new std::stringstream); \
-		suppSS->exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit); \
-		(*suppSS) << makeString(d); \
-		camoto::stream::inout_sptr suppStream(suppSS); \
-		gm::SuppItem si; \
-		si.stream = suppStream; \
-		si.fnTruncate = boost::bind<void>(stringStreamTruncate, suppSS.get(), _1); \
-		suppData[camoto::SuppItem::FAT] = si; \
-	}
-#else
-#	define INVALIDDATA_FATCODE(d)
-#endif
-
-#define INVALIDDATA_TEST(c, d) \
-	INVALIDDATA_TEST_FULL(c, d, 0)
-
-#define INVALIDDATA_TEST_FAT(c, d, f) \
-	INVALIDDATA_TEST_FULL(c, d, f)
-
-#define INVALIDDATA_TEST_FULL(c, d, f) \
-	/* Run an isInstance test first to make sure the data is accepted */ \
-	ISINSTANCE_TEST(invaliddata_ ## c, d, gm::EC_DEFINITELY_YES); \
-	\
-	BOOST_AUTO_TEST_CASE(TEST_NAME(invaliddata_ ## c)) \
-	{ \
-		BOOST_TEST_MESSAGE("invalidData check (" MAP_TYPE "; " #c ")"); \
-		\
-		boost::shared_ptr<gm::Manager> pManager(gm::getManager()); \
-		gm::MapTypePtr pTestType(pManager->getMapTypeByCode(MAP_TYPE)); \
-		\
-		/* Prepare an invalid map */ \
-		boost::shared_ptr<std::stringstream> psstrBase(new std::stringstream); \
-		(*psstrBase) << makeString(d); \
-		camoto::stream::inout_sptr psBase(psstrBase); \
-		\
-		camoto::SuppData suppData; \
-		INVALIDDATA_FATCODE(f) \
-		\
-		BOOST_CHECK_THROW( \
-			gm::MapPtr pMap(pTestType->open(psBase, suppData)), \
-			stream::error \
-		); \
-	}
-
-BOOST_AUTO_TEST_CASE(TEST_NAME(getsize))
-{
-	BOOST_TEST_MESSAGE("Getting map size");
-
-	unsigned int layerCount = this->map2d->getLayerCount();
-	unsigned int width, height;
-	this->map2d->getMapSize(&width, &height);
-
-	unsigned int x, y;
-	this->map2d->getTileSize(&x, &y);
-	width *= x;
-	height *= y;
-
-	BOOST_REQUIRE_EQUAL(width, MAP_WIDTH_PIXELS);
-	BOOST_REQUIRE_EQUAL(height, MAP_HEIGHT_PIXELS);
-	BOOST_REQUIRE_EQUAL(layerCount, MAP_LAYER_COUNT);
+/// Add a test_map2d member function to the test suite
+#define ADD_MAP2D_TEST(fn) {	  \
+	boost::function<void()> fnTest = boost::bind(fn, this); \
+	this->test_map2d::addBoundTest(fnTest, BOOST_TEST_STRINGIZE(fn)); \
 }
 
-BOOST_AUTO_TEST_CASE(TEST_NAME(read))
-{
-	BOOST_TEST_MESSAGE("Reading map codes");
-#define CHECK_FIRST_TILE_IN_LAYER(LAYER) \
-	case (LAYER-1): \
-		targetX = MAP_FIRST_CODE_X_L ## LAYER; \
-		targetY = MAP_FIRST_CODE_Y_L ## LAYER; \
-		if ( \
-			((*i)->x == MAP_FIRST_CODE_X_L ## LAYER) \
-			&& ((*i)->y == MAP_FIRST_CODE_Y_L ## LAYER) \
-		) { \
-			foundFirstTile = true; \
-			BOOST_REQUIRE_EQUAL((*i)->code, MAP_FIRST_CODE_L ## LAYER); \
-		} \
-		break;
-
-	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
-		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
-		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		bool foundFirstTile = false;
-		unsigned int targetX = -1, targetY = -1;
-		for (gm::Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-			(i != items->end()) && (!foundFirstTile);
-			i++
-		) {
-			switch (l) {
-#if MAP_LAYER_COUNT >= 1
-#ifndef MAP_FIRST_CODE_L1
-#error MAP_FIRST_CODE_L1 must be defined for this map format
-#endif
-CHECK_FIRST_TILE_IN_LAYER(1)
-#endif
-#if MAP_LAYER_COUNT >= 2
-#ifndef MAP_FIRST_CODE_L2
-#error MAP_FIRST_CODE_L2 must be defined for this map format
-#endif
-CHECK_FIRST_TILE_IN_LAYER(2)
-#endif
-#if MAP_LAYER_COUNT >= 3
-#ifndef MAP_FIRST_CODE_L3
-#error MAP_FIRST_CODE_L3 must be defined for this map format
-#endif
-CHECK_FIRST_TILE_IN_LAYER(3)
-#endif
-#if MAP_LAYER_COUNT >= 4
-#ifndef MAP_FIRST_CODE_L4
-#error MAP_FIRST_CODE_L4 must be defined for this map format
-#endif
-CHECK_FIRST_TILE_IN_LAYER(4)
-#endif
-#if MAP_LAYER_COUNT >= 5
-#ifndef MAP_FIRST_CODE_L5
-#error MAP_FIRST_CODE_L5 must be defined for this map format
-#endif
-CHECK_FIRST_TILE_IN_LAYER(5)
-#endif
-			}
-		}
-		BOOST_REQUIRE_MESSAGE(foundFirstTile == true,
-			"Unable to find first tile in layer " << l << " at position "
-			<< targetX << "," << targetY);
-		BOOST_TEST_MESSAGE("Found first tile in layer " << l);
-	}
-}
-
-#define ERASE_SUPPITEM(suppitem) \
-	this->suppData[camoto::SuppItem::suppitem]->truncate(0);
-
-BOOST_AUTO_TEST_CASE(TEST_NAME(write))
-{
-	BOOST_TEST_MESSAGE("Write map codes");
-
-	this->base->truncate(0);
-
-#ifdef MAP_HAS_SUPPDATA_LAYER1
-	ERASE_SUPPITEM(Layer1);
-#endif
-#ifdef MAP_HAS_SUPPDATA_LAYER2
-	ERASE_SUPPITEM(Layer2);
-#endif
-
-	this->pTestType->write(this->map, this->base, this->suppData);
-
-	BOOST_CHECK_MESSAGE(
-		is_equal(makeString(INITIALSTATE_NAME)),
-		"Error writing map to a file - data is different to original"
-	);
-
-#ifdef MAP_HAS_SUPPDATA_LAYER1
-	BOOST_CHECK_MESSAGE(
-		is_supp_equal(camoto::SuppItem::Layer1, makeString(TEST_RESULT(initialstate_Layer1))),
-		"Error writing map to a file - data is different to original in supp::layer1"
-	);
-#endif
-
-#ifdef MAP_HAS_SUPPDATA_LAYER2
-	BOOST_CHECK_MESSAGE(
-		is_supp_equal(camoto::SuppItem::Layer2, makeString(TEST_RESULT(initialstate_Layer2))),
-		"Error writing map to a file - data is different to original in supp::layer2"
-	);
-#endif
-
-#ifdef MAP_HAS_SUPPDATA_LAYER3
-	BOOST_CHECK_MESSAGE(
-		is_supp_equal(camoto::SuppItem::Layer3, makeString(TEST_RESULT(initialstate_Layer3))),
-		"Error writing map to a file - data is different to original in supp::layer3"
-	);
-#endif
-
-#ifdef MAP_HAS_SUPPDATA_EXTRA1
-	BOOST_CHECK_MESSAGE(
-		is_supp_equal(camoto::SuppItem::Extra1, makeString(TEST_RESULT(initialstate_Extra1))),
-		"Error writing map to a file - data is different to original in supp::extra1"
-	);
-#endif
-}
-
-BOOST_AUTO_TEST_CASE(TEST_NAME(codelist))
-{
-	BOOST_TEST_MESSAGE("Checking map codes are all in allowed tile list");
-	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
-		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
-		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		const gm::Map2D::Layer::ItemPtrVectorPtr allowed = layer->getValidItemList();
-		for (gm::Map2D::Layer::ItemPtrVector::const_iterator
-			i = items->begin(); i != items->end(); i++
-		) {
-			bool found = false;
-			for (gm::Map2D::Layer::ItemPtrVector::const_iterator
-				j = allowed->begin(); j != allowed->end(); j++
-			) {
-				if ((*i)->code == (*j)->code) {
-					found = true;
-					break;
-				}
-			}
-			BOOST_REQUIRE_MESSAGE(found == true,
-				"Map code " << std::hex << (int)(*i)->code
-				<< " was not found in the list of permitted tiles for layer "
-				<< std::dec << (l+1));
-		}
-	}
-}
-
-BOOST_AUTO_TEST_CASE(TEST_NAME(codelist_valid))
-{
-	BOOST_TEST_MESSAGE("Checking allowed tile list is set up correctly");
-	for (int l = 0; l < MAP_LAYER_COUNT; l++) {
-		gm::Map2D::LayerPtr layer = map2d->getLayer(l);
-		const gm::Map2D::Layer::ItemPtrVectorPtr allowed = layer->getValidItemList();
-		for (gm::Map2D::Layer::ItemPtrVector::const_iterator
-			i = allowed->begin(); i != allowed->end(); i++
-		) {
-			// Coordinates must be zero, otherwise UI selections from the tile list
-			// will be off
-			BOOST_REQUIRE_EQUAL((*i)->x, 0);
-			BOOST_REQUIRE_EQUAL((*i)->y, 0);
-
-			// Type must be a valid Map2D::Layer::Item::Type value
-			BOOST_REQUIRE_LE((*i)->type, 0x001F);
-		}
-	}
-}
-
-BOOST_AUTO_TEST_SUITE_END()
-
-#define TEST_CONVERSION(name, data_in, data_out)	\
-	BOOST_FIXTURE_TEST_CASE(readwrite_ ## name, FIXTURE_NAME) \
-{ \
-	BOOST_TEST_MESSAGE("Read+write map codes"); \
-\
-	this->base->truncate(0); \
-	this->base << makeString(data_in); \
-\
-	BOOST_REQUIRE_NO_THROW( \
-		gm::ManagerPtr pManager = gm::getManager(); \
-		this->pTestType = pManager->getMapTypeByCode(MAP_TYPE); \
-	); \
-	BOOST_REQUIRE_MESSAGE(pTestType, "Could not find map type " MAP_TYPE); \
-\
-	this->map = this->pTestType->open(this->base, this->suppData); \
-	this->map2d = boost::dynamic_pointer_cast<gm::Map2D>(this->map); \
-	BOOST_REQUIRE_MESSAGE(this->map2d, "Could not create map class"); \
-\
-	this->base->truncate(0); \
-\
-	this->pTestType->write(this->map, this->base, this->suppData); \
-\
-	BOOST_CHECK_MESSAGE( \
-		is_equal(makeString(data_out)), \
-		"Error writing map - data is different to expected" \
-	); \
-}
+#endif // _CAMOTO_GAMEMAPS_TEST_MAP2D_HPP_
