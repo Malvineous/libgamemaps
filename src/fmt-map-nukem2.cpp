@@ -296,6 +296,52 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 
 	{
 		Map::AttributePtr attr(new Map::Attribute);
+		attr->type = Map::Attribute::Enum;
+		attr->name = "Use alt backdrop?";
+		attr->desc = "When should the alternate backdrop file be used?";
+		attr->enumValue = (flags >> 6) & 3;
+		attr->enumValueNames.push_back("Never");
+		attr->enumValueNames.push_back("After destroying force field");
+		attr->enumValueNames.push_back("After teleporting");
+		attr->enumValueNames.push_back("Both? (this value has an unknown/untested effect)");
+		attributes->push_back(attr);
+	}
+	{
+		Map::AttributePtr attr(new Map::Attribute);
+		attr->type = Map::Attribute::Enum;
+		attr->name = "Earthquake";
+		attr->desc = "Should the level shake like there is an earthquake?";
+		attr->enumValue = (flags >> 5) & 1;
+		attr->enumValueNames.push_back("No");
+		attr->enumValueNames.push_back("Yes");
+		attributes->push_back(attr);
+	}
+	{
+		Map::AttributePtr attr(new Map::Attribute);
+		attr->type = Map::Attribute::Enum;
+		attr->name = "Backdrop movement";
+		attr->desc = "Should the backdrop move when the player is stationary?";
+		attr->enumValue = (flags >> 3) & 3;
+		attr->enumValueNames.push_back("No");
+		attr->enumValueNames.push_back("Scroll left");
+		attr->enumValueNames.push_back("Scroll up");
+		attr->enumValueNames.push_back("3 (this value has an unknown/untested effect)");
+		attributes->push_back(attr);
+	}
+	{
+		Map::AttributePtr attr(new Map::Attribute);
+		attr->type = Map::Attribute::Enum;
+		attr->name = "Parallax";
+		attr->desc = "How should the backdrop scroll when the player moves?";
+		attr->enumValue = (flags >> 0) & 3;
+		attr->enumValueNames.push_back("Fixed - no movement");
+		attr->enumValueNames.push_back("Horizontal and vertical movement");
+		attr->enumValueNames.push_back("Horizontal movement only");
+		attr->enumValueNames.push_back("3 (this value has an unknown/untested effect)");
+		attributes->push_back(attr);
+	}
+	{
+		Map::AttributePtr attr(new Map::Attribute);
 		attr->type = Map::Attribute::Integer;
 		attr->name = "Alt backdrop";
 		attr->desc = "Number of alternate backdrop file (DROPx.MNI)";
@@ -555,9 +601,22 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	output << nullPadded(val, 13);
 
 	uint8_t flags = 0;
-	output << u8(flags);
 
 	attr = attributes->at(3).get();
+	flags |= attr->enumValue << 6;
+
+	attr = attributes->at(4).get();
+	flags |= attr->enumValue << 5;
+
+	attr = attributes->at(5).get();
+	flags |= attr->enumValue << 3;
+
+	attr = attributes->at(6).get();
+	flags |= attr->enumValue << 0;
+
+	output << u8(flags);
+
+	attr = attributes->at(7).get();
 	output << u8(attr->integerValue);
 
 	output << u16le(0);
@@ -721,15 +780,15 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	}
 
 	// Zone attribute filename (null-padded, not space-padded)
-	attr = attributes->at(4).get();
+	attr = attributes->at(8).get();
 	output << nullPadded(attr->filenameValue, 13);
 
 	// Zone solid tileset filename (null-padded, not space-padded)
-	attr = attributes->at(5).get();
+	attr = attributes->at(9).get();
 	output << nullPadded(attr->filenameValue, 13);
 
 	// Zone masked tileset filename (null-padded, not space-padded)
-	attr = attributes->at(6).get();
+	attr = attributes->at(10).get();
 	output << nullPadded(attr->filenameValue, 13);
 
 	output->flush();
