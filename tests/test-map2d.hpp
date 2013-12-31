@@ -185,6 +185,9 @@ class test_map2d: public test_main
 		/// Link between supplementary items and the class containing the expected
 		/// content for each test case.
 		std::map<camoto::SuppItem::Type, boost::shared_ptr<test_map2d> > suppResult;
+
+		/// Set to false if this supp item is not written when saving a map.
+		bool written;
 };
 
 /// Add a test_map2d member function to the test suite

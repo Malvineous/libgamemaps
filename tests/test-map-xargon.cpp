@@ -26,6 +26,7 @@ class test_suppx1_map_xargon: public test_map2d
 		test_suppx1_map_xargon()
 		{
 			this->type = "map-xargon.x1";
+			this->written = false;
 		}
 
 		virtual std::string initialstate()

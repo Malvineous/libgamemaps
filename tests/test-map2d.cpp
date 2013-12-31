@@ -30,7 +30,7 @@ using namespace camoto::gamemaps;
 #define CHECK_ALL_SUPP_ITEMS(check_func, msg) \
 	for (unsigned int i = 0; i < (unsigned int)SuppItem::MaxValue; i++) { \
 		SuppItem::Type s = (SuppItem::Type)i; \
-		if (this->suppResult[s]) { \
+		if ((this->suppResult[s]) && (this->suppResult[s]->written)) { \
 			BOOST_CHECK_MESSAGE( \
 				this->is_supp_equal(s, \
 					this->suppResult[s]->check_func()), \
@@ -53,6 +53,7 @@ test_map2d::test_map2d()
 		this->mapCode[i].y = 0;
 		this->mapCode[i].code = -1;
 	}
+	this->written = true;
 }
 
 void test_map2d::addTests()
