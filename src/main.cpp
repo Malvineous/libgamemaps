@@ -31,6 +31,7 @@
 #include "fmt-map-hocus.hpp"
 #include "fmt-map-nukem2.hpp"
 #include "fmt-map-rockford.hpp"
+#include "fmt-map-sagent.hpp"
 #include "fmt-map-vinyl.hpp"
 #include "fmt-map-wacky.hpp"
 #include "fmt-map-wordresc.hpp"
@@ -72,6 +73,8 @@ ActualManager::ActualManager()
 	this->vcTypes.push_back(MapTypePtr(new Nukem2MapType()));
 	this->vcTypes.push_back(MapTypePtr(new JillMapType()));
 	this->vcTypes.push_back(MapTypePtr(new RockfordMapType()));
+	this->vcTypes.push_back(MapTypePtr(new SAgentMapType()));
+	this->vcTypes.push_back(MapTypePtr(new SAgentWorldMapType()));
 	this->vcTypes.push_back(MapTypePtr(new VinylMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
 	this->vcTypes.push_back(MapTypePtr(new WordRescueMapType()));
