@@ -361,7 +361,17 @@ MapPtr SAgentMapType::open(stream::input_sptr input, SuppData& suppData) const
 		bg += 2; // skip CRLF
 	}
 
+	// Set up the list of valid tiles
 	Map2D::Layer::ItemPtrVectorPtr validItems(new Map2D::Layer::ItemPtrVector());
+	for (unsigned int i = 1; i < 4; i++) {
+		// Add the background tiles
+		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
+		t->type = Map2D::Layer::Item::Default;
+		t->x = 0;
+		t->y = 0;
+		t->code = bgtile + i;
+		validItems->push_back(t);
+	}
 	for (const TILE_MAP *next = tm; next->code > 0; next++) {
 		for (unsigned int i = 0; i < 4 * 3; i++) {
 			if (next->tiles[i] >= 0) {
@@ -470,17 +480,112 @@ void SAgentMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			// Skip this cell if there is no tile in either layer
 			if ((*inbg == -1) && (*infg == -1)) continue;
 
+			bool foundBG = false;
+			bool foundFG = false;
+
+			// Check lights
+			switch (*inbg) {
+				// Normal background tile that made it in somehow
+				case MAKE_TILE( 6, 16):
+				case MAKE_TILE( 6, 44):
+				case MAKE_TILE( 8, 16):
+				case MAKE_TILE( 8, 20):
+				case MAKE_TILE( 9, 24):
+				case MAKE_TILE( 9, 28):
+				case MAKE_TILE( 9, 32):
+				case MAKE_TILE( 9, 36):
+				case MAKE_TILE( 9, 40):
+				case MAKE_TILE(11,  8):
+				case MAKE_TILE(11, 12):
+				case MAKE_TILE(11, 16):
+				case MAKE_TILE(11, 32):
+				case MAKE_TILE(11, 36):
+				case MAKE_TILE(11, 40):
+				case MAKE_TILE(11, 44):
+				//case MAKE_TILE( 1,  0):
+					*inbg = -1; // don't process it below
+					foundBG = true;
+					*outbg = 0x20;
+					break;
+				case MAKE_TILE( 6, 16 + 1):
+				case MAKE_TILE( 6, 44 + 1):
+				case MAKE_TILE( 8, 16 + 1):
+				case MAKE_TILE( 8, 20 + 1):
+				case MAKE_TILE( 9, 24 + 1):
+				case MAKE_TILE( 9, 28 + 1):
+				case MAKE_TILE( 9, 32 + 1):
+				case MAKE_TILE( 9, 36 + 1):
+				case MAKE_TILE( 9, 40 + 1):
+				case MAKE_TILE(11,  8 + 1):
+				case MAKE_TILE(11, 12 + 1):
+				case MAKE_TILE(11, 16 + 1):
+				case MAKE_TILE(11, 32 + 1):
+				case MAKE_TILE(11, 36 + 1):
+				case MAKE_TILE(11, 40 + 1):
+				case MAKE_TILE(11, 44 + 1):
+				//case MAKE_TILE( 1,  0 + 1):
+					*inbg = -1; // don't process it below
+					foundBG = true;
+					*outbg = 0x35;
+					break;
+				case MAKE_TILE( 6, 16 + 2):
+				case MAKE_TILE( 6, 44 + 2):
+				case MAKE_TILE( 8, 16 + 2):
+				case MAKE_TILE( 8, 20 + 2):
+				case MAKE_TILE( 9, 24 + 2):
+				case MAKE_TILE( 9, 28 + 2):
+				case MAKE_TILE( 9, 32 + 2):
+				case MAKE_TILE( 9, 36 + 2):
+				case MAKE_TILE( 9, 40 + 2):
+				case MAKE_TILE(11,  8 + 2):
+				case MAKE_TILE(11, 12 + 2):
+				case MAKE_TILE(11, 16 + 2):
+				case MAKE_TILE(11, 32 + 2):
+				case MAKE_TILE(11, 36 + 2):
+				case MAKE_TILE(11, 40 + 2):
+				case MAKE_TILE(11, 44 + 2):
+				//case MAKE_TILE( 1,  0 + 2):
+					*inbg = -1; // don't process it below
+					foundBG = true;
+					*outbg = 0x36;
+					break;
+				case MAKE_TILE( 6, 16 + 3):
+				case MAKE_TILE( 6, 44 + 3):
+				case MAKE_TILE( 8, 16 + 3):
+				case MAKE_TILE( 8, 20 + 3):
+				case MAKE_TILE( 9, 24 + 3):
+				case MAKE_TILE( 9, 28 + 3):
+				case MAKE_TILE( 9, 32 + 3):
+				case MAKE_TILE( 9, 36 + 3):
+				case MAKE_TILE( 9, 40 + 3):
+				case MAKE_TILE(11,  8 + 3):
+				case MAKE_TILE(11, 12 + 3):
+				case MAKE_TILE(11, 16 + 3):
+				case MAKE_TILE(11, 32 + 3):
+				case MAKE_TILE(11, 36 + 3):
+				case MAKE_TILE(11, 40 + 3):
+				case MAKE_TILE(11, 44 + 3):
+				//case MAKE_TILE( 1,  0 + 3):
+					*inbg = -1; // don't process it below
+					foundBG = true;
+					*outbg = 0x37;
+					break;
+			}
+
+			// Check other tiles
 			for (const TILE_MAP *tnext = tm; tnext->code > 0; tnext++) {
-				if (*inbg == tnext->tiles[4 * 3 - 1]) {
+				if ((!foundBG) && (*inbg == tnext->tiles[4 * 3 - 1])) {
 					// TODO: Check surrounding area?
 					*outbg = tnext->code;
-					break;
+					if (foundFG) break;
+					foundBG = true;
 				}
-				if (*infg == tnext->tiles[4 * 3 - 1]) {
+				if ((!foundFG) && (*infg == tnext->tiles[4 * 3 - 1])) {
 					// TODO: Check surrounding area?
 					*outfg = tnext->code;
 					fgRowValid[y] = true; // remember to write out this row later
-					break;
+					if (foundBG) break;
+					foundFG = true;
 				}
 			}
 		}

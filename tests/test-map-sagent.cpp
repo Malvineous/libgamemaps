@@ -31,11 +31,11 @@ class test_map_sagent: public test_map2d
 		{
 			this->type = "map-sagent";
 			this->pxWidth = 40 * 16;
-			this->pxHeight = 3 * 16;
+			this->pxHeight = 4 * 16;
 			this->numLayers = 2;
 			this->mapCode[0].code = ST(5, 14);
-			this->mapCode[1].x = 2;
-			this->mapCode[1].y = 1;
+			this->mapCode[1].x = 3;
+			this->mapCode[1].y = 2;
 			this->mapCode[1].code = ST(5, 29);
 
 			this->outputWidth = 42;
@@ -106,10 +106,11 @@ class test_map_sagent: public test_map2d
 				"667                                     \x0D\x0A"
 				"                                        \x0D\x0A"
 				"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x0D\x0A"
-				"O                                      O\x0D\x0A"
-				"* d                                     \x0D\x0A"
+				"O    " "  "    "                                O\x0D\x0A"
+				"O 567" " \xD2" "                                O\x0D\x0A"
+				"*  d " " f"    "                                 \x0D\x0A"
 				"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x0D\x0A"
-			) + std::string(42 * (48 - 6), '\0');
+			) + std::string(42 * (48 - 7), '\0');
 		}
 };
 
