@@ -171,7 +171,7 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 		}
 
 		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
-			unsigned int x, unsigned int y, unsigned int *maxCount)
+			unsigned int x, unsigned int y, unsigned int *maxCount) const
 		{
 			if ((item->code == WR_CODE_ENTRANCE) || (item->code == WR_CODE_EXIT)) {
 				*maxCount = 1; // only one level entrance/exit permitted
@@ -359,6 +359,11 @@ MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
 		>> u16le(mapWidth)
 		>> u16le(mapHeight)
 	;
+
+	// Map size of zero is invalid
+	// TESTED BY: fmt_map_wordresc_isinstance_c05
+	if (mapWidth * mapHeight == 0) return MapType::DefinitelyNo;
+
 	psMap->seekg(2*7, stream::cur);
 
 	// Check the items are each within range
