@@ -30,13 +30,18 @@
 
 using namespace camoto;
 
+test_main::test_main()
+	: outputWidth(32)
+{
+}
+
 void test_main::printNice(boost::test_tools::predicate_result& res,
 	const std::string& s, const std::string& diff)
 {
 	const char *c = CLR_YELLOW;
 	res.message() << c;
 	for (int i = 0; i < s.length(); i++) {
-		if ((i > 0) && (i % 41 == 0)) {
+		if ((i > 0) && (i % this->outputWidth == 0)) {
 			res.message() << CLR_NORM << "\n" << std::setfill('0') << std::setw(3)
 				<< std::hex << i << ": " << c;
 		}

@@ -39,6 +39,7 @@ class test_map_ccaves: public test_map2d
 			this->mapCode[1].x = 32;
 			this->mapCode[1].y = 3;
 			this->mapCode[1].code = MAKE_TILE(12, 36);
+			this->outputWidth = 41;
 		}
 
 		void addTests()
