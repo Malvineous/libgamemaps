@@ -189,7 +189,7 @@ MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
 		if (lenMap < CC_MAP_WIDTH) return MapType::DefinitelyNo;
 
 		// Ensure the row data is valid
-		psMap->read((char *)row, CC_MAP_WIDTH);
+		psMap->read(row, CC_MAP_WIDTH);
 		for (unsigned int x = 0; x < CC_MAP_WIDTH; x++) {
 			// TESTED BY: fmt_map_ccaves_isinstance_c04
 			if (row[x] > CC_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
@@ -220,7 +220,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Read the background layer
 	uint8_t *bg = new uint8_t[lenMap];
 	boost::scoped_array<uint8_t> sbg(bg);
-	input->read((char *)bg, lenMap);
+	input->read(bg, lenMap);
 
 	unsigned int height = lenMap / (CC_MAP_WIDTH + 1);
 
@@ -744,10 +744,9 @@ void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	// Write the background layer
 	for (unsigned int y = 0; y < mapHeight; y++) {
 		output << u8(mapWidth);
-		output->write((char *)bgdst, mapWidth);
+		output->write(bgdst, mapWidth);
 		bgdst += mapWidth;
 	}
-	output->flush();
 	output->truncate_here();
 	return;
 }
