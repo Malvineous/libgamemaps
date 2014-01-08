@@ -256,6 +256,12 @@ void test_map2d::test_isinstance_others()
 		std::string otherType = pTestType->getMapCode();
 		if (otherType.compare(this->type) == 0) continue;
 
+		// Skip any formats known to produce false detections unavoidably
+		if (
+			std::find(
+				this->skipInstDetect.begin(), this->skipInstDetect.end(), otherType
+			) != this->skipInstDetect.end()) continue;
+
 		BOOST_TEST_MESSAGE("Checking " << this->type
 			<< " content against isInstance() for " << otherType);
 

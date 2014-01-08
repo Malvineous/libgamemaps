@@ -186,8 +186,18 @@ class test_map2d: public test_main
 		/// content for each test case.
 		std::map<camoto::SuppItem::Type, boost::shared_ptr<test_map2d> > suppResult;
 
-		/// Set to false if this supp item is not written when saving a map.
+		/// Set to false if this instance is of a supp item and it is not written
+		/// out when saving a map.
 		bool written;
+
+		/// Any formats here identify us as an instance of that type, and it
+		/// cannot be avoided.
+		/**
+		 * If "otherformat" is listed here then we will not pass our initialstate
+		 * to otherformat's isInstance function.  This is kind of backwards but is
+		 * is the way the test functions are designed.
+		 */
+		std::vector<std::string> skipInstDetect;
 };
 
 /// Add a test_map2d member function to the test suite
