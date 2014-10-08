@@ -18,7 +18,7 @@ Outstanding tasks
    types are:
      - Single image, centred, stationary (Cosmo)
      - Single image, moving, parallaxed
-     - Tiled image, moving, parallaxed (Duke II horiz only, Hocus horiz only)
+     - Tiled image, moving, parallaxed (Duke II horiz+vert, Hocus horiz only)
      - Map layer, moving, stationary (Harry)
      - Single colour (Word Rescue)
      - 1-4 tiles, repeated, alternating on opposite rows (Crystal Caves, Secret Agent)
@@ -53,6 +53,10 @@ Halloween Harry:
 Monster Bash:
  - Figure out what additional sprites the rest of the creatures require, as per
    http://www.shikadi.net/moddingwiki/Monster_Bash_Level_Format#Sprite_list_.28.sgl.29
+
+Scubaventure:
+ - Abstract sprite list in map-bash so there is one list for Monster Bash and
+   one for Scubaventure.
 
 Word Rescue:
  - Come up with suitable overlay images for tiles marked as foreground ones, as
