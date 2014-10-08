@@ -25,6 +25,7 @@
 #include "fmt-map-ccaves.hpp"
 #include "fmt-map-ccomic.hpp"
 #include "fmt-map-cosmo.hpp"
+#include "fmt-map-darkages.hpp"
 #include "fmt-map-ddave.hpp"
 #include "fmt-map-got.hpp"
 #include "fmt-map-harry.hpp"
@@ -66,6 +67,7 @@ ActualManager::ActualManager()
 	this->vcTypes.push_back(MapTypePtr(new CCavesMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CComicMapType()));
 	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
+	this->vcTypes.push_back(MapTypePtr(new DarkAgesMapType()));
 	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
 	this->vcTypes.push_back(MapTypePtr(new GOTMapType()));
 	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));

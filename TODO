@@ -40,6 +40,9 @@ Crystal Caves:
  - Vines will go through some tiles, insert a solid block at the top of the vine
    to prevent this.
 
+Dark Ages:
+ - Add test code
+
 Duke Nukem II:
  - Add support for Actor tiles
 
