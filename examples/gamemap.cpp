@@ -2,7 +2,7 @@
  * @file   gamemap.cpp
  * @brief  Command-line interface to libgamemaps.
  *
- * Copyright (C) 2010-2013 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2014 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -202,11 +202,13 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 	if (!srcPal) {
 		srcPal = gg::createPalette_DefaultVGA();
 		// Force last colour to be transparent
+		srcPal->at(255).red = 255;
+		srcPal->at(255).green = 0;
+		srcPal->at(255).blue = 192;
 		srcPal->at(255).alpha = 0;
 	}
 	png::palette pal(srcPal->size());
 	int j = 0;
-	//pal[ 0] = png::color(0xFF, 0x00, 0xFF); // transparent
 	png::tRNS transparency;
 	for (gg::PaletteTable::iterator
 		i = srcPal->begin(); i != srcPal->end(); i++, j++
@@ -214,7 +216,6 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 		pal[j] = png::color(i->red, i->green, i->blue);
 		if (i->alpha == 0) transparency.push_back(j);
 	}
-	png.set_palette(pal);
 	useMask = srcPal->size() < 255; // only mask if enough room in the palette
 	if (useMask) {
 		// Increment any transparent indices because we're going to insert a new
@@ -223,8 +224,10 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 			(*i)++;
 		}
 		// Make first colour transparent
-		transparency.push_back(0);
+		pal.insert(pal.begin(), png::color(255, 0, 192));
+		transparency.insert(transparency.begin(), 0);
 	}
+	png.set_palette(pal);
 	if (transparency.size() > 0) {
 		png.set_tRNS(transparency);
 	}
