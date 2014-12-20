@@ -810,6 +810,8 @@ finishTesting:
 							<< MAP2D_CAP(CanResize)
 							<< MAP2D_CAP(ChangeTileSize)
 							<< MAP2D_CAP(HasViewport)
+							<< MAP2D_CAP(HasPaths)
+							<< MAP2D_CAP(FixedPathCount)
 							<< "\n"
 						;
 					}
@@ -857,6 +859,8 @@ finishTesting:
 							<< MAP2D_LAYER_CAP(CanResize)
 							<< MAP2D_LAYER_CAP(HasOwnTileSize)
 							<< MAP2D_LAYER_CAP(ChangeTileSize)
+							<< MAP2D_LAYER_CAP(HasPalette)
+							<< MAP2D_LAYER_CAP(UseImageDims)
 							<< "\n"
 						;
 
