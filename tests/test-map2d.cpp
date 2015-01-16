@@ -232,7 +232,7 @@ void test_map2d::test_conversion(const std::string& input,
 boost::test_tools::predicate_result test_map2d::is_content_equal(
 	const std::string& exp)
 {
-	return this->is_equal(exp, this->base->str());
+	return this->is_equal(exp, *(this->base->str()));
 }
 
 boost::test_tools::predicate_result test_map2d::is_supp_equal(
@@ -240,7 +240,7 @@ boost::test_tools::predicate_result test_map2d::is_supp_equal(
 {
 	stream::string_sptr suppBase =
 		boost::dynamic_pointer_cast<stream::string>(this->suppData[type]);
-	return this->is_equal(strExpected, suppBase->str());
+	return this->is_equal(strExpected, *(suppBase->str()));
 }
 
 void test_map2d::test_isinstance_others()
