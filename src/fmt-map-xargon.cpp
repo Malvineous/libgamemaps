@@ -430,7 +430,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 			mapStrings.push_back(next);
 			offStrings -= lenStr;
 		}
-	} catch (const stream::incomplete_read& e) {
+	} catch (const stream::incomplete_read&) {
 		throw stream::error("Map file has been truncated! (text section cut unexpectedly)");
 	}
 

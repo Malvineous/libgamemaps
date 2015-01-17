@@ -706,7 +706,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		uint8_t num, code;
 		try {
 			input >> u8(num) >> u8(code);
-		} catch (const stream::incomplete_read& e) {
+		} catch (const stream::incomplete_read&) {
 			// Some level files seem to be truncated (maybe for efficiency)
 			break;
 		}
