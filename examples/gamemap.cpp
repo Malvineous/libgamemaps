@@ -569,7 +569,7 @@ int main(int iArgC, char *cArgV[])
 							try {
 								stream::file_sptr suppStream(new stream::file());
 								suppStream->open(i->second);
-							} catch (const stream::open_error& e) {
+							} catch (const stream::open_error&) {
 								bSuppOK = false;
 								std::cout << "  * Could not find/open " << i->second
 									<< ", map is probably not "
