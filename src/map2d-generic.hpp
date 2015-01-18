@@ -101,103 +101,14 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		/// Destructor.
 		virtual ~GenericMap2D();
 
-		/// Get the capabilities of this map format.
-		/**
-		 * @return One or more of the Caps enum values (OR'd together.)
-		 */
 		virtual int getCaps() const;
-
-		/// Retrieve the size of the in-game viewport.
-		/**
-		 * These dimensions indicate how much of the level can be seen by the player
-		 * inside the game.  Given the age of most DOS games, it is typically how
-		 * many tiles can be seen on a 320x200 display (minus the space used for the
-		 * status bar).
-		 *
-		 * @param x
-		 *   Pointer to store viewport width, in pixels.
-		 *
-		 * @param y
-		 *   Pointer to store layer height, in pixels.
-		 */
 		virtual void getViewport(unsigned int *x, unsigned int *y) const;
-
-		/// Retrieve the size of the map.
-		/**
-		 * @pre getCaps() must include HasGlobalSize.
-		 *
-		 * @param x
-		 *   Pointer to store layer width, as number of tiles.  If getCaps() does
-		 *   not include HasOwnTileSize then this value is in pixels instead (i.e.
-		 *   a tile size of 1x1 is assumed.)
-		 *
-		 * @param y
-		 *   Pointer to store layer height, as number of tiles.
-		 */
 		virtual void getMapSize(unsigned int *x, unsigned int *y) const;
-
-		/// Change the size of each cell in the layer.
-		/**
-		 * @pre getCaps() must include CanResize.
-		 *
-		 * @param x
-		 *   New layer width, as number of tiles.
-		 *
-		 * @param y
-		 *   New layer height, as number of tiles.
-		 */
 		virtual void setMapSize(unsigned int x, unsigned int y);
-
-		/// Retrieve the size of each cell in the layer's grid.
-		/**
-		 * @pre getCaps() includes HasGlobalTileSize.
-		 *
-		 * @param x
-		 *   Pointer to store tile width in pixels.
-		 *
-		 * @param y
-		 *   Pointer to store tile height in pixels.
-		 */
 		virtual void getTileSize(unsigned int *x, unsigned int *y) const;
-
-		/// Change the size of each cell in the layer.
-		/**
-		 * @pre getCaps() must include ChangeTileSize.
-		 *
-		 * @param x
-		 *   New tile width in pixels.
-		 *
-		 * @param y
-		 *   New tile height in pixels.
-		 */
 		virtual void setTileSize(unsigned int x, unsigned int y);
-
-		/// Get the number of layers in the map.
-		/**
-		 * @return Number of layers.  All maps have at least one layer.
-		 */
 		virtual unsigned int getLayerCount() const;
-
-		/// Get access to the given layer.
-		/**
-		 * @param index
-		 *   Layer index.  Must be < getLayerCount().
-		 *
-		 * @return A shared pointer to the layer.
-		 */
 		virtual LayerPtr getLayer(unsigned int index);
-
-		/// Get a list of paths in the level.
-		/**
-		 * A path is a series of points/vectors defining a travel route.  Unlike
-		 * layers, paths are always expressed in pixels, irrespective of tile size.
-		 *
-		 * @pre getCaps() includes HasPaths.
-		 *
-		 * @return A shared pointer to a vector of Path instances.  The paths in
-		 *   the vector can be edited, but if getCaps() includes FixedPaths then
-		 *   paths cannot be created or removed.
-		 */
 		virtual PathPtrVectorPtr getPaths();
 
 	protected:
