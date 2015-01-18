@@ -63,8 +63,9 @@ a command-line interface to the library as well as an example of how to use
 the library.  This program is installed as part of the "make install" process.
 See "man gamemap" for full details.
 
-libgamecommon, libgamegraphics and png++ are required dependencies of this
-library.  png++ can be obtained from http://www.nongnu.org/pngpp/
+libgamecommon, libgamegraphics, libpng and png++ >= 0.2.7 are required
+dependencies of this library.  png++ can be obtained from
+http://www.nongnu.org/pngpp/
 
 The library is compiled and installed in the usual way:
 
@@ -75,7 +76,8 @@ The library is compiled and installed in the usual way:
 If you downloaded the git release, run ./autogen.sh before the commands above.
 You can also run "make check" to compile and run the tests.
 
-All supported map formats are fully documented on the ModdingWiki - see
-http://www.shikadi.net/moddingwiki/Category:Map_Files
+All supported file formats are fully documented on the ModdingWiki - see:
+
+ * http://www.shikadi.net/moddingwiki/Category:Map_formats
 
 This library is released under the GPLv3 license.
