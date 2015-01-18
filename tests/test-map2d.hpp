@@ -2,7 +2,7 @@
  * @file   test-map2d.hpp
  * @brief  Generic test code for Map2D class descendents.
  *
- * Copyright (C) 2010-2013 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
