@@ -37,6 +37,12 @@
 /// Height of tiles in attribute layer
 #define WR_ATTILE_HEIGHT           8
 
+/// Width of map view during gameplay, in pixels
+#define WR_VIEWPORT_WIDTH  288
+
+/// Height of map view during gameplay, in pixels
+#define WR_VIEWPORT_HEIGHT 152
+
 /// Map code to write for locations with no tile set.
 #define WR_DEFAULT_BGTILE       0xFF
 
@@ -246,7 +252,7 @@ class Map2D_WordRescue: virtual public GenericMap2D
 			:	GenericMap2D(
 					attributes, GraphicsFilenames(),
 					Map2D::HasViewport,
-					288, 152, // viewport
+					WR_VIEWPORT_WIDTH, WR_VIEWPORT_HEIGHT,
 					width, height,
 					WR_BGTILE_WIDTH, WR_BGTILE_HEIGHT,
 					layers, Map2D::PathPtrVectorPtr()
