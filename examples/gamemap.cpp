@@ -304,6 +304,10 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 						// Display nothing, but could be changed to a question mark
 						thisTile.width = thisTile.height = 0;
 						break;
+
+					// Avoid compiler warning about unhandled enum
+					case gm::Map2D::Layer::NumImageTypes:
+						assert(imgType != gm::Map2D::Layer::NumImageTypes);
 				}
 				cache.push_back(thisTile);
 			}
