@@ -53,6 +53,19 @@
 /// Map code to write for locations with no tile set
 #define DN2_DEFAULT_BGTILE 0x00
 
+// Indices into attributes array
+#define ATTR_CZONE    0
+#define ATTR_BACKDROP 1
+#define ATTR_MUSIC    2
+#define ATTR_USEALTBD 3
+#define ATTR_QUAKE    4
+#define ATTR_SCROLLBD 5
+#define ATTR_PARALLAX 6
+#define ATTR_ALTBD    7
+#define ATTR_ZONEATTR 8
+#define ATTR_ZONETSET 9
+#define ATTR_ZONEMSET 10
+
 namespace camoto {
 namespace gamemaps {
 
@@ -172,10 +185,34 @@ class Map2D_Nukem2: virtual public GenericMap2D
 
 			Map::GraphicsFilename gf;
 			gf.type = "tls-nukem2-czone";
-			gf.filename = this->attributes[0].filenameValue;
+			gf.filename = this->attributes[ATTR_CZONE].filenameValue;
 			if (!gf.filename.empty()) {
 				this->graphicsFilenames[BackgroundTileset1] = gf;
 			}
+
+			gf.type = "img-nukem2-backdrop";
+			gf.filename = this->attributes[ATTR_BACKDROP].filenameValue;
+			if (!gf.filename.empty()) {
+				this->graphicsFilenames[BackgroundImage] = gf;
+			}
+		}
+
+		Map2D::ImageAttachment getBackgroundImage(
+			const TilesetCollectionPtr& tileset, ImagePtr *outImage,
+			PaletteEntry *outColour) const
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundImage);
+			if (t != tileset->end()) {
+				const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+				if (images.size() > 0) {
+					// Just open the first image, it will have been whatever was supplied
+					// by this->graphicsFilenames[BackgroundImage]
+					*outImage = t->second->openImage(images[0]);
+					return Map2D::SingleImageCentred;
+				}
+			}
+
+			return Map2D::NoBackground;
 		}
 };
 
@@ -270,6 +307,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Trim off the padding spaces
 	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
 	attr.filenameValidExtension = "mni";
+	assert(attributes.size() == ATTR_CZONE); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Filename;
@@ -279,6 +317,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Trim off the padding spaces
 	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
 	attr.filenameValidExtension = "mni";
+	assert(attributes.size() == ATTR_BACKDROP); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Filename;
@@ -288,6 +327,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Trim off the padding spaces
 	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
 	attr.filenameValidExtension = "imf";
+	assert(attributes.size() == ATTR_MUSIC); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	input
@@ -306,6 +346,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	attr.enumValueNames.push_back("After destroying force field");
 	attr.enumValueNames.push_back("After teleporting");
 	attr.enumValueNames.push_back("Both? (this value has an unknown/untested effect)");
+	assert(attributes.size() == ATTR_USEALTBD); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Enum;
@@ -314,6 +355,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	attr.enumValue = (flags >> 5) & 1;
 	attr.enumValueNames.push_back("No");
 	attr.enumValueNames.push_back("Yes");
+	assert(attributes.size() == ATTR_QUAKE); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Enum;
@@ -324,6 +366,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	attr.enumValueNames.push_back("Scroll left");
 	attr.enumValueNames.push_back("Scroll up");
 	attr.enumValueNames.push_back("3 (this value has an unknown/untested effect)");
+	assert(attributes.size() == ATTR_SCROLLBD); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Enum;
@@ -334,6 +377,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	attr.enumValueNames.push_back("Horizontal and vertical movement");
 	attr.enumValueNames.push_back("Horizontal movement only");
 	attr.enumValueNames.push_back("3 (this value has an unknown/untested effect)");
+	assert(attributes.size() == ATTR_PARALLAX); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Integer;
@@ -342,6 +386,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	attr.integerValue = altBack;
 	attr.integerMinValue = 1;
 	attr.integerMaxValue = 24;
+	assert(attributes.size() == ATTR_ALTBD); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	// Read in the actor layer
@@ -506,6 +551,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Trim off the padding spaces
 	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
 	attr.filenameValidExtension = "mni";
+	assert(attributes.size() == ATTR_ZONEATTR); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Filename;
@@ -515,6 +561,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Trim off the padding spaces
 	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
 	attr.filenameValidExtension = "mni";
+	assert(attributes.size() == ATTR_ZONETSET); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	attr.type = Map::Attribute::Filename;
@@ -524,6 +571,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	// Trim off the padding spaces
 	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
 	attr.filenameValidExtension = "mni";
+	assert(attributes.size() == ATTR_ZONEMSET); // make sure compile-time index is correct
 	attributes.push_back(attr);
 
 	// Create the map structures
@@ -557,21 +605,21 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 		<< u16le(offBG)
 	;
 	// CZone
-	Map::Attribute& attr0 = map->attributes[0];
+	Map::Attribute& attr0 = map->attributes[ATTR_CZONE];
 	std::string val = attr0.filenameValue;
 	int padamt = 12 - val.length();
 	val += std::string(padamt, ' '); // pad with spaces
 	output << nullPadded(val, 13);
 
 	// Backdrop
-	Map::Attribute& attr1 = map->attributes[1];
+	Map::Attribute& attr1 = map->attributes[ATTR_BACKDROP];
 	val = attr1.filenameValue;
 	padamt = 12 - val.length();
 	val += std::string(padamt, ' '); // pad with spaces
 	output << nullPadded(val, 13);
 
 	// Song
-	Map::Attribute& attr2 = map->attributes[2];
+	Map::Attribute& attr2 = map->attributes[ATTR_MUSIC];
 	val = attr2.filenameValue;
 	padamt = 12 - val.length();
 	val += std::string(padamt, ' '); // pad with spaces
@@ -579,21 +627,21 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 
 	uint8_t flags = 0;
 
-	Map::Attribute& attr3 = map->attributes[3];
+	Map::Attribute& attr3 = map->attributes[ATTR_USEALTBD];
 	flags |= attr3.enumValue << 6;
 
-	Map::Attribute& attr4 = map->attributes[4];
+	Map::Attribute& attr4 = map->attributes[ATTR_QUAKE];
 	flags |= attr4.enumValue << 5;
 
-	Map::Attribute& attr5 = map->attributes[5];
+	Map::Attribute& attr5 = map->attributes[ATTR_SCROLLBD];
 	flags |= attr5.enumValue << 3;
 
-	Map::Attribute& attr6 = map->attributes[6];
+	Map::Attribute& attr6 = map->attributes[ATTR_PARALLAX];
 	flags |= attr6.enumValue << 0;
 
 	output << u8(flags);
 
-	Map::Attribute& attr7 = map->attributes[7];
+	Map::Attribute& attr7 = map->attributes[ATTR_ALTBD];
 	output << u8(attr7.integerValue);
 
 	output << u16le(0);
@@ -757,15 +805,15 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	}
 
 	// Zone attribute filename (null-padded, not space-padded)
-	Map::Attribute& attr8 = map->attributes[8];
+	Map::Attribute& attr8 = map->attributes[ATTR_ZONEATTR];
 	output << nullPadded(attr8.filenameValue, 13);
 
 	// Zone solid tileset filename (null-padded, not space-padded)
-	Map::Attribute& attr9 = map->attributes[9];
+	Map::Attribute& attr9 = map->attributes[ATTR_ZONETSET];
 	output << nullPadded(attr9.filenameValue, 13);
 
 	// Zone masked tileset filename (null-padded, not space-padded)
-	Map::Attribute& attr10 = map->attributes[10];
+	Map::Attribute& attr10 = map->attributes[ATTR_ZONEMSET];
 	output << nullPadded(attr10.filenameValue, 13);
 
 	output->flush();
