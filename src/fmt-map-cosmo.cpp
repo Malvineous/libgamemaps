@@ -152,6 +152,76 @@ class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
 		}
 };
 
+class Map2D_Cosmo: virtual public GenericMap2D
+{
+	public:
+		Map2D_Cosmo(const Attributes& attributes, unsigned int width,
+			LayerPtrVector& layers)
+			:	GenericMap2D(
+					attributes, Map::GraphicsFilenames(),
+					Map2D::HasViewport,
+					CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
+					width, 32768 / width,
+					CCA_TILE_WIDTH, CCA_TILE_HEIGHT,
+					layers, Map2D::PathPtrVectorPtr()
+				)
+		{
+			// Populate the graphics filenames
+			unsigned int dropNum = this->attributes[ATTR_BACKDROP].enumValue;
+			if (dropNum > 0) {
+				Map::GraphicsFilename gf;
+				gf.type = "img-cosmo-backdrop";
+				switch (dropNum) {
+					case 0: gf.filename = "bdblank.mni"; break;
+					case 1: gf.filename = "bdpipe.mni"; break;
+					case 2: gf.filename = "bdredsky.mni"; break;
+					case 3: gf.filename = "bdrocktk.mni"; break;
+					case 4: gf.filename = "bdjungle.mni"; break;
+					case 5: gf.filename = "bdstar.mni"; break;
+					case 6: gf.filename = "bdwierd.mni"; break;
+					case 7: gf.filename = "bdcave.mni"; break;
+					case 8: gf.filename = "bdice.mni"; break;
+					case 9: gf.filename = "bdshrum.mni"; break;
+					case 10: gf.filename = "bdtechms.mni"; break;
+					case 11: gf.filename = "bdnewsky.mni"; break;
+					case 12: gf.filename = "bdstar2.mni"; break;
+					case 13: gf.filename = "bdstar3.mni"; break;
+					case 14: gf.filename = "bdforest.mni"; break;
+					case 15: gf.filename = "bdmountn.mni"; break;
+					case 16: gf.filename = "bdguts.mni"; break;
+					case 17: gf.filename = "bdbrktec.mni"; break;
+					case 18: gf.filename = "bdclouds.mni"; break;
+					case 19: gf.filename = "bdfutcty.mni"; break;
+					case 20: gf.filename = "bdice2.mni"; break;
+					case 21: gf.filename = "bdcliff.mni"; break;
+					case 22: gf.filename = "bdspooky.mni"; break;
+					case 23: gf.filename = "bdcrystl.mni"; break;
+					case 24: gf.filename = "bdcircut.mni"; break;
+					case 25: gf.filename = "bdcircpc.mni"; break;
+					default: gf.filename = "bdblank.mni"; break;
+				}
+				this->graphicsFilenames[BackgroundImage] = gf;
+			}
+		}
+
+		Map2D::ImageAttachment getBackgroundImage(
+			const TilesetCollectionPtr& tileset, ImagePtr *outImage,
+			PaletteEntry *outColour) const
+		{
+			TilesetCollection::const_iterator t = tileset->find(BackgroundImage);
+			if (t != tileset->end()) {
+				const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+				if (images.size() > 0) {
+					// Just open the first image, it will have been whatever was supplied
+					// by this->graphicsFilenames[BackgroundImage]
+					*outImage = t->second->openImage(images[0]);
+					return Map2D::SingleImageCentred;
+				}
+			}
+			return Map2D::NoBackground;
+		}
+};
+
 
 std::string CosmoMapType::getMapCode() const
 {
@@ -413,14 +483,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 	layers.push_back(actorLayer);
 
-	Map2DPtr map(new GenericMap2D(
-		attributes, Map::GraphicsFilenames(),
-		Map2D::HasViewport,
-		CCA_VIEWPORT_WIDTH, CCA_VIEWPORT_HEIGHT,
-		mapWidth, 32768 / mapWidth,
-		CCA_TILE_WIDTH, CCA_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
+	Map2DPtr map(new Map2D_Cosmo(attributes, mapWidth, layers));
 
 	return map;
 }
