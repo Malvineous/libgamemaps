@@ -31,6 +31,7 @@ EXTRA_libgamemaps_la_SOURCES += fmt-map-ccomic.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-cosmo.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-darkages.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ddave.hpp
+EXTRA_libgamemaps_la_SOURCES += fmt-map-duke1.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-got.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-harry.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-hocus.hpp
