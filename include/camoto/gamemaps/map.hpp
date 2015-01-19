@@ -82,15 +82,22 @@ enum ImagePurpose {
 	FontTileset7,
 	FontTileset8,
 	FontTileset9,
+	_FIRST_IMAGE, ///< Do not use (for IMAGEPURPOSE_IS_* macro)
 	BackgroundImage,
 	TilesetPurposeCount // must always be last
 };
 
 /// Is this ImagePurpose for an Image?
-#define IMAGEPURPOSE_IS_IMAGE(p) ((p) & 0x10)
+inline bool ImagePurpose_IsImage(const ImagePurpose& p)
+{
+	return p > _FIRST_IMAGE;
+}
 
-/// Is this ImagePurpose for an Tileset?
-#define IMAGEPURPOSE_IS_TILESET(p) (((p) & 0x10) == 0)
+/// Is this ImagePurpose for a tileset?
+inline bool ImagePurpose_IsTileset(const ImagePurpose& p)
+{
+	return p < _FIRST_IMAGE;
+}
 
 /// List of Tileset shared pointers.
 typedef std::map<ImagePurpose, gamegraphics::TilesetPtr> TilesetCollection;
