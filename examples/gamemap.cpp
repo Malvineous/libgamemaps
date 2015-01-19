@@ -654,148 +654,138 @@ finishTesting:
 		// Run through the actions on the command line
 		for (std::vector<po::option>::iterator i = pa.options.begin(); i != pa.options.end(); i++) {
 			if (i->string_key.compare("info") == 0) {
-				std::cout << (bScript ? "attribute_count=" : "Number of attributes: ");
-				gm::Map::AttributePtrVectorPtr attributes = pMap->getAttributes();
-				if (attributes) {
-					std::cout << attributes->size() << "\n";
-					int attrNum = 0;
-					for (gm::Map::AttributePtrVector::const_iterator
-						i = attributes->begin(); i != attributes->end(); i++
-					) {
-						gm::Map::AttributePtr a = *i;
+				std::cout << (bScript ? "attribute_count=" : "Number of attributes: ")
+					<< pMap->attributes.size() << "\n";
+				int attrNum = 0;
+				for (gm::Map::Attributes::const_iterator
+					i = pMap->attributes.begin(); i != pMap->attributes.end(); i++
+				) {
+					const gm::Map::Attribute& a = *i;
 
-						if (bScript) std::cout << "attribute" << attrNum << "_name=";
-						else std::cout << "Attribute " << attrNum+1 << ": ";
-						std::cout << a->name << "\n";
+					if (bScript) std::cout << "attribute" << attrNum << "_name=";
+					else std::cout << "Attribute " << attrNum+1 << ": ";
+					std::cout << a.name << "\n";
 
-						if (bScript) std::cout << "attribute" << attrNum << "_desc=";
-						else std::cout << "  Description: ";
-						std::cout << a->desc << "\n";
+					if (bScript) std::cout << "attribute" << attrNum << "_desc=";
+					else std::cout << "  Description: ";
+					std::cout << a.desc << "\n";
 
-						if (bScript) std::cout << "attribute" << attrNum << "_type=";
-						else std::cout << "  Type: ";
-						switch (a->type) {
+					if (bScript) std::cout << "attribute" << attrNum << "_type=";
+					else std::cout << "  Type: ";
+					switch (a.type) {
 
-							case gm::Map::Attribute::Integer: {
-								std::cout << (bScript ? "int" : "Integer value") << "\n";
+						case gm::Map::Attribute::Integer: {
+							std::cout << (bScript ? "int" : "Integer value") << "\n";
 
-								if (bScript) std::cout << "attribute" << attrNum << "_value=";
-								else std::cout << "  Current value: ";
-								std::cout << a->integerValue << "\n";
+							if (bScript) std::cout << "attribute" << attrNum << "_value=";
+							else std::cout << "  Current value: ";
+							std::cout << a.integerValue << "\n";
 
-								if (bScript) {
-									std::cout << "attribute" << attrNum << "_min=" << a->integerMinValue
-										<< "\nattribute" << attrNum << "_max=" << a->integerMaxValue;
+							if (bScript) {
+								std::cout << "attribute" << attrNum << "_min=" << a.integerMinValue
+									<< "\nattribute" << attrNum << "_max=" << a.integerMaxValue;
+							} else {
+								std::cout << "  Range: ";
+								if ((a.integerMinValue == 0) && (a.integerMaxValue == 0)) {
+									std::cout << "[unlimited]";
 								} else {
-									std::cout << "  Range: ";
-									if ((a->integerMinValue == 0) && (a->integerMaxValue == 0)) {
-										std::cout << "[unlimited]";
-									} else {
-										std::cout << a->integerMinValue << " to " << a->integerMaxValue;
-									}
+									std::cout << a.integerMinValue << " to " << a.integerMaxValue;
 								}
-								std::cout << "\n";
-								break;
 							}
-
-							case gm::Map::Attribute::Enum: {
-								std::cout << (bScript ? "enum" : "Item from list") << "\n";
-
-								if (bScript) std::cout << "attribute" << attrNum << "_value=";
-								else std::cout << "  Current value: ";
-								if (a->enumValue > a->enumValueNames.size()) {
-									std::cout << (bScript ? "error" : "[out of range]");
-								} else {
-									if (bScript) std::cout << a->enumValue;
-									else std::cout << "[" << a->enumValue << "] "
-										<< a->enumValueNames[a->enumValue];
-								}
-								std::cout << "\n";
-
-								if (bScript) std::cout << "attribute" << attrNum
-									<< "_choice_count=" << a->enumValueNames.size() << "\n";
-
-								int option = 0;
-								for (std::vector<std::string>::const_iterator
-									j = a->enumValueNames.begin(); j != a->enumValueNames.end(); j++
-								) {
-									if (bScript) {
-										std::cout << "attribute" << attrNum << "_choice" << option
-											<< "=";
-									} else {
-										std::cout << "  Allowed value " << option << ": ";
-									}
-									std::cout << *j << "\n";
-									option++;
-								}
-								break;
-							}
-
-							case gm::Map::Attribute::Filename: {
-								std::cout << (bScript ? "filename" : "Filename") << "\n";
-
-								if (bScript) std::cout << "attribute" << attrNum << "_value=";
-								else std::cout << "  Current value: ";
-								std::cout << a->filenameValue << "\n";
-
-								if (bScript) std::cout << "attribute" << attrNum
-									<< "_filespec=";
-								else std::cout << "  Valid files: ";
-								std::cout << "*";
-								if (!a->filenameValidExtension.empty()) {
-									std::cout << '.' << a->filenameValidExtension;
-								}
-								std::cout << "\n";
-								break;
-							}
-
-							default:
-								std::cout << (bScript ? "unknown" : "Unknown type (fix this!)");
-								break;
+							std::cout << "\n";
+							break;
 						}
-						attrNum++;
+
+						case gm::Map::Attribute::Enum: {
+							std::cout << (bScript ? "enum" : "Item from list") << "\n";
+
+							if (bScript) std::cout << "attribute" << attrNum << "_value=";
+							else std::cout << "  Current value: ";
+							if (a.enumValue > a.enumValueNames.size()) {
+								std::cout << (bScript ? "error" : "[out of range]");
+							} else {
+								if (bScript) std::cout << a.enumValue;
+								else std::cout << "[" << a.enumValue << "] "
+									<< a.enumValueNames[a.enumValue];
+							}
+							std::cout << "\n";
+
+							if (bScript) std::cout << "attribute" << attrNum
+								<< "_choice_count=" << a.enumValueNames.size() << "\n";
+
+							int option = 0;
+							for (std::vector<std::string>::const_iterator
+								j = a.enumValueNames.begin(); j != a.enumValueNames.end(); j++
+							) {
+								if (bScript) {
+									std::cout << "attribute" << attrNum << "_choice" << option
+										<< "=";
+								} else {
+									std::cout << "  Allowed value " << option << ": ";
+								}
+								std::cout << *j << "\n";
+								option++;
+							}
+							break;
+						}
+
+						case gm::Map::Attribute::Filename: {
+							std::cout << (bScript ? "filename" : "Filename") << "\n";
+
+							if (bScript) std::cout << "attribute" << attrNum << "_value=";
+							else std::cout << "  Current value: ";
+							std::cout << a.filenameValue << "\n";
+
+							if (bScript) std::cout << "attribute" << attrNum
+								<< "_filespec=";
+							else std::cout << "  Valid files: ";
+							std::cout << "*";
+							if (!a.filenameValidExtension.empty()) {
+								std::cout << '.' << a.filenameValidExtension;
+							}
+							std::cout << "\n";
+							break;
+						}
+
+						default:
+							std::cout << (bScript ? "unknown" : "Unknown type (fix this!)");
+							break;
 					}
-				} else {
-					std::cout << "0\n"; // number of attributes
+					attrNum++;
 				}
 
-				std::cout << (bScript ? "gfx_filename_count=" : "Number of graphics filenames: ");
-				gm::Map::GraphicsFilenamesPtr gfxFilenames = pMap->getGraphicsFilenames();
-				if (gfxFilenames) {
-					std::cout << gfxFilenames->size() << "\n";
-					int fileNum = 0;
-					for (gm::Map::GraphicsFilenames::const_iterator
-						i = gfxFilenames->begin(); i != gfxFilenames->end(); i++
-					) {
-						const gm::Map::GraphicsFilename *a = &(i->second);
+				std::cout << (bScript ? "gfx_filename_count=" : "Number of graphics filenames: ")
+					<< pMap->graphicsFilenames.size() << "\n";
+				int fileNum = 0;
+				for (gm::Map::GraphicsFilenames::const_iterator
+					i = pMap->graphicsFilenames.begin(); i != pMap->graphicsFilenames.end(); i++
+				) {
+					const gm::Map::GraphicsFilename& a = i->second;
 
-						if (bScript) {
-							std::cout << "gfx_file" << fileNum << "_name=" << a->filename << "\n";
-							std::cout << "gfx_file" << fileNum << "_type=" << a->type << "\n";
-							std::cout << "gfx_file" << fileNum << "_purpose=" << i->first << "\n";
-						} else {
-							std::cout << "Graphics file " << fileNum+1 << ": " << a->filename
-								<< " [";
-							switch (i->first) {
-								case gm::GenericTileset1:    std::cout << "Generic tileset 1"; break;
-								case gm::BackgroundImage:    std::cout << "Background image"; break;
-								case gm::BackgroundTileset1: std::cout << "Background tileset 1"; break;
-								case gm::BackgroundTileset2: std::cout << "Background tileset 2"; break;
-								case gm::ForegroundTileset1: std::cout << "Foreground tileset 1"; break;
-								case gm::ForegroundTileset2: std::cout << "Foreground tileset 2"; break;
-								case gm::SpriteTileset1:     std::cout << "Sprite tileset 1"; break;
-								case gm::FontTileset1:       std::cout << "Font tileset 1"; break;
-								case gm::FontTileset2:       std::cout << "Font tileset 2"; break;
-								default:
-									std::cout << "Unknown purpose <fix this>";
-									break;
-							}
-							std::cout << " of type " << a->type << "]\n";
+					if (bScript) {
+						std::cout << "gfx_file" << fileNum << "_name=" << a.filename << "\n";
+						std::cout << "gfx_file" << fileNum << "_type=" << a.type << "\n";
+						std::cout << "gfx_file" << fileNum << "_purpose=" << i->first << "\n";
+					} else {
+						std::cout << "Graphics file " << fileNum+1 << ": " << a.filename
+							<< " [";
+						switch (i->first) {
+							case gm::GenericTileset1:    std::cout << "Generic tileset 1"; break;
+							case gm::BackgroundImage:    std::cout << "Background image"; break;
+							case gm::BackgroundTileset1: std::cout << "Background tileset 1"; break;
+							case gm::BackgroundTileset2: std::cout << "Background tileset 2"; break;
+							case gm::ForegroundTileset1: std::cout << "Foreground tileset 1"; break;
+							case gm::ForegroundTileset2: std::cout << "Foreground tileset 2"; break;
+							case gm::SpriteTileset1:     std::cout << "Sprite tileset 1"; break;
+							case gm::FontTileset1:       std::cout << "Font tileset 1"; break;
+							case gm::FontTileset2:       std::cout << "Font tileset 2"; break;
+							default:
+								std::cout << "Unknown purpose <fix this>";
+								break;
 						}
-						fileNum++;
+						std::cout << " of type " << a.type << "]\n";
 					}
-				} else {
-					std::cout << "0\n"; // number of gfx filenames
+					fileNum++;
 				}
 
 				std::cout << (bScript ? "map_type=" : "Map type: ");
@@ -806,7 +796,7 @@ finishTesting:
 #define MAP2D_CAP(c)        CAP(gm::Map2D,        c, mapCaps)
 #define MAP2D_LAYER_CAP(c)  CAP(gm::Map2D::Layer, c, layerCaps)
 
-					int mapCaps = map2d->getCaps();
+					int mapCaps = map2d->caps;
 					if (bScript) {
 						std::cout << "map_caps=" << mapCaps << "\n";
 					} else {
@@ -833,10 +823,9 @@ finishTesting:
 						<< "\n";
 
 					if (mapCaps & gm::Map2D::HasViewport) {
-						unsigned int x, y;
-						map2d->getViewport(&x, &y);
-						std::cout << (bScript ? "viewport_width=" : "Viewport size: ") << x
-							<< (bScript ? "\nviewport_height=" : "x") << y
+						std::cout << (bScript ? "viewport_width=" : "Viewport size: ")
+							<< map2d->viewportX
+							<< (bScript ? "\nviewport_height=" : "x") << map2d->viewportY
 							<< (bScript ? "" : " pixels") << "\n";
 					}
 

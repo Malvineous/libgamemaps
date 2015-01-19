@@ -214,7 +214,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
-	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+	Map::Attributes attributes;
 
 	// Skip signature and flags
 	input->seekg(0x12 + 4, stream::cur);
@@ -230,15 +230,15 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	uint8_t mapFlags;
 	input >> u8(mapFlags);
 
-	Map::AttributePtr attrParallax(new Map::Attribute);
-	attrParallax->type = Map::Attribute::Enum;
-	attrParallax->name = "Background";
-	attrParallax->desc = "How to position the background layer as the player "
+	Map::Attribute attrParallax;
+	attrParallax.type = Map::Attribute::Enum;
+	attrParallax.name = "Background";
+	attrParallax.desc = "How to position the background layer as the player "
 		"moves (parallax is only visible in-game).";
-	attrParallax->enumValue = mapFlags == 0 ? 0 : 1;
-	attrParallax->enumValueNames.push_back("Fixed");
-	attrParallax->enumValueNames.push_back("Parallax");
-	attributes->push_back(attrParallax);
+	attrParallax.enumValue = mapFlags == 0 ? 0 : 1;
+	attrParallax.enumValueNames.push_back("Fixed");
+	attrParallax.enumValueNames.push_back("Parallax");
+	attributes.push_back(attrParallax);
 
 	// TODO: Load palette
 	input->seekg(768, stream::cur);
@@ -358,7 +358,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(actorLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		attributes, NO_GFX_CALLBACK,
+		attributes, Map::GraphicsFilenames(),
 		Map2D::HasViewport,
 		HH_VIEWPORT_WIDTH, HH_VIEWPORT_HEIGHT,
 		mapWidth, mapHeight,
@@ -377,8 +377,7 @@ void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	if (map2d->getLayerCount() != 3)
 		throw stream::error("Incorrect layer count for this format.");
 
-	Map::AttributePtrVectorPtr attributes = map->getAttributes();
-	if (attributes->size() != 1) {
+	if (map->attributes.size() != 1) {
 		throw stream::error("Cannot write map as there is an incorrect number "
 			"of attributes set.");
 	}
@@ -386,12 +385,12 @@ void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	unsigned int mapWidth, mapHeight;
 	map2d->getMapSize(&mapWidth, &mapHeight);
 
-	Map::Attribute *attrParallax = attributes->at(0).get();
-	if (attrParallax->type != Map::Attribute::Enum) {
+	const Map::Attribute& attrParallax = map->attributes[0];
+	if (attrParallax.type != Map::Attribute::Enum) {
 		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (parallax != enum)");
 	}
-	uint8_t mapFlags = attrParallax->enumValue;
+	uint8_t mapFlags = attrParallax.enumValue;
 
 	// Find the player-start-point objects
 	uint16_t startX = 0, startY = 0;

@@ -58,21 +58,6 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-Map::GraphicsFilenamesPtr getNukem2GfxFilenames(const Map *map)
-{
-	Map::AttributePtrVectorPtr attributes = map->getAttributes();
-	assert(attributes); // this map format always has attributes
-	assert(attributes->size() > 0);
-
-	Map::GraphicsFilenamesPtr files(new Map::GraphicsFilenames);
-	Map::GraphicsFilename gf;
-	gf.type = "tls-nukem2-czone";
-	gf.filename = attributes->at(0)->filenameValue;
-	if (!gf.filename.empty()) (*files)[BackgroundTileset1] = gf;
-
-	return files;
-}
-
 class Nukem2ActorLayer: virtual public GenericMap2D::Layer
 {
 	public:
@@ -168,6 +153,32 @@ class Nukem2ForegroundLayer: virtual public GenericMap2D::Layer
 		}
 };
 
+class Map2D_Nukem2: virtual public GenericMap2D
+{
+	public:
+		Map2D_Nukem2(const Attributes& attributes,
+			unsigned int width, LayerPtrVector& layers)
+			:	GenericMap2D(
+					attributes, GraphicsFilenames(),
+					Map2D::HasViewport,
+					DN2_VIEWPORT_WIDTH, DN2_VIEWPORT_HEIGHT,
+					width, DN2_NUM_TILES_BG / width,
+					DN2_TILE_WIDTH, DN2_TILE_HEIGHT,
+					layers, Map2D::PathPtrVectorPtr()
+				)
+		{
+			// Populate the graphics filenames
+			assert(this->attributes.size() > 0);
+
+			Map::GraphicsFilename gf;
+			gf.type = "tls-nukem2-czone";
+			gf.filename = this->attributes[0].filenameValue;
+			if (!gf.filename.empty()) {
+				this->graphicsFilenames[BackgroundTileset1] = gf;
+			}
+		}
+};
+
 
 std::string Nukem2MapType::getMapCode() const
 {
@@ -249,42 +260,35 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 		>> u16le(bgOffset)
 	;
 
-	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = "CZone tileset";
-		attr->desc = "Filename of the tileset to use for drawing the foreground and background layers";
-		input >> nullPadded(attr->filenameValue, 13);
-		// Trim off the padding spaces
-		attr->filenameValue = attr->filenameValue.substr(0, attr->filenameValue.find_last_not_of(' ') + 1);
-		attr->filenameValidExtension = "mni";
-		attributes->push_back(attr);
-	}
+	Map::Attributes attributes;
+	Map::Attribute attr;
 
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = "Backdrop";
-		attr->desc = "Filename of the backdrop to draw behind the map";
-		input >> nullPadded(attr->filenameValue, 13);
-		// Trim off the padding spaces
-		attr->filenameValue = attr->filenameValue.substr(0, attr->filenameValue.find_last_not_of(' ') + 1);
-		attr->filenameValidExtension = "mni";
-		attributes->push_back(attr);
-	}
+	attr.type = Map::Attribute::Filename;
+	attr.name = "CZone tileset";
+	attr.desc = "Filename of the tileset to use for drawing the foreground and background layers";
+	input >> nullPadded(attr.filenameValue, 13);
+	// Trim off the padding spaces
+	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
+	attr.filenameValidExtension = "mni";
+	attributes.push_back(attr);
 
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = "Music";
-		attr->desc = "File to play as background music";
-		input >> nullPadded(attr->filenameValue, 13);
-		// Trim off the padding spaces
-		attr->filenameValue = attr->filenameValue.substr(0, attr->filenameValue.find_last_not_of(' ') + 1);
-		attr->filenameValidExtension = "imf";
-		attributes->push_back(attr);
-	}
+	attr.type = Map::Attribute::Filename;
+	attr.name = "Backdrop";
+	attr.desc = "Filename of the backdrop to draw behind the map";
+	input >> nullPadded(attr.filenameValue, 13);
+	// Trim off the padding spaces
+	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
+	attr.filenameValidExtension = "mni";
+	attributes.push_back(attr);
+
+	attr.type = Map::Attribute::Filename;
+	attr.name = "Music";
+	attr.desc = "File to play as background music";
+	input >> nullPadded(attr.filenameValue, 13);
+	// Trim off the padding spaces
+	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
+	attr.filenameValidExtension = "imf";
+	attributes.push_back(attr);
 
 	input
 		>> u8(flags)
@@ -294,62 +298,51 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	;
 	lenMap -= 2+13+13+13+1+1+2+2;
 
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Enum;
-		attr->name = "Use alt backdrop?";
-		attr->desc = "When should the alternate backdrop file be used?";
-		attr->enumValue = (flags >> 6) & 3;
-		attr->enumValueNames.push_back("Never");
-		attr->enumValueNames.push_back("After destroying force field");
-		attr->enumValueNames.push_back("After teleporting");
-		attr->enumValueNames.push_back("Both? (this value has an unknown/untested effect)");
-		attributes->push_back(attr);
-	}
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Enum;
-		attr->name = "Earthquake";
-		attr->desc = "Should the level shake like there is an earthquake?";
-		attr->enumValue = (flags >> 5) & 1;
-		attr->enumValueNames.push_back("No");
-		attr->enumValueNames.push_back("Yes");
-		attributes->push_back(attr);
-	}
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Enum;
-		attr->name = "Backdrop movement";
-		attr->desc = "Should the backdrop move when the player is stationary?";
-		attr->enumValue = (flags >> 3) & 3;
-		attr->enumValueNames.push_back("No");
-		attr->enumValueNames.push_back("Scroll left");
-		attr->enumValueNames.push_back("Scroll up");
-		attr->enumValueNames.push_back("3 (this value has an unknown/untested effect)");
-		attributes->push_back(attr);
-	}
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Enum;
-		attr->name = "Parallax";
-		attr->desc = "How should the backdrop scroll when the player moves?";
-		attr->enumValue = (flags >> 0) & 3;
-		attr->enumValueNames.push_back("Fixed - no movement");
-		attr->enumValueNames.push_back("Horizontal and vertical movement");
-		attr->enumValueNames.push_back("Horizontal movement only");
-		attr->enumValueNames.push_back("3 (this value has an unknown/untested effect)");
-		attributes->push_back(attr);
-	}
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Integer;
-		attr->name = "Alt backdrop";
-		attr->desc = "Number of alternate backdrop file (DROPx.MNI)";
-		attr->integerValue = altBack;
-		attr->integerMinValue = 1;
-		attr->integerMaxValue = 24;
-		attributes->push_back(attr);
-	}
+	attr.type = Map::Attribute::Enum;
+	attr.name = "Use alt backdrop?";
+	attr.desc = "When should the alternate backdrop file be used?";
+	attr.enumValue = (flags >> 6) & 3;
+	attr.enumValueNames.push_back("Never");
+	attr.enumValueNames.push_back("After destroying force field");
+	attr.enumValueNames.push_back("After teleporting");
+	attr.enumValueNames.push_back("Both? (this value has an unknown/untested effect)");
+	attributes.push_back(attr);
+
+	attr.type = Map::Attribute::Enum;
+	attr.name = "Earthquake";
+	attr.desc = "Should the level shake like there is an earthquake?";
+	attr.enumValue = (flags >> 5) & 1;
+	attr.enumValueNames.push_back("No");
+	attr.enumValueNames.push_back("Yes");
+	attributes.push_back(attr);
+
+	attr.type = Map::Attribute::Enum;
+	attr.name = "Backdrop movement";
+	attr.desc = "Should the backdrop move when the player is stationary?";
+	attr.enumValue = (flags >> 3) & 3;
+	attr.enumValueNames.push_back("No");
+	attr.enumValueNames.push_back("Scroll left");
+	attr.enumValueNames.push_back("Scroll up");
+	attr.enumValueNames.push_back("3 (this value has an unknown/untested effect)");
+	attributes.push_back(attr);
+
+	attr.type = Map::Attribute::Enum;
+	attr.name = "Parallax";
+	attr.desc = "How should the backdrop scroll when the player moves?";
+	attr.enumValue = (flags >> 0) & 3;
+	attr.enumValueNames.push_back("Fixed - no movement");
+	attr.enumValueNames.push_back("Horizontal and vertical movement");
+	attr.enumValueNames.push_back("Horizontal movement only");
+	attr.enumValueNames.push_back("3 (this value has an unknown/untested effect)");
+	attributes.push_back(attr);
+
+	attr.type = Map::Attribute::Integer;
+	attr.name = "Alt backdrop";
+	attr.desc = "Number of alternate backdrop file (DROPx.MNI)";
+	attr.integerValue = altBack;
+	attr.integerMinValue = 1;
+	attr.integerMaxValue = 24;
+	attributes.push_back(attr);
 
 	// Read in the actor layer
 	unsigned int numActors = numActorInts / 3;
@@ -506,40 +499,32 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Trailing filenames
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = "Zone attribute (unused)";
-		attr->desc = "Filename of the zone tile attributes (unused)";
-		input >> nullPadded(attr->filenameValue, 13);
-		// Trim off the padding spaces
-		attr->filenameValue = attr->filenameValue.substr(0, attr->filenameValue.find_last_not_of(' ') + 1);
-		attr->filenameValidExtension = "mni";
-		attributes->push_back(attr);
-	}
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = "Zone tileset (unused)";
-		attr->desc = "Filename of the zone solid tileset (unused)";
-		input >> nullPadded(attr->filenameValue, 13);
-		// Trim off the padding spaces
-		attr->filenameValue = attr->filenameValue.substr(0, attr->filenameValue.find_last_not_of(' ') + 1);
-		attr->filenameValidExtension = "mni";
-		attributes->push_back(attr);
-	}
-	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = "Zone masked tileset (unused)";
-		attr->desc = "Filename of the zone masked tileset (unused)";
-		input >> nullPadded(attr->filenameValue, 13);
-		// Trim off the padding spaces
-		attr->filenameValue = attr->filenameValue.substr(0, attr->filenameValue.find_last_not_of(' ') + 1);
-		attr->filenameValidExtension = "mni";
-		attributes->push_back(attr);
-	}
+	attr.type = Map::Attribute::Filename;
+	attr.name = "Zone attribute (unused)";
+	attr.desc = "Filename of the zone tile attributes (unused)";
+	input >> nullPadded(attr.filenameValue, 13);
+	// Trim off the padding spaces
+	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
+	attr.filenameValidExtension = "mni";
+	attributes.push_back(attr);
 
+	attr.type = Map::Attribute::Filename;
+	attr.name = "Zone tileset (unused)";
+	attr.desc = "Filename of the zone solid tileset (unused)";
+	input >> nullPadded(attr.filenameValue, 13);
+	// Trim off the padding spaces
+	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
+	attr.filenameValidExtension = "mni";
+	attributes.push_back(attr);
+
+	attr.type = Map::Attribute::Filename;
+	attr.name = "Zone masked tileset (unused)";
+	attr.desc = "Filename of the zone masked tileset (unused)";
+	input >> nullPadded(attr.filenameValue, 13);
+	// Trim off the padding spaces
+	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
+	attr.filenameValidExtension = "mni";
+	attributes.push_back(attr);
 
 	// Create the map structures
 	Map2D::LayerPtr bgLayer(new Nukem2BackgroundLayer(tilesBG, validBGItems));
@@ -550,14 +535,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 	layers.push_back(actorLayer);
 
-	Map2DPtr map(new GenericMap2D(
-		attributes, getNukem2GfxFilenames,
-		Map2D::HasViewport,
-		DN2_VIEWPORT_WIDTH, DN2_VIEWPORT_HEIGHT,
-		mapWidth, DN2_NUM_TILES_BG / mapWidth,
-		DN2_TILE_WIDTH, DN2_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
+	Map2DPtr map(new Map2D_Nukem2(attributes, mapWidth, layers));
 
 	return map;
 }
@@ -578,46 +556,45 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	output
 		<< u16le(offBG)
 	;
-	Map::AttributePtrVectorPtr attributes = map->getAttributes();
 	// CZone
-	Map::Attribute *attr = attributes->at(0).get();
-	std::string val = attr->filenameValue;
+	Map::Attribute& attr0 = map->attributes[0];
+	std::string val = attr0.filenameValue;
 	int padamt = 12 - val.length();
 	val += std::string(padamt, ' '); // pad with spaces
 	output << nullPadded(val, 13);
 
 	// Backdrop
-	attr = attributes->at(1).get();
-	val = attr->filenameValue;
+	Map::Attribute& attr1 = map->attributes[1];
+	val = attr1.filenameValue;
 	padamt = 12 - val.length();
 	val += std::string(padamt, ' '); // pad with spaces
 	output << nullPadded(val, 13);
 
 	// Song
-	attr = attributes->at(2).get();
-	val = attr->filenameValue;
+	Map::Attribute& attr2 = map->attributes[2];
+	val = attr2.filenameValue;
 	padamt = 12 - val.length();
 	val += std::string(padamt, ' '); // pad with spaces
 	output << nullPadded(val, 13);
 
 	uint8_t flags = 0;
 
-	attr = attributes->at(3).get();
-	flags |= attr->enumValue << 6;
+	Map::Attribute& attr3 = map->attributes[3];
+	flags |= attr3.enumValue << 6;
 
-	attr = attributes->at(4).get();
-	flags |= attr->enumValue << 5;
+	Map::Attribute& attr4 = map->attributes[4];
+	flags |= attr4.enumValue << 5;
 
-	attr = attributes->at(5).get();
-	flags |= attr->enumValue << 3;
+	Map::Attribute& attr5 = map->attributes[5];
+	flags |= attr5.enumValue << 3;
 
-	attr = attributes->at(6).get();
-	flags |= attr->enumValue << 0;
+	Map::Attribute& attr6 = map->attributes[6];
+	flags |= attr6.enumValue << 0;
 
 	output << u8(flags);
 
-	attr = attributes->at(7).get();
-	output << u8(attr->integerValue);
+	Map::Attribute& attr7 = map->attributes[7];
+	output << u8(attr7.integerValue);
 
 	output << u16le(0);
 
@@ -780,16 +757,16 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	}
 
 	// Zone attribute filename (null-padded, not space-padded)
-	attr = attributes->at(8).get();
-	output << nullPadded(attr->filenameValue, 13);
+	Map::Attribute& attr8 = map->attributes[8];
+	output << nullPadded(attr8.filenameValue, 13);
 
 	// Zone solid tileset filename (null-padded, not space-padded)
-	attr = attributes->at(9).get();
-	output << nullPadded(attr->filenameValue, 13);
+	Map::Attribute& attr9 = map->attributes[9];
+	output << nullPadded(attr9.filenameValue, 13);
 
 	// Zone masked tileset filename (null-padded, not space-padded)
-	attr = attributes->at(10).get();
-	output << nullPadded(attr->filenameValue, 13);
+	Map::Attribute& attr10 = map->attributes[10];
+	output << nullPadded(attr10.filenameValue, 13);
 
 	output->flush();
 	return;

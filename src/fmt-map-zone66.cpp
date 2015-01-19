@@ -189,7 +189,7 @@ MapPtr Zone66MapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
+		Map::Attributes(), Map::GraphicsFilenames(),
 		Map2D::HasViewport,
 		320, 200, // viewport size
 		Z66_MAP_WIDTH, Z66_MAP_HEIGHT,

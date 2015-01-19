@@ -44,7 +44,7 @@ const std::string& GenericMap2D::Layer::getTitle() const
 	return this->title;
 }
 
-int GenericMap2D::Layer::getCaps() const
+unsigned int GenericMap2D::Layer::getCaps() const
 {
 	return this->caps;
 }

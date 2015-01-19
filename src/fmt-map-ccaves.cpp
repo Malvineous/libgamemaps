@@ -494,7 +494,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
+		Map::Attributes(), Map::GraphicsFilenames(),
 		Map2D::HasViewport,
 		CC_VIEWPORT_WIDTH, CC_VIEWPORT_HEIGHT,
 		CC_MAP_WIDTH, height,

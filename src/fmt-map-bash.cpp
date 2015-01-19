@@ -378,27 +378,43 @@ class BashInvisibleLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-Map::GraphicsFilenamesPtr bash_getGraphicsFilenames(const Map *map)
+class Map2D_Bash: virtual public GenericMap2D
 {
-	Map::AttributePtrVectorPtr attributes = map->getAttributes();
-	assert(attributes); // this map format always has attributes
-	assert(attributes->size() == MB_NUM_ATTRIBUTES);
+	public:
+		Map2D_Bash(const Attributes& attributes,
+			unsigned int width, unsigned int height,
+			LayerPtrVector& layers)
+			:	GenericMap2D(
+					attributes, GraphicsFilenames(),
+					Map2D::HasViewport,
+					MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
+					width, height,
+					MB_TILE_WIDTH, MB_TILE_HEIGHT,
+					layers, Map2D::PathPtrVectorPtr()
+				)
+		{
+			// Populate the graphics filenames
+			assert(this->attributes.size() == MB_NUM_ATTRIBUTES);
 
-	Map::GraphicsFilenamesPtr files(new Map::GraphicsFilenames);
-	Map::GraphicsFilename gf;
-	gf.type = "tls-bash-bg";
-	gf.filename = attributes->at(0)->filenameValue;
-	if (!gf.filename.empty()) (*files)[BackgroundTileset1] = gf; // bg tiles
+			Map::GraphicsFilename gf;
+			gf.type = "tls-bash-bg";
+			gf.filename = this->attributes[0].filenameValue;
+			if (!gf.filename.empty()) {
+				this->graphicsFilenames[BackgroundTileset1] = gf; // bg tiles
+			}
 
-	gf.type = "tls-bash-fg";
-	gf.filename = attributes->at(1)->filenameValue;
-	if (!gf.filename.empty()) (*files)[ForegroundTileset1] = gf; // fg tiles
+			gf.type = "tls-bash-fg";
+			gf.filename = this->attributes[1].filenameValue;
+			if (!gf.filename.empty()) {
+				this->graphicsFilenames[ForegroundTileset1] = gf; // fg tiles
+			}
 
-	gf.filename = attributes->at(2)->filenameValue;
-	if (!gf.filename.empty()) (*files)[ForegroundTileset2] = gf; // bon tiles
-
-	return files;
-}
+			gf.filename = this->attributes[2].filenameValue;
+			if (!gf.filename.empty()) {
+				this->graphicsFilenames[ForegroundTileset2] = gf; // bon tiles
+			}
+		}
+};
 
 
 std::string BashMapType::getMapCode() const
@@ -504,27 +520,27 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		"Unknown",
 	};
 	input->seekg(0, stream::start);
-	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+	Map::Attributes attributes;
 	for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Filename;
-		attr->name = attrNames[i];
-		attr->desc = attrDesc[i];
-		input >> nullPadded(attr->filenameValue, 31);
-		if (attr->filenameValue.compare("UNNAMED") == 0) {
-			attr->filenameValue.clear();
+		Map::Attribute attr;
+		attr.type = Map::Attribute::Filename;
+		attr.name = attrNames[i];
+		attr.desc = attrDesc[i];
+		input >> nullPadded(attr.filenameValue, 31);
+		if (attr.filenameValue.compare("UNNAMED") == 0) {
+			attr.filenameValue.clear();
 		} else {
 			// Add the fake extension
 			if (
-				(!attr->filenameValue.empty())
+				(!attr.filenameValue.empty())
 				&& (i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
 			) {
-				attr->filenameValue += ".";
-				attr->filenameValue += validTypes[i];
+				attr.filenameValue += ".";
+				attr.filenameValue += validTypes[i];
 			}
 		}
-		attr->filenameValidExtension = validTypes[i];
-		attributes->push_back(attr);
+		attr.filenameValidExtension = validTypes[i];
+		attributes.push_back(attr);
 	}
 
 	// Read the background layer
@@ -778,14 +794,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(attrLayer);
 	layers.push_back(pointLayer);
 
-	Map2DPtr map(new GenericMap2D(
-		attributes, bash_getGraphicsFilenames,
-		Map2D::HasViewport,
-		MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
-		mapWidth, mapHeight,
-		MB_TILE_WIDTH, MB_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
+	Map2DPtr map(new Map2D_Bash(attributes, mapWidth, mapHeight, layers));
 
 	return map;
 }
@@ -812,14 +821,13 @@ void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
 
 	// Write map info file
 	{
-		Map::AttributePtrVectorPtr attributes = map->getAttributes();
-		if (attributes->size() != MB_NUM_ATTRIBUTES) {
+		if (map->attributes.size() != MB_NUM_ATTRIBUTES) {
 			throw stream::error("Cannot write map as there is an incorrect number "
 				"of attributes set.");
 		}
 		std::string val;
 		for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
-			Map::Attribute *attr = attributes->at(i).get();
+			Map::Attribute *attr = &map->attributes[i];
 			if (attr->filenameValue.empty()) {
 				val = "UNNAMED";
 			} else {

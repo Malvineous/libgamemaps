@@ -408,7 +408,7 @@ MapPtr GOTMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(objLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
+		Map::Attributes(), Map::GraphicsFilenames(),
 		Map2D::HasViewport,
 		320, 192, // viewport size
 		GOT_SCR_WIDTH * GOT_MAP_SCREENCOUNT_HORIZ,

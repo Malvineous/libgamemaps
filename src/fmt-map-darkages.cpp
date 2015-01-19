@@ -223,7 +223,7 @@ MapPtr DarkAgesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(bgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		Map::AttributePtrVectorPtr(), NO_GFX_CALLBACK,
+		Map::Attributes(), Map::GraphicsFilenames(),
 		Map2D::HasViewport,
 		240, 144, // viewport size
 		DA_MAP_WIDTH, DA_MAP_HEIGHT,

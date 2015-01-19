@@ -249,50 +249,50 @@ MapPtr SAgentMapType::open(stream::input_sptr input, SuppData& suppData) const
 	bg += SAM_MAP_WIDTH + 2; // skip full second line (not displayed in the game)
 
 	unsigned int bgtile;
-	Map::AttributePtrVectorPtr attributes(new Map::AttributePtrVector());
+	Map::Attributes attributes;
 	{
-		Map::AttributePtr attr(new Map::Attribute);
-		attr->type = Map::Attribute::Enum;
-		attr->name = "Background tile";
-		attr->desc = "Default tile to use as level background";
+		Map::Attribute attr;
+		attr.type = Map::Attribute::Enum;
+		attr.name = "Background tile";
+		attr.desc = "Default tile to use as level background";
 		switch (bgcode) {
-			case 667: bgtile = MAKE_TILE( 6, 16); attr->enumValue = 0; break;
-			case 695: bgtile = MAKE_TILE( 6, 44); attr->enumValue = 1; break;
-			case 767: bgtile = MAKE_TILE( 8, 16); attr->enumValue = 2; break;
-			case 771: bgtile = MAKE_TILE( 8, 20); attr->enumValue = 3; break;
-			case 325: bgtile = MAKE_TILE( 9, 24); attr->enumValue = 4; break;
-			case 329: bgtile = MAKE_TILE( 9, 28); attr->enumValue = 5; break;
-			case 333: bgtile = MAKE_TILE( 9, 32); attr->enumValue = 6; break;
-			case 337: bgtile = MAKE_TILE( 9, 36); attr->enumValue = 7; break;
-			case 341: bgtile = MAKE_TILE( 9, 40); attr->enumValue = 8; break;
-			case 209: bgtile = MAKE_TILE(11,  8); attr->enumValue = 9; break;
-			case 213: bgtile = MAKE_TILE(11, 12); attr->enumValue = 10; break;
-			case 217: bgtile = MAKE_TILE(11, 16); attr->enumValue = 11; break;
-			case 233: bgtile = MAKE_TILE(11, 32); attr->enumValue = 12; break;
-			case 237: bgtile = MAKE_TILE(11, 36); attr->enumValue = 13; break;
-			case 241: bgtile = MAKE_TILE(11, 40); attr->enumValue = 14; break;
-			case 245: bgtile = MAKE_TILE(11, 44); attr->enumValue = 15; break;
-			case 501: bgtile = MAKE_TILE( 1,  0); attr->enumValue = 16; break;
-			default: bgtile = MAKE_TILE( 6, 16); attr->enumValue = 0; break;
+			case 667: bgtile = MAKE_TILE( 6, 16); attr.enumValue = 0; break;
+			case 695: bgtile = MAKE_TILE( 6, 44); attr.enumValue = 1; break;
+			case 767: bgtile = MAKE_TILE( 8, 16); attr.enumValue = 2; break;
+			case 771: bgtile = MAKE_TILE( 8, 20); attr.enumValue = 3; break;
+			case 325: bgtile = MAKE_TILE( 9, 24); attr.enumValue = 4; break;
+			case 329: bgtile = MAKE_TILE( 9, 28); attr.enumValue = 5; break;
+			case 333: bgtile = MAKE_TILE( 9, 32); attr.enumValue = 6; break;
+			case 337: bgtile = MAKE_TILE( 9, 36); attr.enumValue = 7; break;
+			case 341: bgtile = MAKE_TILE( 9, 40); attr.enumValue = 8; break;
+			case 209: bgtile = MAKE_TILE(11,  8); attr.enumValue = 9; break;
+			case 213: bgtile = MAKE_TILE(11, 12); attr.enumValue = 10; break;
+			case 217: bgtile = MAKE_TILE(11, 16); attr.enumValue = 11; break;
+			case 233: bgtile = MAKE_TILE(11, 32); attr.enumValue = 12; break;
+			case 237: bgtile = MAKE_TILE(11, 36); attr.enumValue = 13; break;
+			case 241: bgtile = MAKE_TILE(11, 40); attr.enumValue = 14; break;
+			case 245: bgtile = MAKE_TILE(11, 44); attr.enumValue = 15; break;
+			case 501: bgtile = MAKE_TILE( 1,  0); attr.enumValue = 16; break;
+			default: bgtile = MAKE_TILE( 6, 16); attr.enumValue = 0; break;
 		}
-		attr->enumValueNames.push_back("Blue sky/grey tiles");
-		attr->enumValueNames.push_back("Grey tiles");
-		attr->enumValueNames.push_back("Grey stone");
-		attr->enumValueNames.push_back("Blue brick");
-		attr->enumValueNames.push_back("Blue diamonds");
-		attr->enumValueNames.push_back("Red stone");
-		attr->enumValueNames.push_back("Night sky/grey tiles");
-		attr->enumValueNames.push_back("Grey/spare 1");
-		attr->enumValueNames.push_back("Grey/spare 2");
-		attr->enumValueNames.push_back("Red/grey tiles");
-		attr->enumValueNames.push_back("Grey pattern");
-		attr->enumValueNames.push_back("Blue");
-		attr->enumValueNames.push_back("Diagonal red brick");
-		attr->enumValueNames.push_back("Grey with white line");
-		attr->enumValueNames.push_back("Blue dirt");
-		attr->enumValueNames.push_back("Overlapping red squares");
-		attr->enumValueNames.push_back("Grass");
-		attributes->push_back(attr);
+		attr.enumValueNames.push_back("Blue sky/grey tiles");
+		attr.enumValueNames.push_back("Grey tiles");
+		attr.enumValueNames.push_back("Grey stone");
+		attr.enumValueNames.push_back("Blue brick");
+		attr.enumValueNames.push_back("Blue diamonds");
+		attr.enumValueNames.push_back("Red stone");
+		attr.enumValueNames.push_back("Night sky/grey tiles");
+		attr.enumValueNames.push_back("Grey/spare 1");
+		attr.enumValueNames.push_back("Grey/spare 2");
+		attr.enumValueNames.push_back("Red/grey tiles");
+		attr.enumValueNames.push_back("Grey pattern");
+		attr.enumValueNames.push_back("Blue");
+		attr.enumValueNames.push_back("Diagonal red brick");
+		attr.enumValueNames.push_back("Grey with white line");
+		attr.enumValueNames.push_back("Blue dirt");
+		attr.enumValueNames.push_back("Overlapping red squares");
+		attr.enumValueNames.push_back("Grass");
+		attributes.push_back(attr);
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
@@ -392,7 +392,7 @@ MapPtr SAgentMapType::open(stream::input_sptr input, SuppData& suppData) const
 	layers.push_back(fgLayer);
 
 	Map2DPtr map(new GenericMap2D(
-		attributes, NO_GFX_CALLBACK,
+		attributes, Map::GraphicsFilenames(),
 		Map2D::HasViewport,
 		SAM_VIEWPORT_WIDTH, SAM_VIEWPORT_HEIGHT,
 		SAM_MAP_WIDTH, height,
@@ -599,19 +599,18 @@ void SAgentMapType::write(MapPtr map, stream::expanding_output_sptr output,
 			<< (lineCount - SAM_MAX_ROWS) << " row(s) in order to save the level."));
 	}
 
-	Map::AttributePtrVectorPtr attributes = map->getAttributes();
-	if (attributes->size() != 1) {
+	if (map->attributes.size() != 1) {
 		throw stream::error("Cannot write map as there is an incorrect number "
 			"of attributes set.");
 	}
 
-	Map::Attribute *attrBG = attributes->at(0).get();
-	if (attrBG->type != Map::Attribute::Enum) {
+	Map::Attribute& attrBG = map->attributes[0];
+	if (attrBG.type != Map::Attribute::Enum) {
 		throw stream::error("Cannot write map as there is an attribute of the "
 			"wrong type (bg != enum)");
 	}
 	int bgcode;
-	switch (attrBG->enumValue) {
+	switch (attrBG.enumValue) {
 		case 0: bgcode = 667; break;
 		case 1: bgcode = 695; break;
 		case 2: bgcode = 767; break;

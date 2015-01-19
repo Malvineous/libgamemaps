@@ -24,14 +24,15 @@
 namespace camoto {
 namespace gamemaps {
 
-GenericMap2D::GenericMap2D(AttributePtrVectorPtr attributes,
-	GraphicsFilenamesCallback fnGfxFiles, int caps,
-	unsigned int viewportWidth, unsigned int viewportHeight, unsigned int width,
-	unsigned int height, unsigned int tileWidth, unsigned int tileHeight,
-	LayerPtrVector& layers, PathPtrVectorPtr paths)
-	:	GenericMap(attributes, fnGfxFiles),
-		caps(caps),
-		viewportWidth(viewportWidth), viewportHeight(viewportHeight),
+using namespace camoto::gamegraphics;
+
+GenericMap2D::GenericMap2D(const Attributes& attributes,
+	const GraphicsFilenames& graphicsFilenames, unsigned int caps,
+	unsigned int viewportWidth, unsigned int viewportHeight,
+	unsigned int width, unsigned int height,
+	unsigned int tileWidth, unsigned int tileHeight,
+	const LayerPtrVector& layers, PathPtrVectorPtr paths)
+	:	Map2D(attributes, graphicsFilenames, caps, viewportWidth, viewportHeight),
 		width(width), height(height),
 		tileWidth(tileWidth), tileHeight(tileHeight),
 		layers(layers),
@@ -47,20 +48,6 @@ GenericMap2D::~GenericMap2D()
 {
 }
 
-int GenericMap2D::getCaps() const
-{
-	return this->caps;
-}
-
-void GenericMap2D::getViewport(unsigned int *x, unsigned int *y) const
-{
-	assert(this->getCaps() & HasViewport);
-
-	*x = this->viewportWidth;
-	*y = this->viewportHeight;
-	return;
-}
-
 void GenericMap2D::getMapSize(unsigned int *x, unsigned int *y) const
 {
 	*x = this->width;
@@ -70,7 +57,7 @@ void GenericMap2D::getMapSize(unsigned int *x, unsigned int *y) const
 
 void GenericMap2D::setMapSize(unsigned int x, unsigned int y)
 {
-	assert(this->getCaps() & CanResize);
+	assert(this->caps & CanResize);
 
 	this->width = x;
 	this->height = y;
@@ -86,7 +73,7 @@ void GenericMap2D::getTileSize(unsigned int *x, unsigned int *y) const
 
 void GenericMap2D::setTileSize(unsigned int x, unsigned int y)
 {
-	assert(this->getCaps() & ChangeTileSize);
+	assert(this->caps & ChangeTileSize);
 
 	this->tileWidth = x;
 	this->tileHeight = y;

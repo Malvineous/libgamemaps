@@ -22,13 +22,12 @@
 #define _CAMOTO_GAMEMAPS_MAP2D_GENERIC_HPP_
 
 #include <camoto/gamemaps/map2d.hpp>
-#include "map-generic.hpp"
 
 namespace camoto {
 namespace gamemaps {
 
 /// 2D grid-based Map.
-class GenericMap2D: virtual public Map2D, virtual public GenericMap
+class GenericMap2D: public Map2D
 {
 	public:
 		class Layer;
@@ -37,10 +36,6 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		/**
 		 * @param attributes
 		 *   List of attributes that apply to this map.
-		 *
-		 * @param fnGfxFiles
-		 *   Callback to retrieve the list of graphics files needed to render this
-		 *   map.
 		 *
 		 * @param caps
 		 *   Map capabilities.  One or more Caps values OR'd together.
@@ -92,17 +87,16 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		 *   map size in pixels, then divided by the layer's different tile size to
 		 *   reveal the dimensions of the layer in a number of tiles.
 		 */
-		GenericMap2D(AttributePtrVectorPtr attributes,
-			GraphicsFilenamesCallback fnGfxFiles, int caps,
+		GenericMap2D(const Attributes& attributes,
+			const GraphicsFilenames& graphicsFilenames, unsigned int caps,
 			unsigned int viewportWidth, unsigned int viewportHeight,
-			unsigned int width, unsigned int height, unsigned int tileWidth,
-			unsigned int tileHeight, LayerPtrVector& layers, PathPtrVectorPtr paths);
+			unsigned int width, unsigned int height,
+			unsigned int tileWidth, unsigned int tileHeight,
+			const LayerPtrVector& layers, PathPtrVectorPtr paths);
 
 		/// Destructor.
 		virtual ~GenericMap2D();
 
-		virtual int getCaps() const;
-		virtual void getViewport(unsigned int *x, unsigned int *y) const;
 		virtual void getMapSize(unsigned int *x, unsigned int *y) const;
 		virtual void setMapSize(unsigned int x, unsigned int y);
 		virtual void getTileSize(unsigned int *x, unsigned int *y) const;
@@ -112,15 +106,14 @@ class GenericMap2D: virtual public Map2D, virtual public GenericMap
 		virtual PathPtrVectorPtr getPaths();
 
 	protected:
-		int caps;               ///< Value to return in getCaps().
-		unsigned int viewportWidth;      ///< Width of viewport in pixels.
-		unsigned int viewportHeight;     ///< Height of viewport in pixels.
-		unsigned int width;              ///< Width of map as number of tiles.
-		unsigned int height;             ///< Height of map as number of tiles.
-		unsigned int tileWidth;          ///< Width of tiles in all layers, in pixels.
-		unsigned int tileHeight;         ///< Height of tiles in all layers, in pixels.
-		LayerPtrVector layers;  ///< Map layers
-		PathPtrVectorPtr paths; ///< Map paths
+		unsigned int viewportWidth;   ///< Width of viewport in pixels.
+		unsigned int viewportHeight;  ///< Height of viewport in pixels.
+		unsigned int width;           ///< Width of map as number of tiles.
+		unsigned int height;          ///< Height of map as number of tiles.
+		unsigned int tileWidth;       ///< Width of tiles in all layers, in pixels.
+		unsigned int tileHeight;      ///< Height of tiles in all layers, in pixels.
+		LayerPtrVector layers;        ///< Map layers
+		PathPtrVectorPtr paths;       ///< Map paths
 };
 
 class GenericMap2D::Layer: virtual public Map2D::Layer
@@ -163,7 +156,7 @@ class GenericMap2D::Layer: virtual public Map2D::Layer
 		virtual ~Layer();
 
 		virtual const std::string& getTitle() const;
-		virtual int getCaps() const;
+		virtual unsigned int getCaps() const;
 		virtual void getLayerSize(unsigned int *x, unsigned int *y) const;
 		virtual void setLayerSize(unsigned int x, unsigned int y);
 		virtual void getTileSize(unsigned int *x, unsigned int *y) const;

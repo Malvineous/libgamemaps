@@ -165,20 +165,16 @@ class Map: virtual public Metadata
 			int textMaxLength;     ///< Text type: maximum string length, in chars
 		};
 
-		/// Shared pointer to an Attribute.
-		typedef boost::shared_ptr<Attribute> AttributePtr;
+		/// Attribute list.
+		typedef std::vector<Attribute> Attributes;
 
-		/// Vector of Attribute shared pointers.
-		typedef std::vector<AttributePtr> AttributePtrVector;
-
-		/// Shared pointer to Attribute vector.
-		typedef boost::shared_ptr<AttributePtrVector> AttributePtrVectorPtr;
-
-		/// Get a list of attributes that can be set in this map.
-		virtual AttributePtrVectorPtr getAttributes() = 0;
-
-		/// Const-accessible version
-		virtual const AttributePtrVectorPtr getAttributes() const = 0;
+		/// List of attributes (if any) in this map.
+		/**
+		 * This member is public to avoid having const and non-const getters.
+		 * Attributes should be populated at constructor time, so there's no need
+		 * to do any work in a getter function.
+		 */
+		Attributes attributes;
 
 		/// Information about a graphics file used to render this map.
 		struct GraphicsFilename {
@@ -186,26 +182,21 @@ class Map: virtual public Metadata
 			std::string type;      ///< Type code (e.g. "tls-blah")
 		};
 
-		/// List of Tileset shared pointers.
+		/// Map between each graphics file and what it's used for.
 		typedef std::map<ImagePurpose, GraphicsFilename> GraphicsFilenames;
 
-		/// Shared pointer to a list of image filenames.
-		typedef boost::shared_ptr<GraphicsFilenames> GraphicsFilenamesPtr;
+		/// List of tilesets and what they are used for in this map.
+		GraphicsFilenames graphicsFilenames;
 
-		/// Get a list of additional files needed to render the map.
-		/**
-		 * This function returns a list of filenames and format types needed to
-		 * render the map.  Tilesets, background images, etc.  These values may
-		 * change as map attributes are altered.
-		 */
-		virtual GraphicsFilenamesPtr getGraphicsFilenames() const = 0;
+		inline Map(const Attributes& attributes, const GraphicsFilenames& graphicsFilenames)
+			:	attributes(attributes),
+				graphicsFilenames(graphicsFilenames)
+		{
+		}
 };
 
 /// Shared pointer to a Map.
 typedef boost::shared_ptr<Map> MapPtr;
-
-/// Vector of Map shared pointers.
-typedef std::vector<MapPtr> MapVector;
 
 } // namespace gamemaps
 } // namespace camoto

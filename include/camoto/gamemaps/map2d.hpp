@@ -31,7 +31,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// 2D grid-based Map.
-class Map2D: virtual public Map
+class Map2D: public Map
 {
 	public:
 		/// Capabilities this map supports.
@@ -43,6 +43,21 @@ class Map2D: virtual public Map
 			HasPaths          = 0x0008, ///< Does the map support paths?
 			FixedPathCount    = 0x0010, ///< If set, paths cannot be added/removed, only edited
 		};
+		/// Get the capabilities of this map format.
+		/**
+		 * One or more of the Caps enum values (OR'd together.)
+		 */
+		const unsigned int caps;
+
+		/// Get the size of the in-game viewport.
+		/**
+		 * These dimensions indicate how much of the level can be seen by the player
+		 * inside the game.  Given the age of most DOS games, it is typically how
+		 * many tiles can be seen on a 320x200 display (minus the space used for the
+		 * status bar).
+		 */
+		const unsigned int viewportX; // Viewport width, in pixels.
+		const unsigned int viewportY; // Viewport height, in pixels.
 
 		class Layer;
 		/// Shared pointer to a layer instance.
@@ -57,27 +72,6 @@ class Map2D: virtual public Map
 		typedef std::vector<PathPtr> PathPtrVector;
 		/// Shared pointer to a vector of paths.
 		typedef boost::shared_ptr<PathPtrVector> PathPtrVectorPtr;
-
-		/// Get the capabilities of this map format.
-		/**
-		 * @return One or more of the Caps enum values (OR'd together.)
-		 */
-		virtual int getCaps() const = 0;
-
-		/// Retrieve the size of the in-game viewport.
-		/**
-		 * These dimensions indicate how much of the level can be seen by the player
-		 * inside the game.  Given the age of most DOS games, it is typically how
-		 * many tiles can be seen on a 320x200 display (minus the space used for the
-		 * status bar).
-		 *
-		 * @param x
-		 *   Pointer to store viewport width, in pixels.
-		 *
-		 * @param y
-		 *   Pointer to store layer height, in pixels.
-		 */
-		virtual void getViewport(unsigned int *x, unsigned int *y) const = 0;
 
 		/// Retrieve the size of the map.
 		/**
@@ -156,6 +150,19 @@ class Map2D: virtual public Map
 		 *   paths cannot be created or removed.
 		 */
 		virtual PathPtrVectorPtr getPaths() = 0;
+
+		inline Map2D(const Attributes& attributes, const GraphicsFilenames& graphicsFilenames,
+			unsigned int caps, unsigned int viewportWidth,
+			unsigned int viewportHeight)
+			:	Map(
+					attributes,
+					graphicsFilenames
+				),
+				caps(caps),
+				viewportX(viewportWidth),
+				viewportY(viewportHeight)
+		{
+		}
 };
 
 /// Shared pointer to an MapType.
@@ -212,6 +219,9 @@ class Map2D::Layer
 
 		/// Get the layer's friendly name.
 		/**
+		 * This isn't from the map metadata, this is a name for a level editor to
+		 * display, for example "Foreground" or "Background".
+		 *
 		 * @return A string containing a name suitable for display to the user.
 		 */
 		virtual const std::string& getTitle() const = 0;
@@ -220,7 +230,7 @@ class Map2D::Layer
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual int getCaps() const = 0;
+		virtual unsigned int getCaps() const = 0;
 
 		/// Retrieve the size of the layer.
 		/**
