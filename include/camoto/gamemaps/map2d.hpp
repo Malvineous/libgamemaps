@@ -151,6 +151,41 @@ class Map2D: public Map
 		 */
 		virtual PathPtrVectorPtr getPaths() = 0;
 
+		/// How the map background is drawn behind the level.
+		enum ImageAttachment {
+			NoBackground,        ///< No background image
+			SingleImageCentred,  ///< Image is centered in the middle of the viewport
+			SingleImageTiled,    ///< Image is repeated to fill the largest map layer
+			SingleColour,        ///< Background is a single colour
+		};
+
+		/// Get an image to draw as the background behind all map layers.
+		/**
+		 * Since any empty/default map tiles will not be drawn, those areas will
+		 * show through to this background image.
+		 *
+		 * @param tileset
+		 *   List of tilesets, same as passed to Map2DLayer::imageFromCode().
+		 *
+		 * @param out
+		 *   On return, contains the image to draw.  An empty pointer is returned
+		 *   if the image is not required (e.g. no backdrop or single colour.)
+		 *
+		 * @param outAttach
+		 *   On return, contains an ImageAttachment value specifying how the image
+		 *   should be attached to the background.
+		 *
+		 * @param outColour
+		 *   On return, if outAttach is SingleColour then this field contains the
+		 *   colour to draw as the background.  If outAttach is another value then
+		 *   this field is ignored.
+		 */
+		virtual ImageAttachment getBackgroundImage(
+			const TilesetCollectionPtr& tileset,
+			camoto::gamegraphics::ImagePtr *outImage,
+			camoto::gamegraphics::PaletteEntry *outColour)
+			const = 0;
+
 		inline Map2D(const Attributes& attributes, const GraphicsFilenames& graphicsFilenames,
 			unsigned int caps, unsigned int viewportWidth,
 			unsigned int viewportHeight)

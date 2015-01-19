@@ -261,6 +261,39 @@ class Map2D_WordRescue: virtual public GenericMap2D
 				<< (int)(this->attributes[ATTR_TILESET].enumValue + 1)
 				<< ".wr");
 			this->graphicsFilenames[BackgroundTileset1] = gf;
+
+			unsigned int dropNum = this->attributes[ATTR_BACKDROP].enumValue;
+			if (dropNum > 0) {
+				gf.type = "pcx-1b4p";
+				gf.filename = createString("drop" << dropNum << ".wr");
+				this->graphicsFilenames[BackgroundImage] = gf;
+			}
+		}
+
+		Map2D::ImageAttachment getBackgroundImage(
+			const TilesetCollectionPtr& tileset, ImagePtr *outImage,
+			PaletteEntry *outColour) const
+		{
+			unsigned int dropNum = this->attributes[ATTR_BACKDROP].enumValue;
+			if (dropNum == 0) {
+				unsigned int bgColour = this->attributes[ATTR_BGCOLOUR].enumValue;
+				PaletteTablePtr pal = createPalette_DefaultEGA();
+				*outColour = pal->at(bgColour);
+				return Map2D::SingleColour;
+			}
+
+			TilesetCollection::const_iterator t = tileset->find(BackgroundImage);
+			if (t != tileset->end()) {
+				const Tileset::VC_ENTRYPTR& images = t->second->getItems();
+				if (images.size() > 0) {
+					// Just open the first image, it will have been whatever was supplied
+					// by this->graphicsFilenames[BackgroundImage]
+					*outImage = t->second->openImage(images[0]);
+					return Map2D::SingleImageCentred;
+				}
+			}
+
+			return Map2D::NoBackground;
 		}
 };
 

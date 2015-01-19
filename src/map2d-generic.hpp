@@ -104,6 +104,9 @@ class GenericMap2D: public Map2D
 		virtual unsigned int getLayerCount() const;
 		virtual LayerPtr getLayer(unsigned int index);
 		virtual PathPtrVectorPtr getPaths();
+		virtual ImageAttachment getBackgroundImage(
+			const TilesetCollectionPtr& tileset, gamegraphics::ImagePtr *outImage,
+			gamegraphics::PaletteEntry *outColour) const;
 
 	protected:
 		unsigned int viewportWidth;   ///< Width of viewport in pixels.

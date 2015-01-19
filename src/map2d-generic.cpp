@@ -96,5 +96,12 @@ Map2D::PathPtrVectorPtr GenericMap2D::getPaths()
 	return this->paths;
 }
 
+Map2D::ImageAttachment GenericMap2D::getBackgroundImage(
+	const TilesetCollectionPtr& tileset, ImagePtr *outImage,
+	PaletteEntry *outColour) const
+{
+	return Map2D::NoBackground;
+}
+
 } // namespace gamemaps
 } // namespace camoto
