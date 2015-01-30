@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-bash.hpp
- * @brief  MapType and Map2D implementation for Monster Bash levels.
+ * @file  fmt-map-bash.hpp
+ * @brief MapType and Map2D implementation for Monster Bash levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

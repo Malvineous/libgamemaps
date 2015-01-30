@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-ddave.hpp
- * @brief  MapType and Map2D implementation for Dangerous Dave levels.
+ * @file  fmt-map-ddave.hpp
+ * @brief MapType and Map2D implementation for Dangerous Dave levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

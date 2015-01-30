@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-ccaves.cpp
- * @brief  MapType and Map2D implementation for Crystal Caves levels.
+ * @file  fmt-map-ccaves.cpp
+ * @brief MapType and Map2D implementation for Crystal Caves levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Crystal_Caves

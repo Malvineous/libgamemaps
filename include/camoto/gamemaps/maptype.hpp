@@ -1,7 +1,7 @@
 /**
- * @file   maptype.hpp
- * @brief  MapType class, used to identify and open an instance of a
- *         particular map format.
+ * @file  camoto/gamemaps/maptype.hpp
+ * @brief MapType class, used to identify and open an instance of a
+ *        particular map format.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -96,7 +96,7 @@ class MapType
 
 		/// Open a map file.
 		/**
-		 * @pre Recommended that isInstance() has returned > EC_DEFINITELY_NO.
+		 * @pre Recommended that isInstance() has returned > #DefinitelyNo.
 		 *
 		 * @param input
 		 *   The map file.
@@ -107,7 +107,7 @@ class MapType
 		 * @return A shared pointer to an instance of the Map class.
 		 *
 		 * @note Will throw an exception if the data is invalid (likely if
-		 *   isInstance() returned EC_DEFINITELY_NO) however it will try its best
+		 *   isInstance() returned #DefinitelyNo) however it will try its best
 		 *   to read the data anyway, to make it possible to "force" a file to be
 		 *   opened by a particular format handler.
 		 */

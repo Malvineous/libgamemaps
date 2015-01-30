@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-rockford.hpp
- * @brief  MapType and Map2D implementation for Rockford maps.
+ * @file  fmt-map-rockford.hpp
+ * @brief MapType and Map2D implementation for Rockford maps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

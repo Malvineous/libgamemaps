@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-harry.cpp
- * @brief  MapType and Map2D implementation for Halloween Harry/Alien Carnage.
+ * @file  fmt-map-harry.cpp
+ * @brief MapType and Map2D implementation for Halloween Harry/Alien Carnage.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/GMF_Format_(Halloween_Harry)

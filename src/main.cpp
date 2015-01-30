@@ -1,6 +1,6 @@
 /**
- * @file   libgamemaps/src/main.cpp
- * @brief  Main entry point for libgamemaps.
+ * @file  libgamemaps/src/main.cpp
+ * @brief Main entry point for libgamemaps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

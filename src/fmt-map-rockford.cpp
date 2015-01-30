@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-rockford.cpp
- * @brief  MapType and Map2D implementation for Rockford levels.
+ * @file  fmt-map-rockford.cpp
+ * @brief MapType and Map2D implementation for Rockford levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Rockford

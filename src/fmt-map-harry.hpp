@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-harry.hpp
- * @brief  MapType and Map2D implementation for Halloween Harry/Alien Carnage.
+ * @file  fmt-map-harry.hpp
+ * @brief MapType and Map2D implementation for Halloween Harry/Alien Carnage.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

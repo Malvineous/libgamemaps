@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-wacky.cpp
- * @brief  MapType and Map2D implementation for Wacky Wheels levels.
+ * @file  fmt-map-wacky.cpp
+ * @brief MapType and Map2D implementation for Wacky Wheels levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Wacky_Wheels

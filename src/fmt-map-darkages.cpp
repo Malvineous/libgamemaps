@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-darkages.cpp
- * @brief  MapType and Map2D implementation for Dark Ages levels.
+ * @file  fmt-map-darkages.cpp
+ * @brief MapType and Map2D implementation for Dark Ages levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Dark_Ages_Map_Format

@@ -1,6 +1,6 @@
 /**
- * @file   base-maptype.hpp
- * @brief  Shared functionality for all MapType classes.
+ * @file  base-maptype.hpp
+ * @brief Shared functionality for all MapType classes.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

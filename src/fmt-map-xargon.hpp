@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-xargon.hpp
- * @brief  MapType and Map2D implementation for Jill of the Jungle and Xargon.
+ * @file  fmt-map-xargon.hpp
+ * @brief MapType and Map2D implementation for Jill of the Jungle and Xargon.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

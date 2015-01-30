@@ -1,6 +1,6 @@
 /**
- * @file   map2d_layer.cpp
- * @brief  Generic layer in a 2D grid-based map.
+ * @file  map2d_layer.cpp
+ * @brief Generic layer in a 2D grid-based map.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

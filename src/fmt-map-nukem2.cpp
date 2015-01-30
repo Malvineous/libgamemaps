@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-nukem2.cpp
- * @brief  MapType and Map2D implementation for Duke Nukem II levels.
+ * @file  fmt-map-nukem2.cpp
+ * @brief MapType and Map2D implementation for Duke Nukem II levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Duke_Nukem_II_Map_Format

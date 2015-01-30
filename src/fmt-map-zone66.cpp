@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-zone66.cpp
- * @brief  MapType and Map2D implementation for Zone 66 levels.
+ * @file  fmt-map-zone66.cpp
+ * @brief MapType and Map2D implementation for Zone 66 levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Zone_66_Level_Format

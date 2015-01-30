@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-ccomic.hpp
- * @brief  MapType and Map2D implementation for Captain Comic maps.
+ * @file  fmt-map-ccomic.hpp
+ * @brief MapType and Map2D implementation for Captain Comic maps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

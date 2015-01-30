@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-wordresc.hpp
- * @brief  MapType and Map2D implementation for Word Rescue levels.
+ * @file  fmt-map-wordresc.hpp
+ * @brief MapType and Map2D implementation for Word Rescue levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

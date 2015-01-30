@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-sagent.cpp
- * @brief  MapType and Map2D implementation for Secret Agent levels.
+ * @file  fmt-map-sagent.cpp
+ * @brief MapType and Map2D implementation for Secret Agent levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Secret_Agent

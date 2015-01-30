@@ -1,6 +1,6 @@
 /**
- * @file   util.cpp
- * @brief  Game map utility functions.
+ * @file  util.cpp
+ * @brief Game map utility functions.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

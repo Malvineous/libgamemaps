@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-hocus.cpp
- * @brief  MapType and Map2D implementation for Hocus Pocus.
+ * @file  fmt-map-hocus.cpp
+ * @brief MapType and Map2D implementation for Hocus Pocus.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Hocus_Pocus

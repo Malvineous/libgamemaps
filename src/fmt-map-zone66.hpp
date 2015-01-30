@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-zone66.hpp
- * @brief  MapType and Map2D implementation for Zone 66 maps.
+ * @file  fmt-map-zone66.hpp
+ * @brief MapType and Map2D implementation for Zone 66 maps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

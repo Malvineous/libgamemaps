@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-cosmo.hpp
- * @brief  MapType and Map2D implementation for Cosmo levels.
+ * @file  fmt-map-cosmo.hpp
+ * @brief MapType and Map2D implementation for Cosmo levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

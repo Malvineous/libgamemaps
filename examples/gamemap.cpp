@@ -1,6 +1,6 @@
 /**
- * @file   gamemap.cpp
- * @brief  Command-line interface to libgamemaps.
+ * @file  gamemap.cpp
+ * @brief Command-line interface to libgamemaps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

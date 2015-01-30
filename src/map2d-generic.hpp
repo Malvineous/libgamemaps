@@ -1,6 +1,6 @@
 /**
- * @file   map2d-generic.hpp
- * @brief  Generic implementation of a Map2D interface.
+ * @file  map2d-generic.hpp
+ * @brief Generic implementation of a Map2D interface.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -36,6 +36,9 @@ class GenericMap2D: public Map2D
 		/**
 		 * @param attributes
 		 *   List of attributes that apply to this map.
+		 *
+		 * @param graphicsFilenames
+		 *   Value to store in Map::graphicsFilenames.
 		 *
 		 * @param caps
 		 *   Map capabilities.  One or more Caps values OR'd together.

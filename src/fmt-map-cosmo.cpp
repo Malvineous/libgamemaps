@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-cosmo.cpp
- * @brief  MapType and Map2D implementation for Cosmo levels.
+ * @file  fmt-map-cosmo.cpp
+ * @brief MapType and Map2D implementation for Cosmo levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Cosmo_Level_Format

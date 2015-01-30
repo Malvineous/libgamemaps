@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-ccaves.hpp
- * @brief  MapType and Map2D implementation for Crystal Caves maps.
+ * @file  fmt-map-ccaves.hpp
+ * @brief MapType and Map2D implementation for Crystal Caves maps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

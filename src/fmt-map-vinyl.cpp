@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-vinyl.cpp
- * @brief  MapType and Map2D implementation for Vinyl Goddess From Mars levels.
+ * @file  fmt-map-vinyl.cpp
+ * @brief MapType and Map2D implementation for Vinyl Goddess From Mars levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/VGFM_Level_Format

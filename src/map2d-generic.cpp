@@ -1,6 +1,6 @@
 /**
- * @file   map2d-generic.cpp
- * @brief  Generic implementation of a Map2D interface.
+ * @file  map2d-generic.cpp
+ * @brief Generic implementation of a Map2D interface.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-duke1.hpp
- * @brief  MapType and Map2D implementation for Duke Nukem 1 levels.
+ * @file  fmt-map-duke1.hpp
+ * @brief MapType and Map2D implementation for Duke Nukem 1 levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

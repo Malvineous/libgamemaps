@@ -1,6 +1,6 @@
 /**
- * @file   gamemaps.hpp
- * @brief  Main header for libgamemaps (includes everything.)
+ * @file  camoto/gamemaps.hpp
+ * @brief Main header for libgamemaps (includes everything.)
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -33,7 +33,7 @@ namespace gamemaps {
 libgamemaps provides a standard interface to access different game levels
 regardless of their file format.
 
-\section structure Structure
+\section libgamemaps_structure Structure
 
 The main interface to the library is the getManager() function, which returns
 an instance of the Manager class.  The Manager is used to query supported
@@ -52,7 +52,7 @@ the form of the Map2D class for editing maps from platform-style games.  There
 are currently no plans to implement a Map3D class (e.g. for Build games)
 however should someone be dedicated enough the library can support this.
 
-\section example Examples
+\section libgamemaps_example Examples
 
 The libgamemaps distribution comes with example code in the form of the
 <a href="http://github.com/Malvineous/libgamemaps/blob/master/examples/gamemap.cpp">gamemap
@@ -69,10 +69,10 @@ When run, this program produces output similar to the following:
 This map has 2 layers.
 @endverbatim
 
-\section info More information
+\section libgamemaps_info More information
 
-Additional information including a mailing list is available from the Camoto
-homepage <http://www.shikadi.net/camoto>.
+Additional information is available from the Camoto homepage
+<http://www.shikadi.net/camoto>.
 
 **/
 }

@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-ccomic.cpp
- * @brief  MapType and Map2D implementation for Captain Comic levels.
+ * @file  fmt-map-ccomic.cpp
+ * @brief MapType and Map2D implementation for Captain Comic levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Captain_Comic_Map_Format

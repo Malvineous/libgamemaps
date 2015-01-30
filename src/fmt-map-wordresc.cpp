@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-wordresc.cpp
- * @brief  MapType and Map2D implementation for Word Rescue levels.
+ * @file  fmt-map-wordresc.cpp
+ * @brief MapType and Map2D implementation for Word Rescue levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Word_Rescue

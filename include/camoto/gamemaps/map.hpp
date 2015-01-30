@@ -1,7 +1,7 @@
 /**
- * @file   map.hpp
- * @brief  Declaration of top-level Map class, for accessing files
- *         storing game map data.
+ * @file  camoto/gamemaps/map.hpp
+ * @brief Declaration of top-level Map class, for accessing files
+ *        storing game map data.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

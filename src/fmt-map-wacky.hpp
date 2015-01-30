@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-wacky.hpp
- * @brief  MapType and Map2D implementation for Wacky Wheels levels.
+ * @file  fmt-map-wacky.hpp
+ * @brief MapType and Map2D implementation for Wacky Wheels levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

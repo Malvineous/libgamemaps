@@ -1,6 +1,6 @@
 /**
- * @file   map2d.hpp
- * @brief  2D grid-based Map interface.
+ * @file  camoto/gamemaps/map2d.hpp
+ * @brief 2D grid-based Map interface.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -167,18 +167,17 @@ class Map2D: public Map
 		 * @param tileset
 		 *   List of tilesets, same as passed to Map2DLayer::imageFromCode().
 		 *
-		 * @param out
+		 * @param outImage
 		 *   On return, contains the image to draw.  An empty pointer is returned
 		 *   if the image is not required (e.g. no backdrop or single colour.)
-		 *
-		 * @param outAttach
-		 *   On return, contains an ImageAttachment value specifying how the image
-		 *   should be attached to the background.
 		 *
 		 * @param outColour
 		 *   On return, if outAttach is SingleColour then this field contains the
 		 *   colour to draw as the background.  If outAttach is another value then
 		 *   this field is ignored.
+		 *
+		 * @return An ImageAttachment value specifying how the image should be
+		 *   attached to the background.
 		 */
 		virtual ImageAttachment getBackgroundImage(
 			const TilesetCollectionPtr& tileset,

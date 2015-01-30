@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-sagent.hpp
- * @brief  MapType and Map2D implementation for Secret Agent maps.
+ * @file  fmt-map-sagent.hpp
+ * @brief MapType and Map2D implementation for Secret Agent maps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

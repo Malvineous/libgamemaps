@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-got.hpp
- * @brief  MapType and Map2D implementation for God of Thunder levels.
+ * @file  fmt-map-got.hpp
+ * @brief MapType and Map2D implementation for God of Thunder levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

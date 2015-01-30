@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-sagent-mapping.hpp
- * @brief  Static mapping between tile codes and tile images.
+ * @file  fmt-map-sagent-mapping.hpp
+ * @brief Static mapping between tile codes and tile images.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

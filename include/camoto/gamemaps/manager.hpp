@@ -1,6 +1,6 @@
 /**
- * @file   gamemaps/manager.hpp
- * @brief  Manager class, used for accessing the various map format readers.
+ * @file  camoto/gamemaps/manager.hpp
+ * @brief Manager class, used for accessing the various map format readers.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -47,7 +47,7 @@ namespace gamemaps {
 class Manager
 {
 	public:
-		/// Get an MapType instance for a supported file format.
+		/// Get a MapType instance for a supported file format.
 		/**
 		 * This can be used to enumerate all available file formats.
 		 *
@@ -59,7 +59,7 @@ class Manager
 		 */
 		virtual const MapTypePtr getMapType(unsigned int iIndex) const = 0;
 
-		/// Get an MapType instance by its code.
+		/// Get a MapType instance by its code.
 		/**
 		 * @param strCode
 		 *   %Map code (e.g. "grp-duke3d")

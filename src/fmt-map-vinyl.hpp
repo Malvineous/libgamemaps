@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-vinyl.hpp
- * @brief  MapType and Map2D implementation for Vinyl Goddess From Mars levels.
+ * @file  fmt-map-vinyl.hpp
+ * @brief MapType and Map2D implementation for Vinyl Goddess From Mars levels.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

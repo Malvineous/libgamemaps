@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-got.cpp
- * @brief  MapType and Map2D implementation for God of Thunder levels.
+ * @file  fmt-map-got.cpp
+ * @brief MapType and Map2D implementation for God of Thunder levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/God_of_Thunder_Level_Format

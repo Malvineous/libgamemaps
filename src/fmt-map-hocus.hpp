@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-hocus.hpp
- * @brief  MapType and Map2D implementation for Hocus Pocus.
+ * @file  fmt-map-hocus.hpp
+ * @brief MapType and Map2D implementation for Hocus Pocus.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

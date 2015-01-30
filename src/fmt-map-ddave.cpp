@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-ddave.cpp
- * @brief  MapType and Map2D implementation for Dangerous Dave levels.
+ * @file  fmt-map-ddave.cpp
+ * @brief MapType and Map2D implementation for Dangerous Dave levels.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/DDave_Map_Format

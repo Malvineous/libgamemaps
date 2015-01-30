@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-darkages.hpp
- * @brief  MapType and Map2D implementation for Dark Ages maps.
+ * @file  fmt-map-darkages.hpp
+ * @brief MapType and Map2D implementation for Dark Ages maps.
  *
  * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
  *

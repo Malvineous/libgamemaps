@@ -1,6 +1,6 @@
 /**
- * @file   fmt-map-xargon.cpp
- * @brief  MapType and Map2D implementation for Jill of the Jungle and Xargon.
+ * @file  fmt-map-xargon.cpp
+ * @brief MapType and Map2D implementation for Jill of the Jungle and Xargon.
  *
  * This file format is fully documented on the ModdingWiki:
  *   http://www.shikadi.net/moddingwiki/Jill_of_the_Jungle_Map_Format
