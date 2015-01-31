@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Captain Comic level reader/writer.
-class CComicMapType: virtual public BaseMapType
+class MapType_CComic: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

@@ -71,10 +71,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Nukem2ActorLayer: virtual public GenericMap2D::Layer
+class Layer_Nukem2Actor: virtual public GenericMap2D::Layer
 {
 	public:
-		Nukem2ActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_Nukem2Actor(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Actors",
 					Map2D::Layer::NoCaps,
@@ -100,10 +100,10 @@ class Nukem2ActorLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class Nukem2BackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_Nukem2Background: virtual public GenericMap2D::Layer
 {
 	public:
-		Nukem2BackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_Nukem2Background(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
 					Map2D::Layer::NoCaps,
@@ -133,10 +133,10 @@ class Nukem2BackgroundLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class Nukem2ForegroundLayer: virtual public GenericMap2D::Layer
+class Layer_Nukem2Foreground: virtual public GenericMap2D::Layer
 {
 	public:
-		Nukem2ForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_Nukem2Foreground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Foreground",
 					Map2D::Layer::NoCaps,
@@ -217,31 +217,31 @@ class Map2D_Nukem2: virtual public GenericMap2D
 };
 
 
-std::string Nukem2MapType::getMapCode() const
+std::string MapType_Nukem2::getMapCode() const
 {
 	return "map-nukem2";
 }
 
-std::string Nukem2MapType::getFriendlyName() const
+std::string MapType_Nukem2::getFriendlyName() const
 {
 	return "Duke Nukem II level";
 }
 
-std::vector<std::string> Nukem2MapType::getFileExtensions() const
+std::vector<std::string> MapType_Nukem2::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("mni");
 	return vcExtensions;
 }
 
-std::vector<std::string> Nukem2MapType::getGameList() const
+std::vector<std::string> MapType_Nukem2::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Duke Nukem II");
 	return vcGames;
 }
 
-MapType::Certainty Nukem2MapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Nukem2::isInstance(stream::input_sptr psMap) const
 {
 	stream::len lenMap = psMap->size();
 
@@ -279,13 +279,13 @@ MapType::Certainty Nukem2MapType::isInstance(stream::input_sptr psMap) const
 	return MapType::PossiblyYes;
 }
 
-MapPtr Nukem2MapType::create(SuppData& suppData) const
+MapPtr MapType_Nukem2::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Nukem2::open(stream::input_sptr input, SuppData& suppData) const
 {
 	stream::pos lenMap = input->size();
 	input->seekg(0, stream::start);
@@ -406,7 +406,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	lenMap -= 6 * numActors;
 
 	Map2D::Layer::ItemPtrVectorPtr validActorItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr actorLayer(new Nukem2ActorLayer(actors, validActorItems));
+	Map2D::LayerPtr actorLayer(new Layer_Nukem2Actor(actors, validActorItems));
 
 	input->seekg(bgOffset, stream::start);
 	uint16_t mapWidth;
@@ -575,8 +575,8 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	attributes.push_back(attr);
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new Nukem2BackgroundLayer(tilesBG, validBGItems));
-	Map2D::LayerPtr fgLayer(new Nukem2ForegroundLayer(tilesFG, validFGItems));
+	Map2D::LayerPtr bgLayer(new Layer_Nukem2Background(tilesBG, validBGItems));
+	Map2D::LayerPtr fgLayer(new Layer_Nukem2Foreground(tilesFG, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -588,7 +588,7 @@ MapPtr Nukem2MapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Nukem2::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -820,7 +820,7 @@ void Nukem2MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames Nukem2MapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Nukem2::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

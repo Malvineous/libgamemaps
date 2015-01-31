@@ -49,10 +49,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Zone66BackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_Zone66Background: virtual public GenericMap2D::Layer
 {
 	public:
-		Zone66BackgroundLayer(ItemPtrVectorPtr& items,
+		Layer_Zone66Background(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
@@ -80,31 +80,31 @@ class Zone66BackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string Zone66MapType::getMapCode() const
+std::string MapType_Zone66::getMapCode() const
 {
 	return "map-zone66";
 }
 
-std::string Zone66MapType::getFriendlyName() const
+std::string MapType_Zone66::getFriendlyName() const
 {
 	return "Zone 66 level";
 }
 
-std::vector<std::string> Zone66MapType::getFileExtensions() const
+std::vector<std::string> MapType_Zone66::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("z66");
 	return vcExtensions;
 }
 
-std::vector<std::string> Zone66MapType::getGameList() const
+std::vector<std::string> MapType_Zone66::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Zone 66");
 	return vcGames;
 }
 
-MapType::Certainty Zone66MapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Zone66::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -116,13 +116,13 @@ MapType::Certainty Zone66MapType::isInstance(stream::input_sptr psMap) const
 	return MapType::PossiblyYes;
 }
 
-MapPtr Zone66MapType::create(SuppData& suppData) const
+MapPtr MapType_Zone66::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr Zone66MapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Zone66::open(stream::input_sptr input, SuppData& suppData) const
 {
 	// Read the background layer
 	uint8_t *bg = new uint8_t[Z66_MAP_BG_LEN];
@@ -183,7 +183,7 @@ MapPtr Zone66MapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new Zone66BackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_Zone66Background(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -200,7 +200,7 @@ MapPtr Zone66MapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void Zone66MapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Zone66::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -283,7 +283,7 @@ void Zone66MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames Zone66MapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Zone66::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

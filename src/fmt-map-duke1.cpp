@@ -45,10 +45,10 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 
-class Duke1BackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_Duke1Background: virtual public GenericMap2D::Layer
 {
 	public:
-		Duke1BackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_Duke1Background(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
 					Map2D::Layer::NoCaps,
@@ -79,17 +79,17 @@ class Duke1BackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string Duke1MapType::getMapCode() const
+std::string MapType_Duke1::getMapCode() const
 {
 	return "map-duke1";
 }
 
-std::string Duke1MapType::getFriendlyName() const
+std::string MapType_Duke1::getFriendlyName() const
 {
 	return "Duke Nukem 1 level";
 }
 
-std::vector<std::string> Duke1MapType::getFileExtensions() const
+std::vector<std::string> MapType_Duke1::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("dn1");
@@ -98,14 +98,14 @@ std::vector<std::string> Duke1MapType::getFileExtensions() const
 	return vcExtensions;
 }
 
-std::vector<std::string> Duke1MapType::getGameList() const
+std::vector<std::string> MapType_Duke1::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Duke Nukem 1");
 	return vcGames;
 }
 
-MapType::Certainty Duke1MapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Duke1::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -125,13 +125,13 @@ MapType::Certainty Duke1MapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr Duke1MapType::create(SuppData& suppData) const
+MapPtr MapType_Duke1::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr Duke1MapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Duke1::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -153,7 +153,7 @@ MapPtr Duke1MapType::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new Duke1BackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_Duke1Background(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -170,7 +170,7 @@ MapPtr Duke1MapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void Duke1MapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Duke1::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -202,7 +202,7 @@ void Duke1MapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames Duke1MapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Duke1::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

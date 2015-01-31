@@ -225,10 +225,10 @@ static const char *validTypes[] = {
 
 using namespace camoto::gamegraphics;
 
-class BashForegroundLayer: virtual public GenericMap2D::Layer
+class Layer_BashForeground: virtual public GenericMap2D::Layer
 {
 	public:
-		BashForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_BashForeground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Foreground",
 					Map2D::Layer::NoCaps,
@@ -281,10 +281,10 @@ class BashForegroundLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class BashBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_BashBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		BashBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_BashBackground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
 					Map2D::Layer::NoCaps,
@@ -310,10 +310,10 @@ class BashBackgroundLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class BashSpriteLayer: virtual public GenericMap2D::Layer
+class Layer_BashSprite: virtual public GenericMap2D::Layer
 {
 	public:
-		BashSpriteLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_BashSprite(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Sprites",
 					Map2D::Layer::HasOwnTileSize | Map2D::Layer::UseImageDims,
@@ -355,10 +355,10 @@ class BashSpriteLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class BashInvisibleLayer: virtual public GenericMap2D::Layer
+class Layer_BashInvisible: virtual public GenericMap2D::Layer
 {
 	public:
-		BashInvisibleLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_BashInvisible(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -417,31 +417,31 @@ class Map2D_Bash: virtual public GenericMap2D
 };
 
 
-std::string BashMapType::getMapCode() const
+std::string MapType_Bash::getMapCode() const
 {
 	return "map-bash";
 }
 
-std::string BashMapType::getFriendlyName() const
+std::string MapType_Bash::getFriendlyName() const
 {
 	return "Monster Bash level";
 }
 
-std::vector<std::string> BashMapType::getFileExtensions() const
+std::vector<std::string> MapType_Bash::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("mif");
 	return vcExtensions;
 }
 
-std::vector<std::string> BashMapType::getGameList() const
+std::vector<std::string> MapType_Bash::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Monster Bash");
 	return vcGames;
 }
 
-MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Bash::isInstance(stream::input_sptr psMap) const
 {
 	bool maybe = false;
 	stream::len len = psMap->size();
@@ -483,13 +483,13 @@ MapType::Certainty BashMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr BashMapType::create(SuppData& suppData) const
+MapPtr MapType_Bash::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Bash::open(stream::input_sptr input, SuppData& suppData) const
 {
 	stream::input_sptr bg = suppData[SuppItem::Layer1];
 	stream::input_sptr fg = suppData[SuppItem::Layer2];
@@ -631,7 +631,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = i;
 		validBGItems->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new BashBackgroundLayer(bgtiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_BashBackground(bgtiles, validBGItems));
 
 	Map2D::Layer::ItemPtrVectorPtr validAttrItems(new Map2D::Layer::ItemPtrVector());
 	for (unsigned int i = 0; i < 16; i++) {
@@ -686,7 +686,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
 		validAttrItems->push_back(ta);
 	}
-	Map2D::LayerPtr attrLayer(new BashInvisibleLayer("Attributes", bgattributes, validAttrItems));
+	Map2D::LayerPtr attrLayer(new Layer_BashInvisible("Attributes", bgattributes, validAttrItems));
 
 	Map2D::Layer::ItemPtrVectorPtr validPointItems(new Map2D::Layer::ItemPtrVector());
 	{
@@ -698,7 +698,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		ta->generalFlags = Map2D::Layer::Item::Interactive;
 		validPointItems->push_back(ta);
 	}
-	Map2D::LayerPtr pointLayer(new BashInvisibleLayer("Interactive flags", bgpoints, validPointItems));
+	Map2D::LayerPtr pointLayer(new Layer_BashInvisible("Interactive flags", bgpoints, validPointItems));
 
 	// Read the foreground layer
 	stream::pos lenFG = fg->size();
@@ -735,7 +735,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = i;
 		validFGItems->push_back(t);
 	}
-	Map2D::LayerPtr fgLayer(new BashForegroundLayer(fgtiles, validFGItems));
+	Map2D::LayerPtr fgLayer(new Layer_BashForeground(fgtiles, validFGItems));
 
 	// Read the sprite layer
 	stream::pos lenSpr = spr->size();
@@ -784,7 +784,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = 1000000 + s;
 		validSprites->push_back(t);
 	}
-	Map2D::LayerPtr sprLayer(new BashSpriteLayer(sprtiles, validSprites));
+	Map2D::LayerPtr sprLayer(new Layer_BashSprite(sprtiles, validSprites));
 
 
 	Map2D::LayerPtrVector layers;
@@ -799,7 +799,7 @@ MapPtr BashMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void BashMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Bash::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -1155,7 +1155,7 @@ usedSprites.insert("rock");
 	return;
 }
 
-SuppFilenames BashMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Bash::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

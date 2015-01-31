@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Dark Ages level reader/writer.
-class DarkAgesMapType: virtual public BaseMapType
+class MapType_DarkAges: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

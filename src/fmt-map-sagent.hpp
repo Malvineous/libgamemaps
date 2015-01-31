@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Secret Agent level reader/writer.
-class SAgentMapType: virtual public BaseMapType
+class MapType_SAgent: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;
@@ -47,7 +47,7 @@ class SAgentMapType: virtual public BaseMapType
 };
 
 /// Secret Agent level reader/writer for world map.
-class SAgentWorldMapType: virtual public SAgentMapType
+class MapType_SAgentWorld: virtual public MapType_SAgent
 {
 	protected:
 		virtual bool isWorldMap() const;

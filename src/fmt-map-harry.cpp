@@ -55,10 +55,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class HarryActorLayer: virtual public GenericMap2D::Layer
+class Layer_HarryActor: virtual public GenericMap2D::Layer
 {
 	public:
-		HarryActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_HarryActor(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Actors",
 					Map2D::Layer::UseImageDims,
@@ -83,10 +83,10 @@ class HarryActorLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class HarryBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_HarryBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		HarryBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_HarryBackground(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -113,24 +113,24 @@ class HarryBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string HarryMapType::getMapCode() const
+std::string MapType_Harry::getMapCode() const
 {
 	return "map-harry";
 }
 
-std::string HarryMapType::getFriendlyName() const
+std::string MapType_Harry::getFriendlyName() const
 {
 	return "Halloween Harry level";
 }
 
-std::vector<std::string> HarryMapType::getFileExtensions() const
+std::vector<std::string> MapType_Harry::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("gmf");
 	return vcExtensions;
 }
 
-std::vector<std::string> HarryMapType::getGameList() const
+std::vector<std::string> MapType_Harry::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Alien Carnage");
@@ -138,7 +138,7 @@ std::vector<std::string> HarryMapType::getGameList() const
 	return vcGames;
 }
 
-MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Harry::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 	// TESTED BY: fmt_map_harry_isinstance_c01
@@ -204,13 +204,13 @@ MapType::Certainty HarryMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr HarryMapType::create(SuppData& suppData) const
+MapPtr MapType_Harry::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Harry::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -298,7 +298,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		validActorItems->push_back(t);
 	}
 
-	Map2D::LayerPtr actorLayer(new HarryActorLayer(actors, validActorItems));
+	Map2D::LayerPtr actorLayer(new Layer_HarryActor(actors, validActorItems));
 
 	uint16_t mapWidth, mapHeight;
 	input >> u16le(mapWidth) >> u16le(mapHeight);
@@ -332,7 +332,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = i;
 		validBGItems->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new HarryBackgroundLayer("Background", bgtiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_HarryBackground("Background", bgtiles, validBGItems));
 
 	// Read the foreground layer
 	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
@@ -350,7 +350,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Same items are valid in both FG and BG layers, so reuse BG list here
-	Map2D::LayerPtr fgLayer(new HarryBackgroundLayer("Foreground", fgtiles, validBGItems));
+	Map2D::LayerPtr fgLayer(new Layer_HarryBackground("Foreground", fgtiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -369,7 +369,7 @@ MapPtr HarryMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Harry::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -501,7 +501,7 @@ void HarryMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames HarryMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Harry::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

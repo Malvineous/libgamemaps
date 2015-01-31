@@ -52,10 +52,10 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 
-class DDaveBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_DDaveBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		DDaveBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_DDaveBackground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
 					Map2D::Layer::NoCaps,
@@ -81,31 +81,31 @@ class DDaveBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string DDaveMapType::getMapCode() const
+std::string MapType_DDave::getMapCode() const
 {
 	return "map-ddave";
 }
 
-std::string DDaveMapType::getFriendlyName() const
+std::string MapType_DDave::getFriendlyName() const
 {
 	return "Dangerous Dave level";
 }
 
-std::vector<std::string> DDaveMapType::getFileExtensions() const
+std::vector<std::string> MapType_DDave::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("dav");
 	return vcExtensions;
 }
 
-std::vector<std::string> DDaveMapType::getGameList() const
+std::vector<std::string> MapType_DDave::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Dangerous Dave");
 	return vcGames;
 }
 
-MapType::Certainty DDaveMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_DDave::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -126,13 +126,13 @@ MapType::Certainty DDaveMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr DDaveMapType::create(SuppData& suppData) const
+MapPtr MapType_DDave::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_DDave::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -191,7 +191,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new DDaveBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_DDaveBackground(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -208,7 +208,7 @@ MapPtr DDaveMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void DDaveMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_DDave::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -288,7 +288,7 @@ void DDaveMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames DDaveMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_DDave::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

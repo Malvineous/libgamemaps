@@ -43,10 +43,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class VinylMapLayer: virtual public GenericMap2D::Layer
+class Layer_VinylMap: virtual public GenericMap2D::Layer
 {
 	public:
-		VinylMapLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_VinylMap(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -74,31 +74,31 @@ class VinylMapLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string VinylMapType::getMapCode() const
+std::string MapType_Vinyl::getMapCode() const
 {
 	return "map-vinyl";
 }
 
-std::string VinylMapType::getFriendlyName() const
+std::string MapType_Vinyl::getFriendlyName() const
 {
 	return "Vinyl Goddess From Mars level";
 }
 
-std::vector<std::string> VinylMapType::getFileExtensions() const
+std::vector<std::string> MapType_Vinyl::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("m");
 	return vcExtensions;
 }
 
-std::vector<std::string> VinylMapType::getGameList() const
+std::vector<std::string> MapType_Vinyl::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Vinyl Goddess From Mars");
 	return vcGames;
 }
 
-MapType::Certainty VinylMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Vinyl::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -134,13 +134,13 @@ MapType::Certainty VinylMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr VinylMapType::create(SuppData& suppData) const
+MapPtr MapType_Vinyl::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr VinylMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Vinyl::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 	unsigned int width, height;
@@ -174,7 +174,7 @@ MapPtr VinylMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new VinylMapLayer("Background", bgtiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_VinylMap("Background", bgtiles, validBGItems));
 
 	// Read the foreground layer
 	uint8_t *fg = new uint8_t[mapLen];
@@ -208,7 +208,7 @@ MapPtr VinylMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr fgLayer(new VinylMapLayer("Foreground", fgtiles, validFGItems));
+	Map2D::LayerPtr fgLayer(new Layer_VinylMap("Foreground", fgtiles, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -226,7 +226,7 @@ MapPtr VinylMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void VinylMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Vinyl::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -282,7 +282,7 @@ void VinylMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames VinylMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Vinyl::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

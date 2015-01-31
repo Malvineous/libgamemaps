@@ -70,10 +70,10 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 
-class CosmoActorLayer: virtual public GenericMap2D::Layer
+class Layer_CosmoActor: virtual public GenericMap2D::Layer
 {
 	public:
-		CosmoActorLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_CosmoActor(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Actors",
 					Map2D::Layer::UseImageDims,
@@ -111,10 +111,10 @@ class CosmoActorLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class CosmoBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_CosmoBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		CosmoBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_CosmoBackground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
 					Map2D::Layer::NoCaps,
@@ -223,31 +223,31 @@ class Map2D_Cosmo: virtual public GenericMap2D
 };
 
 
-std::string CosmoMapType::getMapCode() const
+std::string MapType_Cosmo::getMapCode() const
 {
 	return "map-cosmo";
 }
 
-std::string CosmoMapType::getFriendlyName() const
+std::string MapType_Cosmo::getFriendlyName() const
 {
 	return "Cosmo's Cosmic Adventures level";
 }
 
-std::vector<std::string> CosmoMapType::getFileExtensions() const
+std::vector<std::string> MapType_Cosmo::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("mni");
 	return vcExtensions;
 }
 
-std::vector<std::string> CosmoMapType::getGameList() const
+std::vector<std::string> MapType_Cosmo::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Cosmo's Cosmic Adventures");
 	return vcGames;
 }
 
-MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Cosmo::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -280,13 +280,13 @@ MapType::Certainty CosmoMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr CosmoMapType::create(SuppData& suppData) const
+MapPtr MapType_Cosmo::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Cosmo::open(stream::input_sptr input, SuppData& suppData) const
 {
 	stream::pos lenMap = input->size();
 	input->seekg(0, stream::start);
@@ -438,7 +438,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	lenMap -= 6 * numActors;
 
 	Map2D::Layer::ItemPtrVectorPtr validActorItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr actorLayer(new CosmoActorLayer(actors, validActorItems));
+	Map2D::LayerPtr actorLayer(new Layer_CosmoActor(actors, validActorItems));
 
 	// Read the background layer
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
@@ -477,7 +477,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new CosmoBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_CosmoBackground(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -488,7 +488,7 @@ MapPtr CosmoMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Cosmo::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -615,7 +615,7 @@ void CosmoMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames CosmoMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Cosmo::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

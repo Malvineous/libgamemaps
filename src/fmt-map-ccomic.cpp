@@ -40,10 +40,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class CComicBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_CComicBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		CComicBackgroundLayer(ItemPtrVectorPtr& items,
+		Layer_CComicBackground(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
@@ -71,31 +71,31 @@ class CComicBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string CComicMapType::getMapCode() const
+std::string MapType_CComic::getMapCode() const
 {
 	return "map-ccomic";
 }
 
-std::string CComicMapType::getFriendlyName() const
+std::string MapType_CComic::getFriendlyName() const
 {
 	return "Captain Comic level";
 }
 
-std::vector<std::string> CComicMapType::getFileExtensions() const
+std::vector<std::string> MapType_CComic::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("pt");
 	return vcExtensions;
 }
 
-std::vector<std::string> CComicMapType::getGameList() const
+std::vector<std::string> MapType_CComic::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Captain Comic");
 	return vcGames;
 }
 
-MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_CComic::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -129,13 +129,13 @@ MapType::Certainty CComicMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr CComicMapType::create(SuppData& suppData) const
+MapPtr MapType_CComic::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_CComic::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 	unsigned int width, height;
@@ -176,7 +176,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new CComicBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_CComicBackground(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -193,7 +193,7 @@ MapPtr CComicMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void CComicMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_CComic::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -229,7 +229,7 @@ void CComicMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames CComicMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_CComic::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

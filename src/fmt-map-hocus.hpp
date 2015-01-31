@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Hocus Pocus level reader/writer.
-class HocusMapType: virtual public BaseMapType
+class MapType_Hocus: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

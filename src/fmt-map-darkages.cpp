@@ -43,10 +43,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class DarkAgesBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_DarkAgesBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		DarkAgesBackgroundLayer(ItemPtrVectorPtr& items,
+		Layer_DarkAgesBackground(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
@@ -136,31 +136,31 @@ class DarkAgesBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string DarkAgesMapType::getMapCode() const
+std::string MapType_DarkAges::getMapCode() const
 {
 	return "map-darkages";
 }
 
-std::string DarkAgesMapType::getFriendlyName() const
+std::string MapType_DarkAges::getFriendlyName() const
 {
 	return "Dark Ages level";
 }
 
-std::vector<std::string> DarkAgesMapType::getFileExtensions() const
+std::vector<std::string> MapType_DarkAges::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("dal"); // made up, inside file05.da[123]
 	return vcExtensions;
 }
 
-std::vector<std::string> DarkAgesMapType::getGameList() const
+std::vector<std::string> MapType_DarkAges::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Dark Ages");
 	return vcGames;
 }
 
-MapType::Certainty DarkAgesMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_DarkAges::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -172,13 +172,13 @@ MapType::Certainty DarkAgesMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::PossiblyYes;
 }
 
-MapPtr DarkAgesMapType::create(SuppData& suppData) const
+MapPtr MapType_DarkAges::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr DarkAgesMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_DarkAges::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 	const unsigned int mapLen = DA_MAP_WIDTH * DA_MAP_HEIGHT;
@@ -217,7 +217,7 @@ MapPtr DarkAgesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new DarkAgesBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_DarkAgesBackground(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -234,7 +234,7 @@ MapPtr DarkAgesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void DarkAgesMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_DarkAges::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -266,7 +266,7 @@ void DarkAgesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames DarkAgesMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_DarkAges::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

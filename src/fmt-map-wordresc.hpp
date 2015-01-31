@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Word Rescue level reader/writer.
-class WordRescueMapType: virtual public BaseMapType
+class MapType_WordRescue: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

@@ -30,11 +30,11 @@ namespace gamemaps {
 typedef std::map<SuppItem::Type, stream::expanding_output_sptr> ExpandingSuppData;
 
 /// Standard functionality used by all map types
-class BaseMapType: virtual public MapType
+class MapType_Base: virtual public MapType
 {
 	public:
-		BaseMapType();
-		virtual ~BaseMapType();
+		MapType_Base();
+		virtual ~MapType_Base();
 
 		virtual void write(MapPtr map, stream::output_sptr output,
 			SuppData& suppData) const;

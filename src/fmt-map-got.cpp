@@ -85,10 +85,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class GOTBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_GOTBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		GOTBackgroundLayer(ItemPtrVectorPtr& items,
+		Layer_GOTBackground(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
@@ -115,10 +115,10 @@ class GOTBackgroundLayer: virtual public GenericMap2D::Layer
 
 };
 
-class GOTFlagsLayer: virtual public GenericMap2D::Layer
+class Layer_GOTFlags: virtual public GenericMap2D::Layer
 {
 	public:
-		GOTFlagsLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_GOTFlags(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -149,10 +149,10 @@ class GOTFlagsLayer: virtual public GenericMap2D::Layer
 
 };
 
-class GOTActorLayer: virtual public GenericMap2D::Layer
+class Layer_GOTActor: virtual public GenericMap2D::Layer
 {
 	public:
-		GOTActorLayer(ItemPtrVectorPtr& items,
+		Layer_GOTActor(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Actors",
@@ -187,10 +187,10 @@ class GOTActorLayer: virtual public GenericMap2D::Layer
 
 };
 
-class GOTObjectLayer: virtual public GenericMap2D::Layer
+class Layer_GOTObject: virtual public GenericMap2D::Layer
 {
 	public:
-		GOTObjectLayer(ItemPtrVectorPtr& items,
+		Layer_GOTObject(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Objects",
@@ -218,30 +218,30 @@ class GOTObjectLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string GOTMapType::getMapCode() const
+std::string MapType_GOT::getMapCode() const
 {
 	return "map-got";
 }
 
-std::string GOTMapType::getFriendlyName() const
+std::string MapType_GOT::getFriendlyName() const
 {
 	return "God of Thunder level";
 }
 
-std::vector<std::string> GOTMapType::getFileExtensions() const
+std::vector<std::string> MapType_GOT::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	return vcExtensions;
 }
 
-std::vector<std::string> GOTMapType::getGameList() const
+std::vector<std::string> MapType_GOT::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("God of Thunder");
 	return vcGames;
 }
 
-MapType::Certainty GOTMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_GOT::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -262,13 +262,13 @@ MapType::Certainty GOTMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr GOTMapType::create(SuppData& suppData) const
+MapPtr MapType_GOT::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr GOTMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_GOT::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -394,11 +394,11 @@ MapPtr GOTMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr musLayer(new GOTFlagsLayer("Music", tilesMus, validMusItems));
-	Map2D::LayerPtr defaultBGLayer(new GOTFlagsLayer("Default BG", tilesDefault, validBGItems));
-	Map2D::LayerPtr bgLayer(new GOTBackgroundLayer(tiles, validBGItems));
-	Map2D::LayerPtr actorLayer(new GOTActorLayer(tilesActor, validActorItems));
-	Map2D::LayerPtr objLayer(new GOTObjectLayer(tilesObj, validObjItems));
+	Map2D::LayerPtr musLayer(new Layer_GOTFlags("Music", tilesMus, validMusItems));
+	Map2D::LayerPtr defaultBGLayer(new Layer_GOTFlags("Default BG", tilesDefault, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_GOTBackground(tiles, validBGItems));
+	Map2D::LayerPtr actorLayer(new Layer_GOTActor(tilesActor, validActorItems));
+	Map2D::LayerPtr objLayer(new Layer_GOTObject(tilesObj, validObjItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(musLayer);
@@ -420,7 +420,7 @@ MapPtr GOTMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void GOTMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_GOT::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -590,7 +590,7 @@ void GOTMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames GOTMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_GOT::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Wacky Wheels level reader/writer.
-class WackyMapType: virtual public BaseMapType
+class MapType_Wacky: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

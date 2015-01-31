@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Crystal Caves level reader/writer.
-class CCavesMapType: virtual public BaseMapType
+class MapType_CCaves: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

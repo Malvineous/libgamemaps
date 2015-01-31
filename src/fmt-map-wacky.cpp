@@ -54,10 +54,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class WackyBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_WackyBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		WackyBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+		Layer_WackyBackground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Surface",
 					Map2D::Layer::NoCaps,
@@ -87,31 +87,31 @@ class WackyBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string WackyMapType::getMapCode() const
+std::string MapType_Wacky::getMapCode() const
 {
 	return "map-wacky";
 }
 
-std::string WackyMapType::getFriendlyName() const
+std::string MapType_Wacky::getFriendlyName() const
 {
 	return "Wacky Wheels level";
 }
 
-std::vector<std::string> WackyMapType::getFileExtensions() const
+std::vector<std::string> MapType_Wacky::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("m");
 	return vcExtensions;
 }
 
-std::vector<std::string> WackyMapType::getGameList() const
+std::vector<std::string> MapType_Wacky::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Wacky Wheels");
 	return vcGames;
 }
 
-MapType::Certainty WackyMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Wacky::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -134,13 +134,13 @@ MapType::Certainty WackyMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr WackyMapType::create(SuppData& suppData) const
+MapPtr MapType_Wacky::create(SuppData& suppData) const
 {
-	/// @todo Implement WackyMapType::create()
+	/// @todo Implement MapType_Wacky::create()
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Wacky::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -174,7 +174,7 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	// Create the map structures
-	Map2D::LayerPtr bgLayer(new WackyBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_WackyBackground(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -221,7 +221,7 @@ MapPtr WackyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void WackyMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Wacky::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -296,7 +296,7 @@ void WackyMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames WackyMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Wacky::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

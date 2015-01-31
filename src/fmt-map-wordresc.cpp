@@ -97,10 +97,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_WordRescueBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		WordRescueBackgroundLayer(ItemPtrVectorPtr& items,
+		Layer_WordRescueBackground(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
@@ -126,10 +126,10 @@ class WordRescueBackgroundLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class WordRescueObjectLayer: virtual public GenericMap2D::Layer
+class Layer_WordRescueObject: virtual public GenericMap2D::Layer
 {
 	public:
-		WordRescueObjectLayer(const std::string& name, unsigned int caps,
+		Layer_WordRescueObject(const std::string& name, unsigned int caps,
 			unsigned int w, unsigned int h, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
@@ -192,10 +192,10 @@ class WordRescueObjectLayer: virtual public GenericMap2D::Layer
 		}
 };
 
-class WordRescueAttributeLayer: virtual public GenericMap2D::Layer
+class Layer_WordRescueAttribute: virtual public GenericMap2D::Layer
 {
 	public:
-		WordRescueAttributeLayer(ItemPtrVectorPtr& items,
+		Layer_WordRescueAttribute(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Attributes",
@@ -347,17 +347,17 @@ int rleWrite(stream::output_sptr output, uint8_t *data, int len)
 
 
 
-std::string WordRescueMapType::getMapCode() const
+std::string MapType_WordRescue::getMapCode() const
 {
 	return "map-wordresc";
 }
 
-std::string WordRescueMapType::getFriendlyName() const
+std::string MapType_WordRescue::getFriendlyName() const
 {
 	return "Word Rescue level";
 }
 
-std::vector<std::string> WordRescueMapType::getFileExtensions() const
+std::vector<std::string> MapType_WordRescue::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("s0");
@@ -383,14 +383,14 @@ std::vector<std::string> WordRescueMapType::getFileExtensions() const
 	return vcExtensions;
 }
 
-std::vector<std::string> WordRescueMapType::getGameList() const
+std::vector<std::string> MapType_WordRescue::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Word Rescue");
 	return vcGames;
 }
 
-MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_WordRescue::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -461,13 +461,13 @@ MapType::Certainty WordRescueMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr WordRescueMapType::create(SuppData& suppData) const
+MapPtr MapType_WordRescue::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_WordRescue::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -705,9 +705,9 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		validItem8Items->push_back(t);
 	}
 
-	Map2D::LayerPtr item8Layer(new WordRescueObjectLayer(
+	Map2D::LayerPtr item8Layer(new Layer_WordRescueObject(
 		"Fine items", Map2D::Layer::HasOwnTileSize | Map2D::Layer::UseImageDims, 8, 8, items8, validItem8Items));
-	Map2D::LayerPtr item16Layer(new WordRescueObjectLayer(
+	Map2D::LayerPtr item16Layer(new Layer_WordRescueObject(
 		"Coarse items", Map2D::Layer::UseImageDims, 0, 0, items16, validItem16Items));
 
 	// Read the background layer
@@ -745,7 +745,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 		validBGItems->push_back(t);
 	}
 
-	Map2D::LayerPtr bgLayer(new WordRescueBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_WordRescueBackground(tiles, validBGItems));
 
 	// Read the attribute layer
 	Map2D::Layer::ItemPtrVectorPtr atItems(new Map2D::Layer::ItemPtrVector());
@@ -824,7 +824,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	ADD_TILE(Map2D::Layer::Item::Default, 0x00FD, 0); // unknown (see tile mapping code)
 #undef ADD_TILE
 
-	Map2D::LayerPtr atLayer(new WordRescueAttributeLayer(atItems, validAtItems));
+	Map2D::LayerPtr atLayer(new Layer_WordRescueAttribute(atItems, validAtItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -837,7 +837,7 @@ MapPtr WordRescueMapType::open(stream::input_sptr input, SuppData& suppData) con
 	return map;
 }
 
-void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_WordRescue::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -1019,7 +1019,7 @@ void WordRescueMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames WordRescueMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_WordRescue::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

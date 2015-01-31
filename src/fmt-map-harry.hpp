@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Halloween Harry level reader/writer.
-class HarryMapType: virtual public BaseMapType
+class MapType_Harry: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

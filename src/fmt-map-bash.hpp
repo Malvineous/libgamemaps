@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Monster Bash level reader/writer.
-class BashMapType: virtual public BaseMapType
+class MapType_Bash: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

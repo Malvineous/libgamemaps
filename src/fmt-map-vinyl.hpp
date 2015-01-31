@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Vinyl Goddess From Mars level reader/writer.
-class VinylMapType: virtual public BaseMapType
+class MapType_Vinyl: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

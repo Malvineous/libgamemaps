@@ -28,7 +28,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Generic level reader/writer for games based on Tim Sweeney's Jill engine.
-class SweeneyMapType: virtual public BaseMapType
+class MapType_Sweeney: virtual public MapType_Base
 {
 	public:
 		virtual Certainty isInstance(stream::input_sptr psMap) const;
@@ -47,10 +47,10 @@ class SweeneyMapType: virtual public BaseMapType
 };
 
 /// Jill of the Jungle level reader/writer.
-class JillMapType: virtual public SweeneyMapType
+class MapType_Jill: virtual public MapType_Sweeney
 {
 	public:
-		JillMapType();
+		MapType_Jill();
 
 		virtual std::string getMapCode() const;
 		virtual std::string getFriendlyName() const;
@@ -61,10 +61,10 @@ class JillMapType: virtual public SweeneyMapType
 };
 
 /// Xargon level reader/writer.
-class XargonMapType: virtual public SweeneyMapType
+class MapType_Xargon: virtual public MapType_Sweeney
 {
 	public:
-		XargonMapType();
+		MapType_Xargon();
 
 		virtual std::string getMapCode() const;
 		virtual std::string getFriendlyName() const;

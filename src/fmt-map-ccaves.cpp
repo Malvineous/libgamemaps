@@ -60,10 +60,10 @@ namespace gamemaps {
 using namespace camoto::gamegraphics;
 
 
-class CCavesBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_CCavesBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		CCavesBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_CCavesBackground(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -140,31 +140,31 @@ void setFlags(Map2D::Layer::ItemPtr& item, unsigned int flags)
 	return;
 }
 
-std::string CCavesMapType::getMapCode() const
+std::string MapType_CCaves::getMapCode() const
 {
 	return "map-ccaves";
 }
 
-std::string CCavesMapType::getFriendlyName() const
+std::string MapType_CCaves::getFriendlyName() const
 {
 	return "Crystal Caves level";
 }
 
-std::vector<std::string> CCavesMapType::getFileExtensions() const
+std::vector<std::string> MapType_CCaves::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("ccl");
 	return vcExtensions;
 }
 
-std::vector<std::string> CCavesMapType::getGameList() const
+std::vector<std::string> MapType_CCaves::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Crystal Caves");
 	return vcGames;
 }
 
-MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_CCaves::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -205,13 +205,13 @@ MapType::Certainty CCavesMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr CCavesMapType::create(SuppData& suppData) const
+MapPtr MapType_CCaves::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_CCaves::open(stream::input_sptr input, SuppData& suppData) const
 {
 	stream::pos lenMap = input->size();
 
@@ -486,8 +486,8 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 		}
 	}
 
-	Map2D::LayerPtr bgLayer(new CCavesBackgroundLayer("Background", tiles, validBGItems));
-	Map2D::LayerPtr fgLayer(new CCavesBackgroundLayer("Overlay", fgtiles, validFGItems));
+	Map2D::LayerPtr bgLayer(new Layer_CCavesBackground("Background", tiles, validBGItems));
+	Map2D::LayerPtr fgLayer(new Layer_CCavesBackground("Overlay", fgtiles, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -505,7 +505,7 @@ MapPtr CCavesMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_CCaves::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -751,7 +751,7 @@ void CCavesMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames CCavesMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_CCaves::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

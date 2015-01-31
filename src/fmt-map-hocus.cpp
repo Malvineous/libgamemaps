@@ -58,10 +58,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class HocusBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_HocusBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		HocusBackgroundLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_HocusBackground(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -88,31 +88,31 @@ class HocusBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string HocusMapType::getMapCode() const
+std::string MapType_Hocus::getMapCode() const
 {
 	return "map-hocus";
 }
 
-std::string HocusMapType::getFriendlyName() const
+std::string MapType_Hocus::getFriendlyName() const
 {
 	return "Hocus Pocus level";
 }
 
-std::vector<std::string> HocusMapType::getFileExtensions() const
+std::vector<std::string> MapType_Hocus::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("");
 	return vcExtensions;
 }
 
-std::vector<std::string> HocusMapType::getGameList() const
+std::vector<std::string> MapType_Hocus::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Hocus Pocus");
 	return vcGames;
 }
 
-MapType::Certainty HocusMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Hocus::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 	// TESTED BY: fmt_map_hocus_isinstance_c01
@@ -122,13 +122,13 @@ MapType::Certainty HocusMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::PossiblyYes;
 }
 
-MapPtr HocusMapType::create(SuppData& suppData) const
+MapPtr MapType_Hocus::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Hocus::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -151,7 +151,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr bgLayer(new HocusBackgroundLayer("Background", bgtiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_HocusBackground("Background", bgtiles, validBGItems));
 
 	stream::input_sptr layerFile = suppData[SuppItem::Layer1];
 	assert(layerFile);
@@ -173,7 +173,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 
 	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr fgLayer(new HocusBackgroundLayer("Foreground", fgtiles, validFGItems));
+	Map2D::LayerPtr fgLayer(new Layer_HocusBackground("Foreground", fgtiles, validFGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -192,7 +192,7 @@ MapPtr HocusMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void HocusMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Hocus::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -250,7 +250,7 @@ void HocusMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames HocusMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Hocus::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

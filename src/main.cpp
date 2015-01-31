@@ -64,26 +64,26 @@ const ManagerPtr getManager()
 
 ActualManager::ActualManager()
 {
-	this->vcTypes.push_back(MapTypePtr(new BashMapType()));
-	this->vcTypes.push_back(MapTypePtr(new CCavesMapType()));
-	this->vcTypes.push_back(MapTypePtr(new CComicMapType()));
-	this->vcTypes.push_back(MapTypePtr(new CosmoMapType()));
-	this->vcTypes.push_back(MapTypePtr(new DarkAgesMapType()));
-	this->vcTypes.push_back(MapTypePtr(new DDaveMapType()));
-	this->vcTypes.push_back(MapTypePtr(new Duke1MapType()));
-	this->vcTypes.push_back(MapTypePtr(new GOTMapType()));
-	this->vcTypes.push_back(MapTypePtr(new HarryMapType()));
-	this->vcTypes.push_back(MapTypePtr(new HocusMapType()));
-	this->vcTypes.push_back(MapTypePtr(new Nukem2MapType()));
-	this->vcTypes.push_back(MapTypePtr(new JillMapType()));
-	this->vcTypes.push_back(MapTypePtr(new RockfordMapType()));
-	this->vcTypes.push_back(MapTypePtr(new SAgentMapType()));
-	this->vcTypes.push_back(MapTypePtr(new SAgentWorldMapType()));
-	this->vcTypes.push_back(MapTypePtr(new VinylMapType()));
-	this->vcTypes.push_back(MapTypePtr(new WackyMapType()));
-	this->vcTypes.push_back(MapTypePtr(new WordRescueMapType()));
-	this->vcTypes.push_back(MapTypePtr(new XargonMapType()));
-	this->vcTypes.push_back(MapTypePtr(new Zone66MapType()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Bash()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_CCaves()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_CComic()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Cosmo()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_DarkAges()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_DDave()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Duke1()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_GOT()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Harry()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Hocus()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Nukem2()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Jill()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Rockford()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_SAgent()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_SAgentWorld()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Vinyl()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Wacky()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_WordRescue()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Xargon()));
+	this->vcTypes.push_back(MapTypePtr(new MapType_Zone66()));
 }
 
 ActualManager::~ActualManager()

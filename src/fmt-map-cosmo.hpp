@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Cosmo's Cosmic Adventures level reader/writer.
-class CosmoMapType: virtual public BaseMapType
+class MapType_Cosmo: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

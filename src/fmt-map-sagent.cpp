@@ -68,10 +68,10 @@ typedef struct {
 
 #include "fmt-map-sagent-mapping.hpp"
 
-class SAgentCommonLayer: public GenericMap2D::Layer
+class Layer_SAgentCommon: public GenericMap2D::Layer
 {
 	public:
-		SAgentCommonLayer(const std::string& name, ItemPtrVectorPtr& items,
+		Layer_SAgentCommon(const std::string& name, ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					name,
@@ -113,11 +113,11 @@ class SAgentCommonLayer: public GenericMap2D::Layer
 		}
 };
 
-class SAgentBackgroundLayer: public SAgentCommonLayer
+class Layer_SAgentBackground: public Layer_SAgentCommon
 {
 	public:
-		SAgentBackgroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	SAgentCommonLayer(
+		Layer_SAgentBackground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	Layer_SAgentCommon(
 					"Background",
 					items, validItems
 				)
@@ -125,11 +125,11 @@ class SAgentBackgroundLayer: public SAgentCommonLayer
 		}
 };
 
-class SAgentForegroundLayer: public SAgentCommonLayer
+class Layer_SAgentForeground: public Layer_SAgentCommon
 {
 	public:
-		SAgentForegroundLayer(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	SAgentCommonLayer(
+		Layer_SAgentForeground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
+			:	Layer_SAgentCommon(
 					"Foreground",
 					items, validItems
 				)
@@ -145,7 +145,7 @@ class SAgentForegroundLayer: public SAgentCommonLayer
 };
 
 
-std::string SAgentMapType::getMapCode() const
+std::string MapType_SAgent::getMapCode() const
 {
 	if (this->isWorldMap()) {
 		return "map-sagent-world";
@@ -153,7 +153,7 @@ std::string SAgentMapType::getMapCode() const
 	return "map-sagent";
 }
 
-std::string SAgentMapType::getFriendlyName() const
+std::string MapType_SAgent::getFriendlyName() const
 {
 	if (this->isWorldMap()) {
 		return "Secret Agent world map";
@@ -161,21 +161,21 @@ std::string SAgentMapType::getFriendlyName() const
 	return "Secret Agent level";
 }
 
-std::vector<std::string> SAgentMapType::getFileExtensions() const
+std::vector<std::string> MapType_SAgent::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("sam");
 	return vcExtensions;
 }
 
-std::vector<std::string> SAgentMapType::getGameList() const
+std::vector<std::string> MapType_SAgent::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Secret Agent");
 	return vcGames;
 }
 
-MapType::Certainty SAgentMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_SAgent::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -224,13 +224,13 @@ MapType::Certainty SAgentMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr SAgentMapType::create(SuppData& suppData) const
+MapPtr MapType_SAgent::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr SAgentMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_SAgent::open(stream::input_sptr input, SuppData& suppData) const
 {
 	stream::pos lenMap = input->size();
 
@@ -384,8 +384,8 @@ MapPtr SAgentMapType::open(stream::input_sptr input, SuppData& suppData) const
 			}
 		}
 	}
-	Map2D::LayerPtr bgLayer(new SAgentBackgroundLayer(bgtiles, validItems));
-	Map2D::LayerPtr fgLayer(new SAgentForegroundLayer(fgtiles, validItems));
+	Map2D::LayerPtr bgLayer(new Layer_SAgentBackground(bgtiles, validItems));
+	Map2D::LayerPtr fgLayer(new Layer_SAgentForeground(fgtiles, validItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -403,7 +403,7 @@ MapPtr SAgentMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void SAgentMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_SAgent::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -663,20 +663,20 @@ void SAgentMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames SAgentMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_SAgent::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;
 	return supps;
 }
 
-bool SAgentMapType::isWorldMap() const
+bool MapType_SAgent::isWorldMap() const
 {
 	return false;
 }
 
 
-bool SAgentWorldMapType::isWorldMap() const
+bool MapType_SAgentWorld::isWorldMap() const
 {
 	return true;
 }

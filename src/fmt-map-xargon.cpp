@@ -49,11 +49,11 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_SweeneyBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		SweeneyBackgroundLayer(ItemPtrVectorPtr& items,
-			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
+		Layer_SweeneyBackground(ItemPtrVectorPtr& items,
+			MapType_Sweeney::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
 					Map2D::Layer::HasPalette,
@@ -124,14 +124,14 @@ class SweeneyBackgroundLayer: virtual public GenericMap2D::Layer
 		}
 
 	protected:
-		SweeneyMapType::image_map_sptr imgMap;
+		MapType_Sweeney::image_map_sptr imgMap;
 };
 
-class SweeneyObjectLayer: virtual public GenericMap2D::Layer
+class Layer_SweeneyObject: virtual public GenericMap2D::Layer
 {
 	public:
-		SweeneyObjectLayer(ItemPtrVectorPtr& items,
-			SweeneyMapType::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
+		Layer_SweeneyObject(ItemPtrVectorPtr& items,
+			MapType_Sweeney::image_map_sptr imgMap, ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Objects",
 					Map2D::Layer::HasOwnTileSize | Map2D::Layer::HasPalette,
@@ -179,34 +179,34 @@ class SweeneyObjectLayer: virtual public GenericMap2D::Layer
 		}
 
 	protected:
-		SweeneyMapType::image_map_sptr imgMap;
+		MapType_Sweeney::image_map_sptr imgMap;
 };
 
 
 
 
 //
-// JillMapType
+// MapType_Jill
 //
 
-JillMapType::JillMapType()
+MapType_Jill::MapType_Jill()
 {
 	this->viewportWidth = 232;
 	this->viewportHeight = 160;
 	this->lenSavedata = JILL_LEN_SAVEDATA;
 }
 
-std::string JillMapType::getMapCode() const
+std::string MapType_Jill::getMapCode() const
 {
 	return "map-jill";
 }
 
-std::string JillMapType::getFriendlyName() const
+std::string MapType_Jill::getFriendlyName() const
 {
 	return "Jill of the Jungle map";
 }
 
-std::vector<std::string> JillMapType::getFileExtensions() const
+std::vector<std::string> MapType_Jill::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("jn1");
@@ -215,14 +215,14 @@ std::vector<std::string> JillMapType::getFileExtensions() const
 	return vcExtensions;
 }
 
-std::vector<std::string> JillMapType::getGameList() const
+std::vector<std::string> MapType_Jill::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Jill of the Jungle");
 	return vcGames;
 }
 
-SuppFilenames JillMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Jill::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;
@@ -232,27 +232,27 @@ SuppFilenames JillMapType::getRequiredSupps(stream::input_sptr input,
 
 
 //
-// XargonMapType
+// MapType_Xargon
 //
 
-XargonMapType::XargonMapType()
+MapType_Xargon::MapType_Xargon()
 {
 	this->viewportWidth = 20 * XR_TILE_WIDTH;
 	this->viewportHeight = 10 * XR_TILE_HEIGHT;
 	this->lenSavedata = XR_LEN_SAVEDATA;
 }
 
-std::string XargonMapType::getMapCode() const
+std::string MapType_Xargon::getMapCode() const
 {
 	return "map-xargon";
 }
 
-std::string XargonMapType::getFriendlyName() const
+std::string MapType_Xargon::getFriendlyName() const
 {
 	return "Xargon map";
 }
 
-std::vector<std::string> XargonMapType::getFileExtensions() const
+std::vector<std::string> MapType_Xargon::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("xr0");
@@ -262,14 +262,14 @@ std::vector<std::string> XargonMapType::getFileExtensions() const
 	return vcExtensions;
 }
 
-std::vector<std::string> XargonMapType::getGameList() const
+std::vector<std::string> MapType_Xargon::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Xargon");
 	return vcGames;
 }
 
-SuppFilenames XargonMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Xargon::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	// Take the extension from the file being opened and use the corresponding
@@ -282,10 +282,10 @@ SuppFilenames XargonMapType::getRequiredSupps(stream::input_sptr input,
 
 
 //
-// SweeneyMapType
+// MapType_Sweeney
 //
 
-MapType::Certainty SweeneyMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Sweeney::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -323,13 +323,13 @@ MapType::Certainty SweeneyMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr SweeneyMapType::create(SuppData& suppData) const
+MapPtr MapType_Sweeney::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Sweeney::open(stream::input_sptr input, SuppData& suppData) const
 {
 	// Read the tile properties from the suppdata
 	stream::input_sptr dma = suppData[SuppItem::Extra1];
@@ -395,7 +395,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	}
 	lenMap -= XR_MAP_WIDTH * XR_MAP_HEIGHT * 2;
 
-	Map2D::LayerPtr bgLayer(new SweeneyBackgroundLayer(tiles, imgMap, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_SweeneyBackground(tiles, imgMap, validBGItems));
 
 	// Read the object layer
 	uint16_t numObjects;
@@ -523,7 +523,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	v->textContent = "Large text";
 	validObjItems->push_back(v);
 
-	Map2D::LayerPtr objLayer(new SweeneyObjectLayer(objects, imgMap, validObjItems));
+	Map2D::LayerPtr objLayer(new Layer_SweeneyObject(objects, imgMap, validObjItems));
 
 	// Make sure we read in all the objects correctly
 	assert(input->tellg() == (unsigned)(XR_OFFSET_OBJLAYER + 2 + numObjects * XR_OBJ_ENTRY_LEN));
@@ -544,7 +544,7 @@ MapPtr SweeneyMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void SweeneyMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Sweeney::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);

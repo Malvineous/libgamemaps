@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Zone 66 level reader/writer.
-class Zone66MapType: virtual public BaseMapType
+class MapType_Zone66: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

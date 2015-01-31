@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Duke Nukem 1 level reader/writer.
-class Duke1MapType: virtual public BaseMapType
+class MapType_Duke1: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

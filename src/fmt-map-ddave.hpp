@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Dangerous Dave level reader/writer.
-class DDaveMapType: virtual public BaseMapType
+class MapType_DDave: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

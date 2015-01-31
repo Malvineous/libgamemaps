@@ -27,7 +27,7 @@ namespace camoto {
 namespace gamemaps {
 
 /// Rockford level reader/writer.
-class RockfordMapType: virtual public BaseMapType
+class MapType_Rockford: virtual public MapType_Base
 {
 	public:
 		virtual std::string getMapCode() const;

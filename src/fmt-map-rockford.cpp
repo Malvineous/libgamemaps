@@ -46,10 +46,10 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class RockfordBackgroundLayer: virtual public GenericMap2D::Layer
+class Layer_RockfordBackground: virtual public GenericMap2D::Layer
 {
 	public:
-		RockfordBackgroundLayer(ItemPtrVectorPtr& items,
+		Layer_RockfordBackground(ItemPtrVectorPtr& items,
 			ItemPtrVectorPtr& validItems)
 			:	GenericMap2D::Layer(
 					"Background",
@@ -81,31 +81,31 @@ class RockfordBackgroundLayer: virtual public GenericMap2D::Layer
 };
 
 
-std::string RockfordMapType::getMapCode() const
+std::string MapType_Rockford::getMapCode() const
 {
 	return "map-rockford";
 }
 
-std::string RockfordMapType::getFriendlyName() const
+std::string MapType_Rockford::getFriendlyName() const
 {
 	return "Rockford level";
 }
 
-std::vector<std::string> RockfordMapType::getFileExtensions() const
+std::vector<std::string> MapType_Rockford::getFileExtensions() const
 {
 	std::vector<std::string> vcExtensions;
 	vcExtensions.push_back("bin");
 	return vcExtensions;
 }
 
-std::vector<std::string> RockfordMapType::getGameList() const
+std::vector<std::string> MapType_Rockford::getGameList() const
 {
 	std::vector<std::string> vcGames;
 	vcGames.push_back("Rockford");
 	return vcGames;
 }
 
-MapType::Certainty RockfordMapType::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Rockford::isInstance(stream::input_sptr psMap) const
 {
 	stream::pos lenMap = psMap->size();
 
@@ -132,13 +132,13 @@ MapType::Certainty RockfordMapType::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr RockfordMapType::create(SuppData& suppData) const
+MapPtr MapType_Rockford::create(SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr RockfordMapType::open(stream::input_sptr input, SuppData& suppData) const
+MapPtr MapType_Rockford::open(stream::input_sptr input, SuppData& suppData) const
 {
 	input->seekg(0, stream::start);
 
@@ -182,7 +182,7 @@ MapPtr RockfordMapType::open(stream::input_sptr input, SuppData& suppData) const
 		t->code = i;
 		validBGItems->push_back(t);
 	}
-	Map2D::LayerPtr bgLayer(new RockfordBackgroundLayer(tiles, validBGItems));
+	Map2D::LayerPtr bgLayer(new Layer_RockfordBackground(tiles, validBGItems));
 
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
@@ -199,7 +199,7 @@ MapPtr RockfordMapType::open(stream::input_sptr input, SuppData& suppData) const
 	return map;
 }
 
-void RockfordMapType::write(MapPtr map, stream::expanding_output_sptr output,
+void MapType_Rockford::write(MapPtr map, stream::expanding_output_sptr output,
 	ExpandingSuppData& suppData) const
 {
 	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
@@ -235,7 +235,7 @@ void RockfordMapType::write(MapPtr map, stream::expanding_output_sptr output,
 	return;
 }
 
-SuppFilenames RockfordMapType::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Rockford::getRequiredSupps(stream::input_sptr input,
 	const std::string& filename) const
 {
 	SuppFilenames supps;

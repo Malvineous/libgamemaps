@@ -26,15 +26,15 @@ namespace gamemaps {
 
 typedef std::map<SuppItem::Type, stream::expanding_inout_sptr> ExpandingSuppDataRW;
 
-BaseMapType::BaseMapType()
+MapType_Base::MapType_Base()
 {
 }
 
-BaseMapType::~BaseMapType()
+MapType_Base::~MapType_Base()
 {
 }
 
-void BaseMapType::write(MapPtr map, stream::output_sptr output,
+void MapType_Base::write(MapPtr map, stream::output_sptr output,
 	SuppData& suppData) const
 {
 	stream::memory_sptr expOut(new stream::memory);
