@@ -81,6 +81,34 @@ class Layer_DDaveBackground: virtual public GenericMap2D::Layer
 };
 
 
+class Map2D_DDave: virtual public GenericMap2D
+{
+	public:
+		Map2D_DDave(LayerPtrVector& layers, PathPtrVectorPtr& paths)
+			:	GenericMap2D(
+					Map::Attributes(), Map::GraphicsFilenames(),
+					Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPathCount,
+					20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
+					DD_MAP_WIDTH, DD_MAP_HEIGHT,
+					DD_TILE_WIDTH, DD_TILE_HEIGHT,
+					layers, paths
+				)
+		{
+		}
+
+		Map2D::ImageAttachment getBackgroundImage(
+			const TilesetCollectionPtr& tileset, ImagePtr *outImage,
+			PaletteEntry *outColour) const
+		{
+			outColour->red = 0;
+			outColour->green = 0;
+			outColour->blue = 0;
+			outColour->alpha = 255;
+			return Map2D::SingleColour;
+		}
+};
+
+
 std::string MapType_DDave::getMapCode() const
 {
 	return "map-ddave";
@@ -196,15 +224,7 @@ MapPtr MapType_DDave::open(stream::input_sptr input, SuppData& suppData) const
 	Map2D::LayerPtrVector layers;
 	layers.push_back(bgLayer);
 
-	Map2DPtr map(new GenericMap2D(
-		Map::Attributes(), Map::GraphicsFilenames(),
-		Map2D::HasViewport | Map2D::HasPaths | Map2D::FixedPathCount,
-		20 * DD_TILE_WIDTH, 10 * DD_TILE_HEIGHT, // viewport size
-		DD_MAP_WIDTH, DD_MAP_HEIGHT,
-		DD_TILE_WIDTH, DD_TILE_HEIGHT,
-		layers, paths
-	));
-
+	Map2DPtr map(new Map2D_DDave(layers, paths));
 	return map;
 }
 
