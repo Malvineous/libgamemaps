@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([libgamemaps], [1.0],
+AC_INIT([libgamemaps], [1.2],
 	[https://github.com/Malvineous/libgamemaps/issues],
 	[], [http://www.shikadi.net/camoto])
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip])
