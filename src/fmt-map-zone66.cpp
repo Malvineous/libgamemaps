@@ -138,18 +138,19 @@ MapPtr MapType_Zone66::open(stream::input_sptr input, SuppData& suppData) const
 
 	// Read the tile mapping table
 	stream::input_sptr dataMapBG = suppData[SuppItem::Extra1];
+	if (!dataMapBG) throw stream::error("Mandatory Extra1 supplementary item (Z66 tile mapping table) was not supplied.");
 	dataMapBG->seekg(0, stream::start);
-	uint16_t lenMapBG, unknown;
+	uint16_t lenTilemap, unknown;
 	dataMapBG
-		>> u16le(lenMapBG)
+		>> u16le(lenTilemap)
 		>> u16le(unknown)
 	;
-	lenMapBG *= 2; // convert count of 16-bit numbers into number of bytes
-	unsigned int mapBG[256];
-	memset(mapBG, Z66_DEFAULT_BGTILE, 256);
-	for (unsigned int i = 0; i < lenMapBG; i++) {
-		dataMapBG >> u16le(mapBG[i]);
+	if (lenTilemap > 256) lenTilemap = 256;
+	unsigned int tilemap[256];
+	for (unsigned int i = 0; i < lenTilemap; i++) {
+		dataMapBG >> u16le(tilemap[i]);
 	}
+	for (unsigned int i = lenTilemap; i < 256; i++) tilemap[i] = Z66_DEFAULT_BGTILE;
 
 	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
 	tiles->reserve(Z66_MAP_BG_LEN);
@@ -161,7 +162,7 @@ MapPtr MapType_Zone66::open(stream::input_sptr input, SuppData& suppData) const
 		t->type = Map2D::Layer::Item::Default;
 		t->x = i % Z66_MAP_WIDTH;
 		t->y = i / Z66_MAP_WIDTH;
-		t->code = mapBG[bg[i]];
+		t->code = tilemap[bg[i]];
 		tiles->push_back(t);
 	}
 
