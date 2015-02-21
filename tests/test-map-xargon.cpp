@@ -51,6 +51,7 @@ class test_map_xargon: public test_map2d
 			this->mapCode[0].code = 0x01;
 			this->mapCode[1].code = 0x01;
 			this->suppResult[SuppItem::Extra1].reset(new test_suppx1_map_xargon());
+			this->skipInstDetect.push_back("map-wordresc");
 		}
 
 		void addTests()
