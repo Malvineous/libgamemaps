@@ -367,7 +367,7 @@ MapPtr MapType_Sweeney::open(stream::input_sptr input, SuppData& suppData) const
 		// Skip name
 		dma->seekg(namelen, stream::cur);
 		len -= 7 + namelen;
-	} while (len > 0);
+	} while (len > 7);
 
 	// Read the map
 	stream::pos lenMap = input->size();
