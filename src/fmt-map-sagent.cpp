@@ -638,7 +638,16 @@ void MapType_SAgent::write(MapPtr map, stream::expanding_output_sptr output,
 	outbg = bgdst;
 	outfg = fgdst;
 	output->write(strBGcode);
-	output << std::string(SAM_MAP_WIDTH, ' ') << u8(0x0D) << u8(0x0A);
+	output
+		<< u8(0x20) // unknown
+		<< u8(0x20) // background overlay
+		<< u8(0x20) // unknown
+		<< u8(0x33) // tile 0x33 image?
+		<< u8(0x35) // tile 0x35 image
+		<< u8(0x36) // tile 0x36 image
+		<< u8(0x37) // tile 0x37 image
+	;
+	output << std::string(SAM_MAP_WIDTH - 7, ' ') << u8(0x0D) << u8(0x0A);
 	unsigned int numLinesWritten = 2;
 	for (unsigned int y = 0; y < SAM_MAX_ROWS - 2; y++) {
 		if (y >= mapHeight) {

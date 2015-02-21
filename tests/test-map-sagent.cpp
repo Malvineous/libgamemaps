@@ -104,7 +104,7 @@ class test_map_sagent: public test_map2d
 		{
 			return STRING_WITH_NULLS(
 				"667                                     \x0D\x0A"
-				"                                        \x0D\x0A"
+				"   3567                                 \x0D\x0A"
 				"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x0D\x0A"
 				"O    " "  "    "                                O\x0D\x0A"
 				"O 567" " \xD2" "                                O\x0D\x0A"
