@@ -59,7 +59,7 @@ AM_CXXFLAGS += $(libgamecommon_CFLAGS)
 AM_CXXFLAGS += $(libgamegraphics_CFLAGS)
 
 libgamemaps_la_LDFLAGS  = $(AM_LDFLAGS)
-libgamemaps_la_LDFLAGS += -version-info 1:0:0
+libgamemaps_la_LDFLAGS += -version-info 2:0:0
 
 libgamemaps_la_LIBADD  = $(BOOST_SYSTEM_LIBS)
 libgamemaps_la_LIBADD += $(BOOST_FILESYSTEM_LIBS)
