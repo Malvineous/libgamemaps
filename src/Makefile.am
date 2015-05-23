@@ -48,8 +48,7 @@ EXTRA_libgamemaps_la_SOURCES += map2d-generic.hpp
 
 WARNINGS = -Wall -Wextra -Wno-unused-parameter
 
-AM_CPPFLAGS  = $(BOOST_CPPFLAGS)
-AM_CPPFLAGS += -I $(top_srcdir)/include
+AM_CPPFLAGS  = -I $(top_srcdir)/include
 AM_CPPFLAGS += $(libgamecommon_CPPFLAGS)
 AM_CPPFLAGS += $(libgamegraphics_CPPFLAGS)
 AM_CPPFLAGS += $(WARNINGS)
@@ -61,7 +60,5 @@ AM_CXXFLAGS += $(libgamegraphics_CFLAGS)
 libgamemaps_la_LDFLAGS  = $(AM_LDFLAGS)
 libgamemaps_la_LDFLAGS += -version-info 2:0:0
 
-libgamemaps_la_LIBADD  = $(BOOST_SYSTEM_LIBS)
-libgamemaps_la_LIBADD += $(BOOST_FILESYSTEM_LIBS)
-libgamemaps_la_LIBADD += $(libgamecommon_LIBS)
+libgamemaps_la_LIBADD  = $(libgamecommon_LIBS)
 libgamemaps_la_LIBADD += $(libgamegraphics_LIBS)
