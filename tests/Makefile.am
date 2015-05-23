@@ -9,6 +9,7 @@ tests_SOURCES += test-map-cosmo.cpp
 tests_SOURCES += test-map-ddave.cpp
 tests_SOURCES += test-map-got.cpp
 tests_SOURCES += test-map-harry.cpp
+tests_SOURCES += test-map-jill.cpp
 tests_SOURCES += test-map-nukem2.cpp
 tests_SOURCES += test-map-sagent.cpp
 tests_SOURCES += test-map-vinyl.cpp
