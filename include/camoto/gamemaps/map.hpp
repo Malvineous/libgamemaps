@@ -202,9 +202,6 @@ class Map: virtual public Metadata
 		}
 };
 
-/// Shared pointer to a Map.
-typedef boost::shared_ptr<Map> MapPtr;
-
 } // namespace gamemaps
 } // namespace camoto
 
