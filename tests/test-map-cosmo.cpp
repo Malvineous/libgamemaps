@@ -26,14 +26,13 @@ class test_map_cosmo: public test_map2d
 		test_map_cosmo()
 		{
 			this->type = "map-cosmo";
-			this->pxWidth = 64 * 8;
-			this->pxHeight = 512 * 8;
+			this->pxSize = {64 * 8, 512 * 8};
 			this->numLayers = 2;
-			this->mapCode[0].x = 1;
-			this->mapCode[0].y = 0;
+			this->mapCode[0].pos.x = 1;
+			this->mapCode[0].pos.y = 0;
 			this->mapCode[0].code = 0x08;
-			this->mapCode[1].x = 0;
-			this->mapCode[1].y = 0;
+			this->mapCode[1].pos.x = 0;
+			this->mapCode[1].pos.y = 0;
 			this->mapCode[1].code = 0x01;
 		}
 

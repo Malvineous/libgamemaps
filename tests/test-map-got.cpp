@@ -26,17 +26,16 @@ class test_map_got: public test_map2d
 		test_map_got()
 		{
 			this->type = "map-got";
-			this->pxWidth = 20 * 16 * 10;
-			this->pxHeight = 12 * 16 * 12;
+			this->pxSize = {20 * 16 * 10, 12 * 16 * 12};
 			this->numLayers = 5;
 			this->mapCode[0].code = 256 + 0x03;
 			this->mapCode[1].code = 0x88;
 			this->mapCode[2].code = 0xB0;
-			this->mapCode[3].x = 3;
-			this->mapCode[3].y = 4;
+			this->mapCode[3].pos.x = 3;
+			this->mapCode[3].pos.y = 4;
 			this->mapCode[3].code = 0x04;
-			this->mapCode[4].x = 5;
-			this->mapCode[4].y = 6;
+			this->mapCode[4].pos.x = 5;
+			this->mapCode[4].pos.y = 6;
 			this->mapCode[4].code = 0x01;
 
 			this->singleScreen = STRING_WITH_NULLS(

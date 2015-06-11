@@ -26,8 +26,7 @@ class test_map_nukem2: public test_map2d
 		test_map_nukem2()
 		{
 			this->type = "map-nukem2";
-			this->pxWidth = 64 * 8;
-			this->pxHeight = 511 * 8;
+			this->pxSize = {64 * 8, 511 * 8};
 			this->numLayers = 3;
 			this->mapCode[0].code = 0x01;
 			this->mapCode[1].code = 0x70;

@@ -52,8 +52,13 @@ class test_map2d: public test_main
 		 */
 		virtual void addTests();
 
-		/// Reset pMap back to a known state.
-		virtual void prepareTest();
+		/// Reset map back to a known state.
+		/**
+		 * @param empty
+		 *   true resets to an empty map (via MapType::create()) while
+		 *   false resets to initialstate() and calls MapType::open().
+		 */
+		virtual void prepareTest(bool empty);
 
 		void test_isinstance_others();
 		void test_getsize();
@@ -71,15 +76,40 @@ class test_map2d: public test_main
 		virtual std::string initialstate() = 0;
 
 		/// Add a test to the suite.  Used by ADD_MAP2D_TEST().
-		void addBoundTest(boost::function<void()> fnTest,
+		void addBoundTest(bool empty, boost::function<void()> fnTest,
 			boost::unit_test::const_string name);
 
 		/// Reset the map content to the initial state and run the given test.
 		/**
+		 * @param empty
+		 *   true resets to an empty map (via MapType::create()) while
+		 *   false resets to initialstate() and calls MapType::open().
+		 *
 		 * @param fnTest
 		 *   Function to call once map stream is back to initial state.
 		 */
-		void runTest(boost::function<void()> fnTest);
+		void runTest(bool empty, boost::function<void()> fnTest);
+
+		/// Populate suppBase with default content.
+		/**
+		 * This may be called mid-test if the suppBase content should be reset to
+		 * the initial state.
+		 */
+		void resetSuppData(bool empty);
+
+		/// Populate suppData with data loaded from suppBase.
+		/**
+		 * This may be called mid-test if new suppData structures are needed to
+		 * create a new Image instance, since the original ones have been
+		 * std::move()'d to the original Image instance and won't be available to
+		 * create a new Image with.
+		 *
+		 * This repopulates suppData from the existing suppBase content, so it is
+		 * possible to access modified data this way.  If you don't want suppData
+		 * that may have been modified by a previous Image instance, call
+		 * resetSuppData() first to return everything to the initialstate.
+		 */
+		void populateSuppData();
 
 		/// Add an isInstance check to run later.
 		/**
@@ -134,25 +164,23 @@ class test_map2d: public test_main
 
 		/// Does the given supplementary item content match the parameter?
 		boost::test_tools::predicate_result is_supp_equal(
-			camoto::SuppItem::Type type, const std::string& strExpected);
+			camoto::SuppItem type, const std::string& strExpected);
 
 	protected:
 		/// Underlying data stream containing map file content.
-		stream::string_sptr base;
-
-		/// Factory class used to open maps in this format.
-		MapTypePtr pMapType;
+		std::shared_ptr<stream::string> base;
 
 		/// Pointer to the active map instance.
-		Map2DPtr pMap;
+		std::shared_ptr<camoto::gamemaps::Map2D> map;
 
-		/// Supplementary data for the map.
+		/// Pointers to the underlying storage used for suppitems.
+		std::map<SuppItem, std::shared_ptr<stream::string>> suppBase;
+
+		/// Supplementary data for the archive, populated by streams sitting on
+		/// top of suppBase.
 		camoto::SuppData suppData;
 
 	private:
-		/// Have we allocated pMapType yet?
-		bool init;
-
 		/// Number of isInstance tests, used to number them sequentially.
 		unsigned int numIsInstanceTests;
 
@@ -175,25 +203,21 @@ class test_map2d: public test_main
 		 */
 		std::vector<std::string> skipInstDetect;
 
-		/// Width of the entire map, in pixels.
-		int pxWidth;
-
-		/// Height of the entire map, in pixels.
-		int pxHeight;
+		/// Width and height of the entire map, in pixels.
+		camoto::gamemaps::Point pxSize;
 
 		/// Number of layers in the map.
 		int numLayers;
 
 		/// Map codes to inspect, one per layer.
 		struct {
-			int x;
-			int y;
+			camoto::gamemaps::Point pos;
 			int code;
 		} mapCode[MAP2D_MAX_LAYERS];
 
 		/// Link between supplementary items and the class containing the expected
 		/// content for each test case.
-		std::map<camoto::SuppItem::Type, boost::shared_ptr<test_map2d> > suppResult;
+		std::map<camoto::SuppItem, std::shared_ptr<test_map2d>> suppResult;
 
 		/// Set to false if this instance is of a supp item and it is not written
 		/// out when saving a map.
@@ -201,9 +225,9 @@ class test_map2d: public test_main
 };
 
 /// Add a test_map2d member function to the test suite
-#define ADD_MAP2D_TEST(fn) {	  \
+#define ADD_MAP2D_TEST(create, fn) { \
 	boost::function<void()> fnTest = boost::bind(fn, this); \
-	this->test_map2d::addBoundTest(fnTest, BOOST_TEST_STRINGIZE(fn)); \
+	this->test_map2d::addBoundTest(create, fnTest, BOOST_TEST_STRINGIZE(fn)); \
 }
 
 #endif // _CAMOTO_GAMEMAPS_TEST_MAP2D_HPP_

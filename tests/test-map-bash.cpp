@@ -185,8 +185,7 @@ class test_map_bash: public test_map2d
 		test_map_bash()
 		{
 			this->type = "map-bash";
-			this->pxWidth = 16 * 16;
-			this->pxHeight = 2 * 16;
+			this->pxSize = {16 * 16, 2 * 16};
 			this->numLayers = 5;
 			this->mapCode[0].code = 0x01; // code at (0,0)
 			this->mapCode[1].code = 0x01; // code at (0,0)

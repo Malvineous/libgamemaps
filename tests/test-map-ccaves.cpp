@@ -30,14 +30,11 @@ class test_map_ccaves: public test_map2d
 		test_map_ccaves()
 		{
 			this->type = "map-ccaves";
-			this->pxWidth = 40 * 16;
-			this->pxHeight = 17 * 16;
+			this->pxSize = {40 * 16, 17 * 16};
 			this->numLayers = 2;
-			this->mapCode[0].x = 33;
-			this->mapCode[0].y = 0;
+			this->mapCode[0].pos = {33, 0};
 			this->mapCode[0].code = MAKE_TILE(13,  0);
-			this->mapCode[1].x = 32;
-			this->mapCode[1].y = 3;
+			this->mapCode[1].pos = {32, 3};
 			this->mapCode[1].code = MAKE_TILE(12, 36);
 			this->outputWidth = 41;
 		}

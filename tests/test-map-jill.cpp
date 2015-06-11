@@ -52,8 +52,7 @@ class test_map_jill: public test_map2d
 		test_map_jill()
 		{
 			this->type = "map-jill";
-			this->pxWidth = 128 * 16;
-			this->pxHeight = 64 * 16;
+			this->pxSize = {128 * 16, 64 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].code = 0x01;
 			this->mapCode[1].code = 0x01;

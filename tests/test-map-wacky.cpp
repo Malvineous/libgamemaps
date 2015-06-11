@@ -45,8 +45,7 @@ class test_map_wacky: public test_map2d
 		test_map_wacky()
 		{
 			this->type = "map-wacky";
-			this->pxWidth = 64 * 32;
-			this->pxHeight = 64 * 32;
+			this->pxSize = {64 * 32, 64 * 32};
 			this->numLayers = 1;
 			this->mapCode[0].code = 0x20;
 			this->suppResult[SuppItem::Layer1].reset(new test_suppl1_map_wacky());

@@ -26,8 +26,7 @@ class test_map_ccomic: public test_map2d
 		test_map_ccomic()
 		{
 			this->type = "map-ccomic";
-			this->pxWidth = 3 * 16;
-			this->pxHeight = 5 * 16;
+			this->pxSize = {3 * 16, 5 * 16};
 			this->numLayers = 1;
 			this->mapCode[0].code = 0x02;
 		}

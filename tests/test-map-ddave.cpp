@@ -26,9 +26,9 @@ class test_map_ddave: public test_map2d
 		test_map_ddave()
 		{
 			this->type = "map-ddave";
-			this->pxWidth = 100 * 16;
-			this->pxHeight = 10 * 16;
+			this->pxSize = {100 * 16, 10 * 16};
 			this->numLayers = 1;
+			this->mapCode[0].pos = {0, 0};
 			this->mapCode[0].code = 0x01;
 
 			this->initialPath = STRING_WITH_NULLS(

@@ -26,8 +26,7 @@ class test_map_harry: public test_map2d
 		test_map_harry()
 		{
 			this->type = "map-harry";
-			this->pxWidth = 4 * 16;
-			this->pxHeight = 4 * 16;
+			this->pxSize = {4 * 16, 4 * 16};
 			this->numLayers = 3;
 			this->mapCode[0].code = 0x01; // 0x00 is empty tile and thus skipped
 			this->mapCode[1].code = 0x01; // 0x00 is empty tile and thus skipped
