@@ -22,6 +22,7 @@
 #ifndef _CAMOTO_GAMEMAPS_MAPTYPE_HPP_
 #define _CAMOTO_GAMEMAPS_MAPTYPE_HPP_
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <camoto/stream.hpp>
@@ -37,6 +38,12 @@ namespace gamemaps {
 class MapType
 {
 	public:
+		/// Type of object this class creates
+		typedef Map obj_t;
+
+		/// Type name as a string
+		static constexpr const char* const obj_t_name = "Map"; // defined in main.cpp
+
 		/// Confidence level when guessing a file format.
 		enum Certainty {
 			DefinitelyNo,  ///< Definitely not in this format
@@ -51,13 +58,13 @@ class MapType
 		 *
 		 * @return The map short name/ID.
 		 */
-		virtual std::string getMapCode() const = 0;
+		virtual std::string code() const = 0;
 
 		/// Get the map name, e.g. "Xargon map"
 		/**
 		 * @return The map name.
 		 */
-		virtual std::string getFriendlyName() const = 0;
+		virtual std::string friendlyName() const = 0;
 
 		/// Get a list of the known file extensions for this format.
 		/**
@@ -65,23 +72,23 @@ class MapType
 		 *
 		 * @return A vector of file extensions, e.g. "xr1"
 		 */
-		virtual std::vector<std::string> getFileExtensions() const = 0;
+		virtual std::vector<std::string> fileExtensions() const = 0;
 
 		/// Get a list of games using this format.
 		/**
 		 * @return A vector of game names, such as "Major Stryker", "Cosmo's Cosmic
 		 *         Adventures", "Duke Nukem II"
 		 */
-		virtual std::vector<std::string> getGameList() const = 0;
+		virtual std::vector<std::string> games() const = 0;
 
 		/// Check a stream to see if it's in this map format.
 		/**
-		 * @param psMap
+		 * @param content
 		 *   A C++ iostream of the file to test.
 		 *
 		 * @return A single confidence value from \ref MapType::Certainty.
 		 */
-		virtual Certainty isInstance(stream::input_sptr psMap) const = 0;
+		virtual Certainty isInstance(stream::input& content) const = 0;
 
 		/// Create a blank map in this format.
 		/**
@@ -92,7 +99,8 @@ class MapType
 		 *
 		 * @return A shared pointer to an instance of the Map class.
 		 */
-		virtual MapPtr create(SuppData& suppData) const = 0;
+		virtual std::unique_ptr<Map> create(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const = 0;
 
 		/// Open a map file.
 		/**
@@ -111,7 +119,8 @@ class MapType
 		 *   to read the data anyway, to make it possible to "force" a file to be
 		 *   opened by a particular format handler.
 		 */
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const = 0;
+		virtual std::unique_ptr<Map> open(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const = 0;
 
 		/// Write a map out to a file in this format.
 		/**
@@ -133,8 +142,8 @@ class MapType
 		 * @note If an exception is thrown, both output and suppData streams will
 		 *   have been left unchanged.
 		 */
-		virtual void write(MapPtr map, stream::output_sptr output,
-			SuppData& suppData) const = 0;
+		//virtual void write(const Map& map, stream::output& output,
+		//	SuppData& suppData) const = 0;
 
 		/// Get a list of any required supplemental files.
 		/**
@@ -161,15 +170,9 @@ class MapType
 		 *   relative paths, and may even have an absolute path, if one was passed
 		 *   in.
 		 */
-		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+		virtual SuppFilenames getRequiredSupps(stream::input& content,
 			const std::string& filename) const = 0;
 };
-
-/// Shared pointer to a MapType.
-typedef boost::shared_ptr<MapType> MapTypePtr;
-
-/// Vector of MapType shared pointers.
-typedef std::vector<MapTypePtr> MapTypeVector;
 
 } // namespace gamemaps
 } // namespace camoto

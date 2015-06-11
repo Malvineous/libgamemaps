@@ -1,7 +1,8 @@
 lib_LTLIBRARIES = libgamemaps.la
 
 libgamemaps_la_SOURCES  = main.cpp
-libgamemaps_la_SOURCES += base-maptype.cpp
+libgamemaps_la_SOURCES += map-core.cpp
+libgamemaps_la_SOURCES += map2d-core.cpp
 libgamemaps_la_SOURCES += fmt-map-bash.cpp
 libgamemaps_la_SOURCES += fmt-map-ccaves.cpp
 libgamemaps_la_SOURCES += fmt-map-ccomic.cpp
@@ -20,11 +21,10 @@ libgamemaps_la_SOURCES += fmt-map-wacky.cpp
 libgamemaps_la_SOURCES += fmt-map-wordresc.cpp
 libgamemaps_la_SOURCES += fmt-map-xargon.cpp
 libgamemaps_la_SOURCES += fmt-map-zone66.cpp
-libgamemaps_la_SOURCES += map2d-generic.cpp
-libgamemaps_la_SOURCES += map2d_layer.cpp
 libgamemaps_la_SOURCES += util.cpp
 
-EXTRA_libgamemaps_la_SOURCES  = base-maptype.hpp
+EXTRA_libgamemaps_la_SOURCES  = map-core.hpp
+EXTRA_libgamemaps_la_SOURCES += map2d-core.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-bash.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ccaves.hpp fmt-map-ccaves-mapping.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-ccomic.hpp
@@ -44,7 +44,6 @@ EXTRA_libgamemaps_la_SOURCES += fmt-map-wacky.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-wordresc.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-xargon.hpp
 EXTRA_libgamemaps_la_SOURCES += fmt-map-zone66.hpp
-EXTRA_libgamemaps_la_SOURCES += map2d-generic.hpp
 
 WARNINGS = -Wall -Wextra -Wno-unused-parameter
 

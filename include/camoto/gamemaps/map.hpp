@@ -36,7 +36,7 @@ class EInvalidFormat: virtual public error {
 };
 
 /// What an image or tileset is used for.
-enum ImagePurpose {
+enum class ImagePurpose {
 	GenericTileset1 = 0,
 	GenericTileset2,
 	GenericTileset3,
@@ -82,28 +82,115 @@ enum ImagePurpose {
 	FontTileset7,
 	FontTileset8,
 	FontTileset9,
-	_FIRST_IMAGE, ///< Do not use (for IMAGEPURPOSE_IS_* macro)
-	BackgroundImage,
-	TilesetPurposeCount // must always be last
+	BackgroundImage, ///< First image - for ImagePurpose_IsImage()
+	ImagePurposeCount // must always be last
 };
 
 /// Is this ImagePurpose for an Image?
-inline bool ImagePurpose_IsImage(const ImagePurpose& p)
+constexpr bool ImagePurpose_IsImage(ImagePurpose p)
 {
-	return p > _FIRST_IMAGE;
+	return p >= ImagePurpose::BackgroundImage;
 }
 
 /// Is this ImagePurpose for a tileset?
-inline bool ImagePurpose_IsTileset(const ImagePurpose& p)
+constexpr bool ImagePurpose_IsTileset(ImagePurpose p)
 {
-	return p < _FIRST_IMAGE;
+	return p < ImagePurpose::BackgroundImage;
 }
 
-/// List of Tileset shared pointers.
-typedef std::map<ImagePurpose, gamegraphics::TilesetPtr> TilesetCollection;
+/// Convert an ImagePurpose to a string
+// implemented in map-core.cpp
+const char* DLL_EXPORT toString(ImagePurpose p);
 
-/// Shared pointer to a Tileset collection.
-typedef boost::shared_ptr<TilesetCollection> TilesetCollectionPtr;
+/// List of Tileset shared pointers.
+typedef std::map<ImagePurpose, std::shared_ptr<gamegraphics::Tileset>> TilesetCollection;
+
+/// Attribute attached to this map.
+/**
+ * Attributes are configuration options that apply to particular map files,
+ * such as a default background colour or which song to play as background
+ * music in the level.
+ *
+ * Attributes should reflect data contained in the map file itself, so for
+ * example, if the map file doesn't store some value that controls which
+ * tileset is used to draw the level, then the tileset filename shouldn't be
+ * exposed as an attribute (because if it was changed, the new value
+ * couldn't be saved back into the map file.)
+ *
+ * Attributes should reflect properties of the map that the user can and may
+ * wish to change.
+ */
+struct Attribute
+{
+	enum class Type {
+		Integer,         ///< One number within a given range
+		Enum,            ///< One choice from a list of static values
+		Filename,        ///< A filename of the given file type
+		Text,            ///< A text string
+	};
+	Type type;         ///< What type this attribute is
+	std::string name;  ///< Short name of this attribute
+	std::string desc;  ///< Description of this attribute
+
+	int integerValue;    ///< Integer type: current value
+	int integerMinValue; ///< Integer type: minimum allowed value (set min and max to 0 for unlimited)
+	int integerMaxValue; ///< Integer type: maximum allowed value (set min and max to 0 for unlimited)
+
+	unsigned int enumValue;                  ///< Enum type: current value
+	std::vector<std::string> enumValueNames; ///< Enum type: permitted values
+
+	/// Filename type: current filename
+	/**
+	 * Filenames should be specified here as map attributes (as opposed to
+	 * supplementary items) if the files are not required to load the map.
+	 *
+	 * Parts of the actual map (like layer data or sprite positions) should
+	 * be listed as supp data because the map will be incomplete if those
+	 * files are not available, but things like tileset filenames are not
+	 * required to load the map (e.g. if all you want to do is find out the
+	 * map dimensions) so those optional files should be listed as attributes.
+	 */
+	std::string filenameValue;
+
+	/// Filename type: valid filename extensions
+	/**
+	 * Any files that match this specification will be listed as valid choices
+	 * for this attribute value.  An empty string means there is no
+	 * restriction on file extension.
+	 */
+	std::string filenameValidExtension;
+
+	std::string textValue; ///< Text type: the text value
+	int textMaxLength;     ///< Text type: maximum string length, in chars
+};
+
+/// Class inherited by anything that needs to get/set Attribute instances.
+class HasAttributes
+{
+	public:
+		/// Get a list of attributes for this map.
+		virtual std::vector<Attribute> attributes() const = 0;
+
+		/// Change one of the map's integer/enum attributes.
+		/**
+		 * @param index
+		 *   Index into vector returned by attributes().  0 is the first item.
+		 *
+		 * @param newValue
+		 *   The new value to set for the attribute.
+		 */
+		virtual void attribute(unsigned int index, int newValue) = 0;
+
+		/// Change one of the map's string/filename attributes.
+		/**
+		 * @param index
+		 *   Index into vector returned by attributes().  0 is the first item.
+		 *
+		 * @param newValue
+		 *   The new value to set for the attribute.
+		 */
+		virtual void attribute(unsigned int index, const std::string& newValue) = 0;
+};
 
 /// Primary interface to a map file.
 /**
@@ -111,77 +198,16 @@ typedef boost::shared_ptr<TilesetCollection> TilesetCollectionPtr;
  *
  * @note Multithreading: Only call one function in this class at a time.
  */
-class Map: virtual public Metadata
+class Map: public Metadata, public HasAttributes
 {
 	public:
-		/// Attribute attached to this map.
-		/**
-		 * Attributes are configuration options that apply to particular map files,
-		 * such as a default background colour or which song to play as background
-		 * music in the level.
-		 *
-		 * Attributes should reflect data contained in the map file itself, so for
-		 * example, if the map file doesn't store some value that controls which
-		 * tileset is used to draw the level, then the tileset filename shouldn't be
-		 * exposed as an attribute (because if it was changed, the new value
-		 * couldn't be saved back into the map file.)
-		 *
-		 * Attributes should reflect properties of the map that the user can and may
-		 * wish to change.
-		 */
-		struct Attribute {
-			enum Type {
-				Integer,         ///< One number within a given range
-				Enum,            ///< One choice from a list of static values
-				Filename,        ///< A filename of the given file type
-				Text,            ///< A text string
-			};
-			Type type;         ///< What type this attribute is
-			std::string name;  ///< Short name of this attribute
-			std::string desc;  ///< Description of this attribute
-
-			int integerValue;    ///< Integer type: current value
-			int integerMinValue; ///< Integer type: minimum allowed value (set min and max to 0 for unlimited)
-			int integerMaxValue; ///< Integer type: maximum allowed value (set min and max to 0 for unlimited)
-
-			unsigned int enumValue;                  ///< Enum type: current value
-			std::vector<std::string> enumValueNames; ///< Enum type: permitted values
-
-			/// Filename type: current filename
-			/**
-			 * Filenames should be specified here as map attributes (as opposed to
-			 * supplementary items) if the files are not required to load the map.
-			 *
-			 * Parts of the actual map (like layer data or sprite positions) should
-			 * be listed as supp data because the map will be incomplete if those
-			 * files are not available, but things like tileset filenames are not
-			 * required to load the map (e.g. if all you want to do is find out the
-			 * map dimensions) so those optional files should be listed as attributes.
-			 */
-			std::string filenameValue;
-
-			/// Filename type: valid filename extensions
-			/**
-			 * Any files that match this specification will be listed as valid choices
-			 * for this attribute value.  An empty string means there is no
-			 * restriction on file extension.
-			 */
-			std::string filenameValidExtension;
-
-			std::string textValue; ///< Text type: the text value
-			int textMaxLength;     ///< Text type: maximum string length, in chars
-		};
-
-		/// Attribute list.
-		typedef std::vector<Attribute> Attributes;
-
 		/// List of attributes (if any) in this map.
 		/**
 		 * This member is public to avoid having const and non-const getters.
 		 * Attributes should be populated at constructor time, so there's no need
 		 * to do any work in a getter function.
 		 */
-		Attributes attributes;
+		std::vector<Attribute> attributes;
 
 		/// Information about a graphics file used to render this map.
 		struct GraphicsFilename {
@@ -189,17 +215,14 @@ class Map: virtual public Metadata
 			std::string type;      ///< Type code (e.g. "tls-blah")
 		};
 
-		/// Map between each graphics file and what it's used for.
-		typedef std::map<ImagePurpose, GraphicsFilename> GraphicsFilenames;
+		inline virtual ~Map() {};
 
-		/// List of tilesets and what they are used for in this map.
-		GraphicsFilenames graphicsFilenames;
+		/// Get a list of tileset/background image filenames needed for rendering.
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames()
+			const = 0;
 
-		inline Map(const Attributes& attributes, const GraphicsFilenames& graphicsFilenames)
-			:	attributes(attributes),
-				graphicsFilenames(graphicsFilenames)
-		{
-		}
+		/// Save any modifications to the map back to the original files.
+		virtual void flush() = 0;
 };
 
 } // namespace gamemaps

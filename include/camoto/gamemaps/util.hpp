@@ -39,20 +39,14 @@ namespace gamemaps {
  * @param layer
  *   Layer to query.
  *
- * @param layerWidth
- *   Stores layer width on return, in tiles.
+ * @param layerSize
+ *   Stores layer width and height on return, in tiles.
  *
- * @param layerHeight
- *   Stores layer height on return, in tiles.
- *
- * @param tileWidth
- *   Stores tile width on return, in pixels.
- *
- * @param tileHeight
- *   Stores layer height on return, in pixels.
+ * @param tileSize
+ *   Stores tile width and height on return, in pixels.
  */
-void DLL_EXPORT getLayerDims(Map2DPtr map, Map2D::LayerPtr layer, unsigned int *layerWidth,
-	unsigned int *layerHeight, unsigned int *tileWidth, unsigned int *tileHeight);
+void DLL_EXPORT getLayerDims(const Map2D& map, const Map2D::Layer& layer,
+	Point *layerSize, Point *tileSize);
 
 } // namespace gamemaps
 } // namespace camoto

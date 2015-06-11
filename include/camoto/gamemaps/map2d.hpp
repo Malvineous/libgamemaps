@@ -24,30 +24,39 @@
 #include <vector>
 #include <map>
 #include <camoto/gamegraphics/tileset.hpp>
-#include <camoto/gamegraphics/palettetable.hpp>
+#include <camoto/gamegraphics/palette.hpp>
 #include <camoto/gamemaps/map.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
+using gamegraphics::Point;
+
 /// 2D grid-based Map.
-class Map2D: public Map
+class Map2D: virtual public Map
 {
 	public:
+		class Layer;
+		class Path;
+
 		/// Capabilities this map supports.
-		enum Caps {
-			NoCaps            = 0x0000, ///< No caps set
-			CanResize         = 0x0001, ///< Can the map be resized as a whole?
-			ChangeTileSize    = 0x0002, ///< Can the map's grid size be changed?
-			HasViewport       = 0x0004, ///< Does this map have a viewport?
-			HasPaths          = 0x0008, ///< Does the map support paths?
-			FixedPathCount    = 0x0010, ///< If set, paths cannot be added/removed, only edited
+		enum class Caps {
+			Default           = 0,      ///< No caps set
+			HasViewport       = 1 << 0, ///< Can use viewport() to get viewport size
+			HasMapSize        = 1 << 1, ///< Can use mapSize() to get global map size
+			SetMapSize        = 1 << 2, ///< Can use mapSize() to set global map size
+			HasTileSize       = 1 << 3, ///< Can use tileSize() to get global tile size
+			SetTileSize       = 1 << 4, ///< Can use tileSize() to set global tile size
+			AddPaths          = 1 << 5, ///< Can add or remove paths, if unset then can only modify existing paths, if any
 		};
+
+		inline virtual ~Map2D() {};
+
 		/// Get the capabilities of this map format.
 		/**
 		 * One or more of the Caps enum values (OR'd together.)
 		 */
-		const unsigned int caps;
+		virtual Caps caps() const = 0;
 
 		/// Get the size of the in-game viewport.
 		/**
@@ -55,111 +64,89 @@ class Map2D: public Map
 		 * inside the game.  Given the age of most DOS games, it is typically how
 		 * many tiles can be seen on a 320x200 display (minus the space used for the
 		 * status bar).
+		 *
+		 * @return Viewport width and height, in pixels.
 		 */
-		const unsigned int viewportX; // Viewport width, in pixels.
-		const unsigned int viewportY; // Viewport height, in pixels.
-
-		class Layer;
-		/// Shared pointer to a layer instance.
-		typedef boost::shared_ptr<Layer> LayerPtr;
-		/// Vector of layers.
-		typedef std::vector<LayerPtr> LayerPtrVector;
-
-		class Path;
-		/// Shared pointer to a path instance.
-		typedef boost::shared_ptr<Path> PathPtr;
-		/// Vector of paths.
-		typedef std::vector<PathPtr> PathPtrVector;
-		/// Shared pointer to a vector of paths.
-		typedef boost::shared_ptr<PathPtrVector> PathPtrVectorPtr;
+		virtual Point viewport() const = 0;
 
 		/// Retrieve the size of the map.
 		/**
-		 * @pre getCaps() must include HasGlobalSize.
+		 * @pre caps() must include HasGlobalSize.
 		 *
-		 * @param x
-		 *   Pointer to store layer width, as number of tiles.  If getCaps() does
-		 *   not include HasOwnTileSize then this value is in pixels instead (i.e.
-		 *   a tile size of 1x1 is assumed.)
+		 * @note If caps() does not include HasOwnTileSize then this value is in
+		 * pixels instead (i.e. a tile size of 1x1 is assumed.)
 		 *
-		 * @param y
-		 *   Pointer to store layer height, as number of tiles.
+		 * @return Map size as number of tiles.
 		 */
-		virtual void getMapSize(unsigned int *x, unsigned int *y) const = 0;
+		virtual Point mapSize() const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
-		 * @pre getCaps() must include CanResize.
+		 * @pre caps() must include CanResize.
 		 *
-		 * @param x
-		 *   New layer width, as number of tiles.
-		 *
-		 * @param y
-		 *   New layer height, as number of tiles.
+		 * @param newSize
+		 *   New layer width and height, as number of tiles.
 		 */
-		virtual void setMapSize(unsigned int x, unsigned int y) = 0;
+		virtual void mapSize(const Point& newSize) = 0;
 
 		/// Retrieve the size of each cell in the layer's grid.
 		/**
-		 * @pre getCaps() includes HasGlobalTileSize.
+		 * @pre caps() includes HasGlobalTileSize.
 		 *
-		 * @param x
-		 *   Pointer to store tile width in pixels.
-		 *
-		 * @param y
-		 *   Pointer to store tile height in pixels.
+		 * @return Tile size, in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y) const = 0;
+		virtual Point tileSize() const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
-		 * @pre getCaps() must include ChangeTileSize.
+		 * @pre caps() must include SetTileSize.
 		 *
-		 * @param x
-		 *   New tile width in pixels.
-		 *
-		 * @param y
-		 *   New tile height in pixels.
+		 * @param newSize
+		 *   New tile width and height, in pixels.
 		 */
-		virtual void setTileSize(unsigned int x, unsigned int y) = 0;
+		virtual void tileSize(const Point& newSize) = 0;
 
-		/// Get the number of layers in the map.
+		/// Get access to the map's layers.
 		/**
-		 * @return Number of layers.  All maps have at least one layer.
+		 * @return A vector containing a shared pointer to each layer.
 		 */
-		virtual unsigned int getLayerCount() const = 0;
-
-		/// Get access to the given layer.
-		/**
-		 * @param index
-		 *   Layer index.  Must be < getLayerCount().
-		 *
-		 * @return A shared pointer to the layer.
-		 */
-		virtual LayerPtr getLayer(unsigned int index) = 0;
+		virtual std::vector<std::shared_ptr<Map2D::Layer>> layers() = 0;
+		virtual std::vector<std::shared_ptr<const Map2D::Layer>> layers() const = 0;
 
 		/// Get a list of paths in the level.
 		/**
 		 * A path is a series of points/vectors defining a travel route.  Unlike
 		 * layers, paths are always expressed in pixels, irrespective of tile size.
 		 *
-		 * @pre getCaps() includes HasPaths.
+		 * @note If the map format does not support paths, this function will return
+		 *   an empty vector.  You can still check caps() for the presence of
+		 *   AddPaths, and if present, it means the map supports paths but there are
+		 *   just none at present.
 		 *
-		 * @return A shared pointer to a vector of Path instances.  The paths in
-		 *   the vector can be edited, but if getCaps() includes FixedPaths then
-		 *   paths cannot be created or removed.
+		 * @return A vector of Path instances.  The paths in the vector can be
+		 *   edited, but entries cannot be added or removed unless caps() includes
+		 *   AddPaths.
 		 */
-		virtual PathPtrVectorPtr getPaths() = 0;
+		virtual std::vector<std::shared_ptr<Path>>& paths() = 0;
 
-		/// How the map background is drawn behind the level.
-		enum ImageAttachment {
-			NoBackground,        ///< No background image
-			SingleImageCentred,  ///< Image is centered in the middle of the viewport
-			SingleImageTiled,    ///< Image is repeated to fill the largest map layer
-			SingleColour,        ///< Background is a single colour
+		struct Background {
+			/// How the map background is drawn behind the level.
+			enum class Attachment {
+				/// No background image, display as transparent.
+				NoBackground,
+				/// Display img centered in the middle of the viewport.
+				SingleImageCentred,
+				/// Display img repeated to fill the largest map layer.
+				SingleImageTiled,
+				/// Background is the solid colour clr.
+				SingleColour,
+			};
+			Attachment att;
+			std::shared_ptr<gamegraphics::Image> img;
+			gamegraphics::PaletteEntry clr;
 		};
 
-		/// Get an image to draw as the background behind all map layers.
+		/// Get the content to draw as the background behind all map layers.
 		/**
 		 * Since any empty/default map tiles will not be drawn, those areas will
 		 * show through to this background image.
@@ -176,15 +163,12 @@ class Map2D: public Map
 		 *   colour to draw as the background.  If outAttach is another value then
 		 *   this field is ignored.
 		 *
-		 * @return An ImageAttachment value specifying how the image should be
-		 *   attached to the background.
+		 * @return An ImageBackground value specifying how the map background should
+		 *   be drawn.
 		 */
-		virtual ImageAttachment getBackgroundImage(
-			const TilesetCollectionPtr& tileset,
-			camoto::gamegraphics::ImagePtr *outImage,
-			camoto::gamegraphics::PaletteEntry *outColour)
+		virtual Background background(const TilesetCollection& tileset)
 			const = 0;
-
+/*
 		inline Map2D(const Attributes& attributes, const GraphicsFilenames& graphicsFilenames,
 			unsigned int caps, unsigned int viewportWidth,
 			unsigned int viewportHeight)
@@ -197,58 +181,36 @@ class Map2D: public Map
 				viewportY(viewportHeight)
 		{
 		}
+*/
 };
 
-/// Shared pointer to an MapType.
-typedef boost::shared_ptr<Map2D> Map2DPtr;
+inline Map2D::Caps operator| (Map2D::Caps a, Map2D::Caps b) {
+	return static_cast<Map2D::Caps>(
+		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
+	);
+}
+
+inline bool operator& (Map2D::Caps a, Map2D::Caps b) {
+	return
+		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
+	;
+}
 
 /// A map is made up of multiple layers.
 class Map2D::Layer
 {
 	public:
 		class Item;
-		/// Shared pointer to an item.  This is used to avoid copying items around
-		/// which can be problematic when they instances of descendent classes.
-		typedef boost::shared_ptr<Item> ItemPtr;
-		/// Vector of items.
-		typedef std::vector<ItemPtr> ItemPtrVector;
-		/// Shared pointer to a vector of items.
-		typedef boost::shared_ptr<ItemPtrVector> ItemPtrVectorPtr;
 
 		/// Capabilities this layer supports.
-		enum Caps {
-			NoCaps          = 0x00, ///< No caps set
+		enum class Caps {
+			Default         = 0x00, ///< No caps set
 			HasOwnSize      = 0x01, ///< Does the layer have an independent size?
-			CanResize       = 0x02, ///< Can just this layer be resized?
+			SetOwnSize      = 0x02, ///< Can just this layer be resized?
 			HasOwnTileSize  = 0x04, ///< Does the layer have an independent tile size?
-			ChangeTileSize  = 0x08, ///< Can this layer's grid size be changed?
+			SetOwnTileSize  = 0x08, ///< Can this layer's grid size be changed?
 			HasPalette      = 0x10, ///< Palette is obtained from layer instead of tileset
 			UseImageDims    = 0x20, ///< Draw each tile the size of the image itself, instead of the tile size
-		};
-
-		/// Return values from imageFromCode()
-		enum ImageType {
-			Supplied = 0, ///< Use the supplied image
-			Blank = 1,    ///< Don't display any image
-			Unknown = 2,  ///< Display the 'unknown tile' indicator
-			Digit0,       ///< Small character '0'
-			Digit1,       ///< Small character '1'
-			Digit2,       ///< Small character '2'
-			Digit3,       ///< Small character '3'
-			Digit4,       ///< Small character '4'
-			Digit5,       ///< Small character '5'
-			Digit6,       ///< Small character '6'
-			Digit7,       ///< Small character '7'
-			Digit8,       ///< Small character '8'
-			Digit9,       ///< Small character '9'
-			DigitA,       ///< Small character 'A'
-			DigitB,       ///< Small character 'B'
-			DigitC,       ///< Small character 'C'
-			DigitD,       ///< Small character 'D'
-			DigitE,       ///< Small character 'E'
-			DigitF,       ///< Small character 'F'
-			Interactive,  ///< Interactive item
-			NumImageTypes ///< Must be last
 		};
 
 		/// Get the layer's friendly name.
@@ -258,69 +220,78 @@ class Map2D::Layer
 		 *
 		 * @return A string containing a name suitable for display to the user.
 		 */
-		virtual const std::string& getTitle() const = 0;
+		virtual std::string title() const = 0;
 
 		/// Get the capabilities of this layer.
 		/**
 		 * @return One or more of the Caps enum values (OR'd together.)
 		 */
-		virtual unsigned int getCaps() const = 0;
+		virtual Caps caps() const = 0;
 
 		/// Retrieve the size of the layer.
 		/**
-		 * @pre getCaps() includes HasOwnSize.  Otherwise the map's size must be
+		 * @pre caps() includes HasOwnSize.  Otherwise the map's size must be
 		 *   used.
 		 *
-		 * @param x
-		 *   Pointer to store layer width, as number of tiles.
-		 *
-		 * @param y
-		 *   Pointer to store layer height, as number of tiles.
+		 * @return Layer height and width, as number of tiles.
 		 */
-		virtual void getLayerSize(unsigned int *x, unsigned int *y) const = 0;
+		virtual Point layerSize() const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
-		 * @pre getCaps() must include CanResize.
+		 * @pre caps() must include CanResize.
 		 *
-		 * @param x
-		 *   New layer width, as number of tiles.
-		 *
-		 * @param y
-		 *   New layer height, as number of tiles.
+		 * @param newSize
+		 *   New layer width and height, as number of tiles.
 		 */
-		virtual void setLayerSize(unsigned int x, unsigned int y) = 0;
+		virtual void layerSize(const Point& newSize) = 0;
 
 		/// Retrieve the size of each cell in the layer's grid.
 		/**
-		 * @pre getCaps() includes HasOwnTileSize.  If not, the map's tile size
+		 * @pre caps() includes HasOwnTileSize.  If not, the map's tile size
 		 *   must be used.
 		 *
-		 * @param x
-		 *   Pointer to store tile width in pixels.
-		 *
-		 * @param y
-		 *   Pointer to store tile height in pixels.
+		 * @return Tile width and height, in pixels.
 		 */
-		virtual void getTileSize(unsigned int *x, unsigned int *y) const = 0;
+		virtual Point tileSize() const = 0;
 
 		/// Change the size of each cell in the layer.
 		/**
-		 * @pre getCaps() must include ChangeTileSize.
+		 * @pre caps() must include SetTileSize.
 		 *
-		 * @param x
-		 *   New tile width in pixels.
-		 *
-		 * @param y
-		 *   New tile height in pixels.
+		 * @param newSize
+		 *   New tile width and height, in pixels.
 		 */
-		virtual void setTileSize(unsigned int x, unsigned int y) = 0;
+		virtual void tileSize(const Point& newSize) = 0;
 
 		/// Get a list of all tiles in the layer.
 		/**
-		 * @return Vector of all tiles.  The tiles are in any order.
+		 * @return Vector of all tiles.  The tiles are in any order.  The vector is
+		 *   returned by reference, so elements can be added and removed to add or
+		 *   remove tiles from the layer.  Make sure any potential additions are
+		 *   allowed by tilePermittedAt() first.
 		 */
-		virtual ItemPtrVectorPtr getAllItems() = 0;
+		virtual std::vector<Item>& items() = 0;
+		virtual std::vector<Item> items() const = 0;
+
+		/// Return value from imageFromCode()
+		struct ImageFromCodeInfo {
+			/// Image types
+			enum class ImageType {
+				Blank,        ///< Don't display any image
+				Supplied,     ///< Use the supplied image
+				Unknown,      ///< Display the 'unknown tile' indicator
+				HexDigit,     ///< Small character 0-9,A-F given in var 'digit'
+				Interactive,  ///< Interactive item
+				NumImageTypes ///< Must be last
+			};
+			/// Which image to display, and which other members are valid
+			ImageType type;
+			/// When type == HexDigit, values 0-15 for digits 0-9,A-F
+			int digit;
+			/// When type == Supplied, the image to draw
+			std::shared_ptr<camoto::gamegraphics::Image> img;
+		};
 
 		/// Convert a map code into an image.
 		/**
@@ -334,16 +305,16 @@ class Map2D::Layer
 		 *   Camoto Studio reads this information from XML files distributed
 		 *   with the application, for example.
 		 *
-		 * @param out
-		 *   If the return value is ImageType::Supplied, this is a shared pointer
-		 *   to a camoto::gamegraphics::Image instance.  If the return value is
-		 *   anything else, this parameter is ignored.
+		 * @param outImgType
+		 *   On return, an ImageType code indicating what image to display.
 		 *
-		 * @return An ImageType code indicating what image to display.
+		 * @return If outImgType is ImageType::Supplied, this is a shared pointer
+		 *   to a camoto::gamegraphics::Image instance.  If outImgType is anything
+		 *   else, the return value is ignored.
 		 */
-		virtual ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			camoto::gamegraphics::ImagePtr *out) const = 0;
+		virtual ImageFromCodeInfo imageFromCode(
+			const Map2D::Layer::Item& item, const TilesetCollection& tileset)
+			const = 0;
 
 		/// Is the given tile permitted at the specified location?
 		/**
@@ -365,7 +336,7 @@ class Map2D::Layer
 		 * @return true if the tile is permitted at the current position (instance
 		 *  limits notwithstanding) or false if the tile cannot be placed here.
 		 */
-		virtual bool tilePermittedAt(const Map2D::Layer::ItemPtr& item,
+		virtual bool tilePermittedAt(const Map2D::Layer::Item& item,
 			unsigned int x, unsigned int y, unsigned int *maxCount) const = 0;
 
 		/// Get the palette to use with this layer.
@@ -374,12 +345,12 @@ class Map2D::Layer
 		 * can be supplied here.  Palettes applied to individual tiles will still
 		 * override this.
 		 *
-		 * @pre getCaps() return value includes HasPalette.
+		 * @pre caps() return value includes HasPalette.
 		 *
 		 * @return Shared pointer to a PaletteTable.
 		 */
-		virtual gamegraphics::PaletteTablePtr getPalette(
-			const TilesetCollectionPtr& tileset) const = 0;
+		virtual std::shared_ptr<const gamegraphics::Palette> palette(
+			const TilesetCollection& tileset) const = 0;
 
 		/// Get a list of all possible items that can be placed in the layer.
 		/**
@@ -391,14 +362,26 @@ class Map2D::Layer
 		 *
 		 * @return Vector of all items.
 		 */
-		virtual const ItemPtrVectorPtr getValidItemList() const = 0;
+		virtual std::vector<Item> availableItems() const = 0;
 };
+
+inline Map2D::Layer::Caps operator| (Map2D::Layer::Caps a, Map2D::Layer::Caps b) {
+	return static_cast<Map2D::Layer::Caps>(
+		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
+	);
+}
+
+inline bool operator& (Map2D::Layer::Caps a, Map2D::Layer::Caps b) {
+	return
+		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
+	;
+}
 
 /// Item within the layer (a tile)
 class Map2D::Layer::Item
 {
 	public:
-		enum Type {
+		enum class Type {
 			Default   = 0x0000, ///< Default type, no extra fields
 			Player    = 0x0001, ///< Set if player fields are valid
 			Text      = 0x0002, ///< Set if text fields are valid
@@ -406,12 +389,11 @@ class Map2D::Layer::Item
 			Blocking  = 0x0008, ///< Set if blocking fields are valid
 			Flags     = 0x0010, ///< Set if generalFlags field is valid
 		};
-
-		unsigned int type; ///< Which fields are valid?
+		Type type; ///< Which fields are valid?
 
 		// Default fields
-		unsigned int x;  ///< Item location in units of tiles
-		unsigned int y;  ///< Item location in units of tiles
+		/// Item location, in units of tiles
+		Point pos;
 
 		// Since many maps use a code like this, we'll put it here to save each
 		// map format from having to derive its own almost identical class.
@@ -428,11 +410,11 @@ class Map2D::Layer::Item
 		std::string textContent;
 
 		/// These flags control which movement fields are valid and able to be modified
-		enum MovementFlags {
+		enum class MovementFlags {
 			DistanceLimit = 0x0001, ///< Set if dist* vars indicate movement limits
 			SpeedLimit    = 0x0002, ///< Set if speedX and speedY are valid
 		};
-		unsigned int movementFlags;       ///< One or more of MovementFlags
+		MovementFlags movementFlags;       ///< One or more of MovementFlags
 
 		/// Set movementDist* to this value to indicate movement in the
 		/// specified direction, of an indeterminate nature.
@@ -445,7 +427,7 @@ class Map2D::Layer::Item
 		unsigned int movementSpeedX;      ///< Horizontal speed, in milliseconds per pixel
 		unsigned int movementSpeedY;      ///< Vertical speed, in milliseconds per pixel
 
-		enum BlockingFlags {
+		enum class BlockingFlags {
 			BlockLeft     = 0x0001, ///< Prevent movement right, through the left edge
 			BlockRight    = 0x0002, ///< Prevent movement left, through the right edge
 			BlockTop      = 0x0004, ///< Prevent movement down through the top edge (can stand on)
@@ -454,13 +436,49 @@ class Map2D::Layer::Item
 			Slant45       = 0x0020, ///< Slanted tile /, 45 degrees CCW from the horizontal
 			Slant135      = 0x0040, ///< Slanted tile \, 135 degrees CCW from the horizontal
 		};
-		unsigned int blockingFlags;       ///< One or more of MovementFlags
+		BlockingFlags blockingFlags;       ///< One or more of BlockingFlags
 
-		enum GeneralFlags {
+		enum class GeneralFlags {
 			Interactive   = 0x0001, ///< This tile hosts an interactive item
 		};
 		GeneralFlags generalFlags;
 };
+
+inline Map2D::Layer::Item::Type operator| (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
+	return static_cast<Map2D::Layer::Item::Type>(
+		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
+	);
+}
+
+inline bool operator& (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
+	return
+		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
+	;
+}
+
+inline Map2D::Layer::Item::MovementFlags operator| (Map2D::Layer::Item::MovementFlags a, Map2D::Layer::Item::MovementFlags b) {
+	return static_cast<Map2D::Layer::Item::MovementFlags>(
+		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
+	);
+}
+
+inline bool operator& (Map2D::Layer::Item::MovementFlags a, Map2D::Layer::Item::MovementFlags b) {
+	return
+		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
+	;
+}
+
+inline Map2D::Layer::Item::BlockingFlags operator| (Map2D::Layer::Item::BlockingFlags a, Map2D::Layer::Item::BlockingFlags b) {
+	return static_cast<Map2D::Layer::Item::BlockingFlags>(
+		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
+	);
+}
+
+inline bool operator& (Map2D::Layer::Item::BlockingFlags a, Map2D::Layer::Item::BlockingFlags b) {
+	return
+		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
+	;
+}
 
 /// Value to use for tilecodes that have not yet been set.
 const unsigned int INVALID_TILECODE = (unsigned int)-1;
@@ -469,16 +487,13 @@ const unsigned int INVALID_TILECODE = (unsigned int)-1;
 class Map2D::Path
 {
 	public:
-		typedef std::pair<int, int> point;
-		typedef std::vector<point> point_vector;
-
 		/// Starting point(s) of this path.
 		/**
 		 * This vector contains one or more starting points for this path.  If
 		 * multiple starting points are given, the same path is duplicated at
 		 * each point (i.e. changing one path will also modify the others.)
 		 */
-		point_vector start;
+		std::vector<Point> start;
 
 		/// Are the start points fixed (true) or can they be changed (false)?
 		bool fixed;
@@ -492,7 +507,7 @@ class Map2D::Path
 		 * point.  If the path is a closed loop, the last point should NOT be (0,0)
 		 * but rather forceClosed should be set to true.
 		 */
-		point_vector points;
+		std::vector<Point> points;
 
 		/// Maximum size of points vector.
 		/**
