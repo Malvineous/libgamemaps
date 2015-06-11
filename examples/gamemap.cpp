@@ -18,16 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iomanip>
+#include <iostream>
+#include <memory>
 #include <boost/algorithm/string.hpp> // for case-insensitive string compare
 #include <boost/program_options.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/bind.hpp>
 #include <camoto/gamegraphics.hpp>
 #include <camoto/gamemaps.hpp>
 #include <camoto/util.hpp>
 #include <camoto/stream_file.hpp>
-#include <iostream>
-#include <iomanip>
 #include <png++/png.hpp>
 
 namespace po = boost::program_options;
@@ -58,11 +57,37 @@ namespace stream = camoto::stream;
 /// Place to cache tiles when rendering a map to a .png file
 struct CachedTile {
 	unsigned int code;
-	gg::StdImageDataPtr data;
-	gg::StdImageDataPtr mask;
-	unsigned int width;
-	unsigned int height;
+	gg::Pixels data;
+	gg::Pixels mask;
+	gg::Point dims;
 };
+
+// Copied from libgamearchive/examples/gamearch.cpp
+// Split a string in two at a delimiter, e.g. "one=two" becomes "one" and "two"
+// and true is returned.  If there is no delimiter both output strings will be
+// the same as the input string and false will be returned.
+//
+// If delim == '=' then:
+// in        -> ret, out1, out2
+// "one=two" -> true, "one", "two"
+// "one=two=three" -> true, "one=two", "three"
+// "four" -> false, "four", "four"
+// If delim == '@' then:
+// "one@two" -> true, "one", "two"
+// "@1=myfile@@4"
+// "test.txt@here.txt"
+// "@2=test.txt"
+// "e1m1.mid=mysong.mid:@4"
+// "e1m1.mid=mysong.mid:e1m2.mid"
+bool split(const std::string& in, char delim, std::string *out1, std::string *out2)
+{
+	std::string::size_type iEqualPos = in.find_last_of(delim);
+	*out1 = in.substr(0, iEqualPos);
+	// Does the destination have a different filename?
+	bool bAltDest = iEqualPos != std::string::npos;
+	*out2 = bAltDest ? in.substr(iEqualPos + 1) : *out1;
+	return bAltDest;
+}
 
 /// Open a tileset.
 /**
@@ -76,13 +101,12 @@ struct CachedTile {
  *
  * @throw stream::error on error
  */
-gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
+std::shared_ptr<gg::Tileset> openTileset(const std::string& filename,
+	const std::string& type)
 {
-	gg::ManagerPtr pManager(gg::getManager());
-
-	stream::file_sptr psTileset(new stream::file());
+	std::unique_ptr<stream::inout> psTileset;
 	try {
-		psTileset->open(filename.c_str());
+		psTileset = std::make_unique<stream::file>(filename, false);
 	} catch (const stream::open_error& e) {
 		std::cerr << "Error opening " << filename << ": " << e.what()
 			<< std::endl;
@@ -90,75 +114,63 @@ gg::TilesetPtr openTileset(const std::string& filename, const std::string& type)
 			+ e.get_message());
 	}
 
-	gg::TilesetTypePtr pGfxType;
+	gg::TilesetManager::handler_t tilesetType;
 	if (type.empty()) {
 		// Need to autodetect the file format.
-		gg::TilesetTypePtr pTestType;
-		unsigned int i = 0;
-		while ((pTestType = pManager->getTilesetType(i++))) {
-			gg::TilesetType::Certainty cert = pTestType->isInstance(psTileset);
-			switch (cert) {
-				case gg::TilesetType::DefinitelyNo:
+		for (auto& i : gg::TilesetManager::formats()) {
+			switch (i->isInstance(*psTileset)) {
+				case gg::TilesetType::Certainty::DefinitelyNo:
 					break;
-				case gg::TilesetType::Unsure:
+				case gg::TilesetType::Certainty::Unsure:
 					// If we haven't found a match already, use this one
-					if (!pGfxType) pGfxType = pTestType;
+					if (!tilesetType) tilesetType = i;
 					break;
-				case gg::TilesetType::PossiblyYes:
+				case gg::TilesetType::Certainty::PossiblyYes:
 					// Take this one as it's better than an uncertain match
-					pGfxType = pTestType;
+					tilesetType = i;
 					break;
-				case gg::TilesetType::DefinitelyYes:
-					pGfxType = pTestType;
+				case gg::TilesetType::Certainty::DefinitelyYes:
+					tilesetType = i;
 					// Don't bother checking any other formats if we got a 100% match
 					goto finishTesting;
 			}
 		}
 finishTesting:
-		if (!pGfxType) {
+		if (!tilesetType) {
 			std::cerr << "Unable to automatically determine the graphics file "
 				"type.  Use the --graphicstype option to manually specify the file "
 				"format." << std::endl;
 			throw stream::error("Unable to open tileset");
 		}
 	} else {
-		gg::TilesetTypePtr pTestType(pManager->getTilesetTypeByCode(type));
-		if (!pTestType) {
+		tilesetType = gg::TilesetManager::byCode(type);
+		if (!tilesetType) {
 			std::cerr << "Unknown file type given to -y/--graphicstype: " << type
 				<< std::endl;
 			throw stream::error("Unable to open tileset");
 		}
-		pGfxType = pTestType;
 	}
-
-	assert(pGfxType != NULL);
+	assert(tilesetType);
 
 	// See if the format requires any supplemental files
-	camoto::SuppFilenames suppList = pGfxType->getRequiredSupps(filename);
 	camoto::SuppData suppData;
-	if (suppList.size() > 0) {
-		for (camoto::SuppFilenames::iterator i = suppList.begin(); i != suppList.end(); i++) {
-			try {
-				std::cerr << "Opening supplemental file " << i->second << std::endl;
-				stream::file_sptr suppStream(new stream::file());
-				suppStream->open(i->second);
-				suppData[i->first] = suppStream;
-			} catch (const stream::open_error& e) {
-				std::cerr << "Error opening supplemental file " << i->second << ": "
-					<< e.what() << std::endl;
-				throw stream::error("Unable to open supplemental file " + i->second
-					+ ": " +  e.get_message());
-			}
+	for (auto i : tilesetType->getRequiredSupps(*psTileset, filename)) {
+		try {
+			std::cerr << "Opening supplemental file " << i.second << std::endl;
+			suppData[i.first] = std::make_unique<stream::file>(i.second, false);
+		} catch (const stream::open_error& e) {
+			std::cerr << "Error opening supplemental file " << i.second << ": "
+				<< e.what() << std::endl;
+			throw stream::error("Unable to open supplemental file " + i.second
+				+ ": " +  e.get_message());
 		}
 	}
 
 	// Open the graphics file
 	std::cout << "Opening tileset " << filename << " as "
-		<< pGfxType->getCode() << std::endl;
-	gg::TilesetPtr pTileset(pGfxType->open(psTileset, suppData));
-	assert(pTileset);
+		<< tilesetType->code() << std::endl;
 
-	return pTileset;
+	return tilesetType->open(std::move(psTileset), suppData);
 }
 
 /// Export a map to .png file
@@ -177,25 +189,21 @@ finishTesting:
  *
  * @throw stream::error on error
  */
-void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
+void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 	const std::string& destFile)
 {
-	unsigned int outWidth, outHeight; // in pixels
-	unsigned int globalTileWidth, globalTileHeight;
-	map->getTileSize(&globalTileWidth, &globalTileHeight);
-	map->getMapSize(&outWidth, &outHeight);
-	outWidth *= globalTileWidth;
-	outHeight *= globalTileHeight;
+	gg::Point outSize = map.mapSize(); // in pixels
+	gg::Point globalTileSize = map.tileSize();
+	outSize.x *= globalTileSize.x;
+	outSize.y *= globalTileSize.y;
 
-	png::image<png::index_pixel> png(outWidth, outHeight);
+	png::image<png::index_pixel> png(outSize.x, outSize.y);
 
 	bool useMask;
-	gg::PaletteTablePtr srcPal;
-	for (gm::TilesetCollection::const_iterator
-		i = allTilesets->begin(); i != allTilesets->end(); i++
-	) {
-		if (i->second->getCaps() & gg::Tileset::HasPalette) {
-			srcPal = i->second->getPalette();
+	std::shared_ptr<gg::Palette> srcPal;
+	for (auto& i : allTilesets) {
+		if (i.second->caps() & gg::Tileset::Caps::HasPalette) {
+			srcPal = std::make_shared<gg::Palette>(*i.second->palette());
 			break;
 		}
 	}
@@ -210,11 +218,10 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 	png::palette pal(srcPal->size());
 	int j = 0;
 	png::tRNS transparency;
-	for (gg::PaletteTable::iterator
-		i = srcPal->begin(); i != srcPal->end(); i++, j++
-	) {
-		pal[j] = png::color(i->red, i->green, i->blue);
-		if (i->alpha == 0) transparency.push_back(j);
+	for (auto& i : *srcPal) {
+		pal[j] = png::color(i.red, i.green, i.blue);
+		if (i.alpha == 0) transparency.push_back(j);
+		j++;
 	}
 	useMask = srcPal->size() < 255; // only mask if enough room in the palette
 	if (useMask) {
@@ -228,115 +235,123 @@ void map2dToPng(gm::Map2DPtr map, const gm::TilesetCollectionPtr& allTilesets,
 		transparency.insert(transparency.begin(), 0);
 	}
 	png.set_palette(pal);
+	int transparentIndex = 0;
 	if (transparency.size() > 0) {
 		png.set_tRNS(transparency);
+		transparentIndex = transparency[0];
 	}
 
-	unsigned int layerCount = map->getLayerCount();
-	for (unsigned int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
-		gm::Map2D::LayerPtr layer = map->getLayer(layerIndex);
+	// Get the map background
+	auto bg = map.background(allTilesets);
+	switch (bg.att) {
+		case gm::Map2D::Background::Attachment::NoBackground: {
+			png::index_pixel clr(transparentIndex);
+			for (unsigned int y = 0; y < outSize.y; y++) {
+				for (unsigned int x = 0; x < outSize.x; x++) {
+					png[y][x] = clr;
+				}
+			}
+			break;
+		}
+		case gm::Map2D::Background::Attachment::SingleColour: {
+			// Find the background colour in the palette
+			png::index_pixel clr(0);
+			unsigned int palIndex = 0;
+			for (auto& i : *srcPal) {
+				if (
+					(bg.clr.red == i.red)
+					&& (bg.clr.green == i.green)
+					&& (bg.clr.blue == i.blue)
+					&& (bg.clr.alpha == i.alpha)
+				) {
+					clr = palIndex;
+					break;
+				}
+				palIndex++;
+			}
+			for (unsigned int y = 0; y < outSize.y; y++) {
+				for (unsigned int x = 0; x < outSize.x; x++) {
+					png[y][x] = clr;
+				}
+			}
+			break;
+		}
+		// TODO - case gm::Map2D::Background::Attachment::SingleImageCentred:
+		// TODO - case gm::Map2D::Background::Attachment::SingleImageTiled:
+	}
 
+	for (auto& layer : map.layers()) {
 		// Figure out the layer size (in tiles) and the tile size
-		unsigned int layerWidth, layerHeight, tileWidth, tileHeight;
-		getLayerDims(map, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
+		gg::Point layerSize, tileSize;
+		getLayerDims(map, *layer, &layerSize, &tileSize);
 
 		// Prepare tileset
 		std::vector<CachedTile> cache;
 
 		// Run through all items in the layer and render them one by one
-		const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		for (gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
-			t != items->end(); t++
-		) {
+		for (auto& t : layer->items()) {
 			CachedTile thisTile;
-			unsigned int tileCode = (*t)->code;
+			unsigned int tileCode = t.code;
 
 			// Find the cached tile
 			bool found = false;
-			for (std::vector<CachedTile>::iterator ct = cache.begin();
-				ct != cache.end(); ct++
-			) {
-				if (ct->code == tileCode) {
-					thisTile = *ct;
+			for (auto& ct : cache) {
+				if (ct.code == tileCode) {
+					thisTile = ct;
 					found = true;
 					break;
 				}
 			}
 			if (!found) {
 				// Tile hasn't been cached yet, load it from the tileset
-				gg::ImagePtr img;
-				gm::Map2D::Layer::ImageType imgType;
+				gm::Map2D::Layer::ImageFromCodeInfo imgType;
 				try {
-					imgType = layer->imageFromCode(*t, allTilesets, &img);
+					imgType = layer->imageFromCode(t, allTilesets);
 				} catch (const std::exception& e) {
 					std::cerr << "Error loading image: " << e.what() << std::endl;
-					imgType = gm::Map2D::Layer::Unknown;
+					imgType.type = gm::Map2D::Layer::ImageFromCodeInfo::ImageType::Unknown;
 				}
-				switch (imgType) {
-					case gm::Map2D::Layer::Supplied:
-						assert(img);
-						thisTile.data = img->toStandard();
-						thisTile.mask = img->toStandardMask();
-						img->getDimensions(&thisTile.width, &thisTile.height);
+				switch (imgType.type) {
+					case gm::Map2D::Layer::ImageFromCodeInfo::ImageType::Supplied:
+						assert(imgType.img);
+						thisTile.data = imgType.img->convert();
+						thisTile.mask = imgType.img->convert_mask();
+						thisTile.dims = imgType.img->dimensions();
 						thisTile.code = tileCode;
 						break;
-					case gm::Map2D::Layer::Blank:
-						thisTile.width = thisTile.height = 0;
+					case gm::Map2D::Layer::ImageFromCodeInfo::ImageType::Blank:
+						thisTile.dims = {0, 0};
 						break;
-					case gm::Map2D::Layer::Unknown:
-					case gm::Map2D::Layer::Digit0:
-					case gm::Map2D::Layer::Digit1:
-					case gm::Map2D::Layer::Digit2:
-					case gm::Map2D::Layer::Digit3:
-					case gm::Map2D::Layer::Digit4:
-					case gm::Map2D::Layer::Digit5:
-					case gm::Map2D::Layer::Digit6:
-					case gm::Map2D::Layer::Digit7:
-					case gm::Map2D::Layer::Digit8:
-					case gm::Map2D::Layer::Digit9:
-					case gm::Map2D::Layer::DigitA:
-					case gm::Map2D::Layer::DigitB:
-					case gm::Map2D::Layer::DigitC:
-					case gm::Map2D::Layer::DigitD:
-					case gm::Map2D::Layer::DigitE:
-					case gm::Map2D::Layer::DigitF:
-					case gm::Map2D::Layer::Interactive:
+					case gm::Map2D::Layer::ImageFromCodeInfo::ImageType::NumImageTypes: // Avoid compiler warning about unhandled enum
+						assert(false);
+						// fall through
+					case gm::Map2D::Layer::ImageFromCodeInfo::ImageType::Unknown:
+					case gm::Map2D::Layer::ImageFromCodeInfo::ImageType::HexDigit:
+					case gm::Map2D::Layer::ImageFromCodeInfo::ImageType::Interactive:
 						// Display nothing, but could be changed to a question mark
-						thisTile.width = thisTile.height = 0;
+						thisTile.dims = {0, 0};
 						break;
-
-					// Avoid compiler warning about unhandled enum
-					case gm::Map2D::Layer::NumImageTypes:
-						assert(imgType != gm::Map2D::Layer::NumImageTypes);
 				}
 				cache.push_back(thisTile);
 			}
 
-			if (!thisTile.data) continue; // no image
+			if ((thisTile.dims.x == 0) || (thisTile.dims.y == 0)) continue; // no image
 
 			// Draw tile onto png
-			unsigned int offX = (*t)->x * tileWidth;
-			unsigned int offY = (*t)->y * tileHeight;
-			for (unsigned int tY = 0; tY < thisTile.height; tY++) {
+			unsigned int offX = t.pos.x * tileSize.x;
+			unsigned int offY = t.pos.y * tileSize.y;
+			for (unsigned int tY = 0; tY < thisTile.dims.y; tY++) {
 				unsigned int pngY = offY+tY;
-				if (pngY >= outHeight) break; // don't write past image edge
-				for (unsigned int tX = 0; tX < thisTile.width; tX++) {
+				if (pngY >= outSize.y) break; // don't write past image edge
+				for (unsigned int tX = 0; tX < thisTile.dims.x; tX++) {
 					unsigned int pngX = offX+tX;
-					if (pngX >= outWidth) break; // don't write past image edge
-					//png[offY + tY][offX + tX] = png::index_pixel(((*t)->code % 16) + 1);
+					if (pngX >= outSize.x) break; // don't write past image edge
 					// Only write opaque pixels
-					if (((thisTile.mask[tY*thisTile.width+tX] & 0x01) == 0) ||
-						((!useMask) && (layerIndex == 0))
-					) {
+					if ((thisTile.mask[tY * thisTile.dims.x + tX] & 0x01) == 0) {
 						png[pngY][pngX] =
 							// +1 to the colour to skip over transparent (#0)
-							png::index_pixel(thisTile.data[tY*thisTile.width+tX] + (useMask ? 1 : 0));
-					} else {
-						if (layerIndex == 0) {
-							assert(useMask); // just to be sure my logic is right!
-							png[pngY][pngX] = png::index_pixel(0);
-						} // else let higher layers see through to lower ones
-					}
+							png::index_pixel(thisTile.data[tY * thisTile.dims.x + tX] + (useMask ? 1 : 0));
+					} // else let higher layers see through to lower ones
 				}
 			}
 		} // else layer is empty
@@ -375,8 +390,6 @@ int main(int iArgC, char *cArgV[])
 			"specify the map type (default is autodetect)")
 		("graphics,g", po::value<std::string>(),
 			"filename storing game graphics (required with --render)")
-		("graphicstype,y", po::value<std::string>(),
-			"specify format of file passed with --graphics")
 		("script,s",
 			"format output suitable for script parsing")
 		("force,f",
@@ -399,10 +412,7 @@ int main(int iArgC, char *cArgV[])
 	po::variables_map mpArgs;
 
 	std::string strFilename, strType;
-	std::string strGraphics, strGraphicsType;
-
-	// Get the format handler for this file format
-	gm::ManagerPtr pManager(gm::getManager());
+	std::map<gm::ImagePurpose, gm::Map::GraphicsFilename> manualGfx;
 
 	bool bScript = false; // show output suitable for script parsing?
 	bool bForceOpen = false; // open anyway even if map not in given format?
@@ -411,8 +421,8 @@ int main(int iArgC, char *cArgV[])
 		po::parsed_options pa = po::parse_command_line(iArgC, cArgV, poComplete);
 
 		// Parse the global command line options
-		for (std::vector<po::option>::iterator i = pa.options.begin(); i != pa.options.end(); i++) {
-			if (i->string_key.empty()) {
+		for (auto& i : pa.options) {
+			if (i.string_key.empty()) {
 				// If we've already got an map filename, complain that a second one
 				// was given (probably a typo.)
 				if (!strFilename.empty()) {
@@ -420,9 +430,9 @@ int main(int iArgC, char *cArgV[])
 						"filenames given?!)" << std::endl;
 					return 1;
 				}
-				assert(i->value.size() > 0);  // can't have no values with no name!
-				strFilename = i->value[0];
-			} else if (i->string_key.compare("help") == 0) {
+				assert(i.value.size() > 0);  // can't have no values with no name!
+				strFilename = i.value[0];
+			} else if (i.string_key.compare("help") == 0) {
 				std::cout <<
 					"Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>\n"
 					"This program comes with ABSOLUTELY NO WARRANTY.  This is free software,\n"
@@ -436,78 +446,78 @@ int main(int iArgC, char *cArgV[])
 					<< std::endl;
 				return RET_OK;
 			} else if (
-				(i->string_key.compare("t") == 0) ||
-				(i->string_key.compare("type") == 0)
+				(i.string_key.compare("t") == 0) ||
+				(i.string_key.compare("type") == 0)
 			) {
-				strType = i->value[0];
+				strType = i.value[0];
 			} else if (
-				(i->string_key.compare("g") == 0) ||
-				(i->string_key.compare("graphics") == 0)
+				(i.string_key.compare("g") == 0) ||
+				(i.string_key.compare("graphics") == 0)
 			) {
-				strGraphics = i->value[0];
+				std::string purpose, temp;
+				gm::Map::GraphicsFilename gf;
+				bool a = split(i.value[0], '=', &purpose, &temp);
+				bool b = split(temp, ':', &gf.type, &gf.filename);
+				if (!a || !b) {
+					std::cerr << "Malformed -g/--graphics parameter.  Must be of the "
+						"form purpose=type:filename.  Use --help for details." << std::endl;
+					return RET_BADARGS;
+				}
+				for (unsigned int i = 0; i < (unsigned int)gm::ImagePurpose::ImagePurposeCount; i++) {
+					gm::ImagePurpose p = (gm::ImagePurpose)i;
+					if (purpose.compare(toString(p)) == 0) {
+						manualGfx[p] = gf;
+					}
+				}
 			} else if (
-				(i->string_key.compare("y") == 0) ||
-				(i->string_key.compare("graphicstype") == 0)
-			) {
-				strGraphicsType = i->value[0];
-			} else if (
-				(i->string_key.compare("s") == 0) ||
-				(i->string_key.compare("script") == 0)
+				(i.string_key.compare("s") == 0) ||
+				(i.string_key.compare("script") == 0)
 			) {
 				bScript = true;
 			} else if (
-				(i->string_key.compare("f") == 0) ||
-				(i->string_key.compare("force") == 0)
+				(i.string_key.compare("f") == 0) ||
+				(i.string_key.compare("force") == 0)
 			) {
 				bForceOpen = true;
 			} else if (
-				(i->string_key.compare("list-types") == 0)
+				(i.string_key.compare("list-types") == 0)
 			) {
 				std::cout << "Map types: (--type)\n";
-				unsigned int i = 0;
-				{
-					gm::MapTypePtr nextType;
-					while ((nextType = pManager->getMapType(i++))) {
-						std::string code = nextType->getMapCode();
-						std::cout << "  " << code;
-						int len = code.length();
-						if (len < 20) std::cout << std::string(20-code.length(), ' ');
-						std::cout << ' ' << nextType->getFriendlyName();
-						std::vector<std::string> ext = nextType->getFileExtensions();
-						if (ext.size()) {
-							std::vector<std::string>::iterator i = ext.begin();
-							std::cout << " (*." << *i;
-							for (i++; i != ext.end(); i++) {
-								std::cout << "; *." << *i;
-							}
-							std::cout << ")";
+				for (auto& mapType : gm::MapManager::formats()) {
+					std::string code = mapType->code();
+					std::cout << "  " << code;
+					int len = code.length();
+					if (len < 20) std::cout << std::string(20 - code.length(), ' ');
+					std::cout << ' ' << mapType->friendlyName();
+					auto ext = mapType->fileExtensions();
+					if (ext.size()) {
+						auto i = ext.begin();
+						std::cout << " (*." << *i;
+						for (i++; i != ext.end(); i++) {
+							std::cout << "; *." << *i;
 						}
-						std::cout << '\n';
+						std::cout << ")";
 					}
+					std::cout << '\n';
 				}
 
 				std::cout << "\nMap tilesets: (--graphicstype)\n";
-				i = 0;
-				gg::ManagerPtr pManager(gg::getManager());
-				{
-					gg::TilesetTypePtr nextType;
-					while ((nextType = pManager->getTilesetType(i++))) {
-						std::string code = nextType->getCode();
-						std::cout << "  " << code;
-						int len = code.length();
-						if (len < 20) std::cout << std::string(20-code.length(), ' ');
-						std::cout << ' ' << nextType->getFriendlyName();
-						std::vector<std::string> ext = nextType->getFileExtensions();
-						if (ext.size()) {
-							std::vector<std::string>::iterator i = ext.begin();
-							std::cout << " (*." << *i;
-							for (i++; i != ext.end(); i++) {
-								std::cout << "; *." << *i;
-							}
-							std::cout << ")";
+				for (auto& tilesetType : gg::TilesetManager::formats()) {
+					std::string code = tilesetType->code();
+					std::cout << "  " << code;
+					int len = code.length();
+					if (len < 20) std::cout << std::string(20-code.length(), ' ');
+					std::cout << ' ' << tilesetType->friendlyName();
+					auto ext = tilesetType->fileExtensions();
+					if (ext.size()) {
+						auto i = ext.begin();
+						std::cout << " (*." << *i;
+						for (i++; i != ext.end(); i++) {
+							std::cout << "; *." << *i;
 						}
-						std::cout << '\n';
+						std::cout << ")";
 					}
+					std::cout << '\n';
 				}
 				return RET_OK;
 			}
@@ -520,147 +530,128 @@ int main(int iArgC, char *cArgV[])
 		std::cout << "Opening " << strFilename << " as type "
 			<< (strType.empty() ? "<autodetect>" : strType) << std::endl;
 
-		stream::file_sptr psMap(new stream::file());
+		std::unique_ptr<stream::inout> content;
 		try {
-			psMap->open(strFilename.c_str());
+			content = std::make_unique<stream::file>(strFilename, false);
 		} catch (const stream::open_error& e) {
 			std::cerr << "Error opening " << strFilename << ": " << e.what()
 				<< std::endl;
 			return RET_SHOWSTOPPER;
 		}
 
-		gm::MapTypePtr pMapType;
+		gm::MapManager::handler_t mapType;
 		if (strType.empty()) {
 			// Need to autodetect the file format.
-			gm::MapTypePtr pTestType;
-			unsigned int i = 0;
-			while ((pTestType = pManager->getMapType(i++))) {
-				gm::MapType::Certainty cert = pTestType->isInstance(psMap);
+			for (auto& mapTestType : gm::MapManager::formats()) {
+				gm::MapType::Certainty cert = mapTestType->isInstance(*content);
 				switch (cert) {
-					case gm::MapType::DefinitelyNo:
+					case gm::MapType::Certainty::DefinitelyNo:
 						// Don't print anything (TODO: Maybe unless verbose?)
 						break;
-					case gm::MapType::Unsure:
-						std::cout << "File could be a " << pTestType->getFriendlyName()
-							<< " [" << pTestType->getMapCode() << "]" << std::endl;
+					case gm::MapType::Certainty::Unsure:
+						std::cout << "File could be a " << mapTestType->friendlyName()
+							<< " [" << mapTestType->code() << "]" << std::endl;
 						// If we haven't found a match already, use this one
-						if (!pMapType) pMapType = pTestType;
+						if (!mapType) mapType = mapTestType;
 						break;
-					case gm::MapType::PossiblyYes:
-						std::cout << "File is likely to be a " << pTestType->getFriendlyName()
-							<< " [" << pTestType->getMapCode() << "]" << std::endl;
+					case gm::MapType::Certainty::PossiblyYes:
+						std::cout << "File is likely to be a " << mapTestType->friendlyName()
+							<< " [" << mapTestType->code() << "]" << std::endl;
 						// Take this one as it's better than an uncertain match
-						pMapType = pTestType;
+						mapType = mapTestType;
 						break;
-					case gm::MapType::DefinitelyYes:
-						std::cout << "File is definitely a " << pTestType->getFriendlyName()
-							<< " [" << pTestType->getMapCode() << "]" << std::endl;
-						pMapType = pTestType;
+					case gm::MapType::Certainty::DefinitelyYes:
+						std::cout << "File is definitely a " << mapTestType->friendlyName()
+							<< " [" << mapTestType->code() << "]" << std::endl;
+						mapType = mapTestType;
 						// Don't bother checking any other formats if we got a 100% match
 						goto finishTesting;
 				}
-				if (cert != gm::MapType::DefinitelyNo) {
+				if (cert != gm::MapType::Certainty::DefinitelyNo) {
 					// We got a possible match, see if it requires any suppdata
-					camoto::SuppFilenames suppList = pTestType->getRequiredSupps(psMap,
-						strFilename);
+					auto suppList = mapTestType->getRequiredSupps(*content, strFilename);
 					if (suppList.size() > 0) {
 						// It has suppdata, see if it's present
 						std::cout << "  * This format requires supplemental files..." << std::endl;
 						bool bSuppOK = true;
-						for (camoto::SuppFilenames::iterator
-							i = suppList.begin(); i != suppList.end(); i++
-						) {
+						for (auto& i : suppList) {
 							try {
-								stream::file_sptr suppStream(new stream::file());
-								suppStream->open(i->second);
+								auto suppStream = std::make_unique<stream::file>(i.second, false);
 							} catch (const stream::open_error&) {
 								bSuppOK = false;
-								std::cout << "  * Could not find/open " << i->second
+								std::cout << "  * Could not find/open " << i.second
 									<< ", map is probably not "
-									<< pTestType->getMapCode() << std::endl;
+									<< mapTestType->code() << std::endl;
 								break;
 							}
 						}
 						if (bSuppOK) {
 							// All supp files opened ok
 							std::cout << "  * All supp files present, map is likely "
-								<< pTestType->getMapCode() << std::endl;
+								<< mapTestType->code() << std::endl;
 							// Set this as the most likely format
-							pMapType = pTestType;
+							mapType = mapTestType;
 						}
 					}
 				}
 			}
 finishTesting:
-			if (!pMapType) {
+			if (!mapType) {
 				std::cerr << "Unable to automatically determine the file type.  Use "
 					"the --type option to manually specify the file format." << std::endl;
 				return RET_BE_MORE_SPECIFIC;
 			}
 		} else {
-			gm::MapTypePtr pTestType(pManager->getMapTypeByCode(strType));
-			if (!pTestType) {
+			mapType = gm::MapManager::byCode(strType);
+			if (!mapType) {
 				std::cerr << "Unknown file type given to -t/--type: " << strType
 					<< std::endl;
 				return RET_BADARGS;
 			}
-			pMapType = pTestType;
 		}
 
-		assert(pMapType != NULL);
+		assert(mapType != NULL);
 
 		// Check to see if the file is actually in this format
-		if (!pMapType->isInstance(psMap)) {
+		if (!mapType->isInstance(*content)) {
 			if (bForceOpen) {
 				std::cerr << "Warning: " << strFilename << " is not a "
-					<< pMapType->getFriendlyName() << ", open forced." << std::endl;
+					<< mapType->friendlyName() << ", open forced." << std::endl;
 			} else {
 				std::cerr << "Invalid format: " << strFilename << " is not a "
-					<< pMapType->getFriendlyName() << "\n"
+					<< mapType->friendlyName() << "\n"
 					<< "Use the -f option to try anyway." << std::endl;
 				return RET_BE_MORE_SPECIFIC;
 			}
 		}
 
 		// See if the format requires any supplemental files
-		camoto::SuppFilenames suppList = pMapType->getRequiredSupps(psMap,
-			strFilename);
 		camoto::SuppData suppData;
-		if (suppList.size() > 0) {
-			for (camoto::SuppFilenames::iterator
-				i = suppList.begin(); i != suppList.end(); i++
-			) {
-				try {
-					std::cerr << "Opening supplemental file " << i->second << std::endl;
-					stream::file_sptr suppStream(new stream::file());
-					suppStream->open(i->second);
-					suppData[i->first] = suppStream;
-				} catch (const stream::open_error& e) {
-					std::cerr << "Error opening supplemental file " << i->second << ": "
-						<< e.what() << std::endl;
-					return RET_SHOWSTOPPER;
-				}
+		for (auto& i : mapType->getRequiredSupps(*content, strFilename)) {
+			try {
+				std::cerr << "Opening supplemental file " << i.second << std::endl;
+				suppData[i.first] = std::make_unique<stream::file>(i.second, false);
+			} catch (const stream::open_error& e) {
+				std::cerr << "Error opening supplemental file " << i.second << ": "
+					<< e.what() << std::endl;
+				return RET_SHOWSTOPPER;
 			}
 		}
 
 		// Open the map file
-		//FN_TRUNCATE fnTruncate = boost::bind<void>(truncate, strFilename.c_str(), _1);
-		gm::MapPtr pMap(pMapType->open(psMap, suppData));
+		std::shared_ptr<gm::Map> pMap = mapType->open(std::move(content), suppData);
 		assert(pMap);
 
 		// File type of inserted files defaults to empty, which means 'generic file'
 		std::string strLastFiletype;
 
 		// Run through the actions on the command line
-		for (std::vector<po::option>::iterator i = pa.options.begin(); i != pa.options.end(); i++) {
-			if (i->string_key.compare("info") == 0) {
+		for (auto& i : pa.options) {
+			if (i.string_key.compare("info") == 0) {
 				std::cout << (bScript ? "attribute_count=" : "Number of attributes: ")
 					<< pMap->attributes.size() << "\n";
 				int attrNum = 0;
-				for (gm::Map::Attributes::const_iterator
-					i = pMap->attributes.begin(); i != pMap->attributes.end(); i++
-				) {
-					const gm::Map::Attribute& a = *i;
+				for (auto& a : pMap->attributes) {
 
 					if (bScript) std::cout << "attribute" << attrNum << "_name=";
 					else std::cout << "Attribute " << attrNum+1 << ": ";
@@ -674,7 +665,7 @@ finishTesting:
 					else std::cout << "  Type: ";
 					switch (a.type) {
 
-						case gm::Map::Attribute::Integer: {
+						case gm::Attribute::Type::Integer: {
 							std::cout << (bScript ? "int" : "Integer value") << "\n";
 
 							if (bScript) std::cout << "attribute" << attrNum << "_value=";
@@ -696,7 +687,7 @@ finishTesting:
 							break;
 						}
 
-						case gm::Map::Attribute::Enum: {
+						case gm::Attribute::Type::Enum: {
 							std::cout << (bScript ? "enum" : "Item from list") << "\n";
 
 							if (bScript) std::cout << "attribute" << attrNum << "_value=";
@@ -729,7 +720,7 @@ finishTesting:
 							break;
 						}
 
-						case gm::Map::Attribute::Filename: {
+						case gm::Attribute::Type::Filename: {
 							std::cout << (bScript ? "filename" : "Filename") << "\n";
 
 							if (bScript) std::cout << "attribute" << attrNum << "_value=";
@@ -755,194 +746,195 @@ finishTesting:
 				}
 
 				std::cout << (bScript ? "gfx_filename_count=" : "Number of graphics filenames: ")
-					<< pMap->graphicsFilenames.size() << "\n";
+					<< pMap->graphicsFilenames().size() << "\n";
 				int fileNum = 0;
-				for (gm::Map::GraphicsFilenames::const_iterator
-					i = pMap->graphicsFilenames.begin(); i != pMap->graphicsFilenames.end(); i++
-				) {
-					const gm::Map::GraphicsFilename& a = i->second;
-
+				for (auto& a : pMap->graphicsFilenames()) {
 					if (bScript) {
-						std::cout << "gfx_file" << fileNum << "_name=" << a.filename << "\n";
-						std::cout << "gfx_file" << fileNum << "_type=" << a.type << "\n";
-						std::cout << "gfx_file" << fileNum << "_purpose=" << i->first << "\n";
+						std::cout << "gfx_file" << fileNum << "_name=" << a.second.filename << "\n";
+						std::cout << "gfx_file" << fileNum << "_type=" << a.second.type << "\n";
+						std::cout << "gfx_file" << fileNum << "_purpose=" << (unsigned int)a.first << "\n";
 					} else {
-						std::cout << "Graphics file " << fileNum+1 << ": " << a.filename
+						std::cout << "Graphics file " << fileNum+1 << ": " << a.second.filename
 							<< " [";
-						switch (i->first) {
-							case gm::GenericTileset1:    std::cout << "Generic tileset 1"; break;
-							case gm::BackgroundImage:    std::cout << "Background image"; break;
-							case gm::BackgroundTileset1: std::cout << "Background tileset 1"; break;
-							case gm::BackgroundTileset2: std::cout << "Background tileset 2"; break;
-							case gm::ForegroundTileset1: std::cout << "Foreground tileset 1"; break;
-							case gm::ForegroundTileset2: std::cout << "Foreground tileset 2"; break;
-							case gm::SpriteTileset1:     std::cout << "Sprite tileset 1"; break;
-							case gm::FontTileset1:       std::cout << "Font tileset 1"; break;
-							case gm::FontTileset2:       std::cout << "Font tileset 2"; break;
+						switch (a.first) {
+							case gm::ImagePurpose::GenericTileset1:    std::cout << "Generic tileset 1"; break;
+							case gm::ImagePurpose::BackgroundImage:    std::cout << "Background image"; break;
+							case gm::ImagePurpose::BackgroundTileset1: std::cout << "Background tileset 1"; break;
+							case gm::ImagePurpose::BackgroundTileset2: std::cout << "Background tileset 2"; break;
+							case gm::ImagePurpose::ForegroundTileset1: std::cout << "Foreground tileset 1"; break;
+							case gm::ImagePurpose::ForegroundTileset2: std::cout << "Foreground tileset 2"; break;
+							case gm::ImagePurpose::SpriteTileset1:     std::cout << "Sprite tileset 1"; break;
+							case gm::ImagePurpose::FontTileset1:       std::cout << "Font tileset 1"; break;
+							case gm::ImagePurpose::FontTileset2:       std::cout << "Font tileset 2"; break;
 							default:
 								std::cout << "Unknown purpose <fix this>";
 								break;
 						}
-						std::cout << " of type " << a.type << "]\n";
+						std::cout << " of type " << a.second.type << "]\n";
 					}
 					fileNum++;
 				}
 
 				std::cout << (bScript ? "map_type=" : "Map type: ");
-				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
+				auto map2d = std::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {
 					std::cout << (bScript ? "2d" : "2D grid-based") << "\n";
-#define CAP(o, c, v)        " " __STRING(c) << ((v & o::c) ? '+' : '-')
+#define CAP(o, c, v)        " " __STRING(c) << ((v & o::Caps::c) ? '+' : '-')
 #define MAP2D_CAP(c)        CAP(gm::Map2D,        c, mapCaps)
 #define MAP2D_LAYER_CAP(c)  CAP(gm::Map2D::Layer, c, layerCaps)
 
-					int mapCaps = map2d->caps;
+					auto mapCaps = map2d->caps();
 					if (bScript) {
-						std::cout << "map_caps=" << mapCaps << "\n";
+						std::cout << "map_caps=" << (unsigned int)mapCaps << "\n";
 					} else {
 						std::cout << "Map capabilities:"
-							<< MAP2D_CAP(CanResize)
-							<< MAP2D_CAP(ChangeTileSize)
 							<< MAP2D_CAP(HasViewport)
-							<< MAP2D_CAP(HasPaths)
-							<< MAP2D_CAP(FixedPathCount)
+							<< MAP2D_CAP(HasMapSize)
+							<< MAP2D_CAP(SetMapSize)
+							<< MAP2D_CAP(HasTileSize)
+							<< MAP2D_CAP(SetTileSize)
+							<< MAP2D_CAP(AddPaths)
 							<< "\n"
 						;
 					}
-					unsigned int mapTileWidth, mapTileHeight;
-					map2d->getTileSize(&mapTileWidth, &mapTileHeight);
-					std::cout << (bScript ? "tile_width=" : "Tile size: ") << mapTileWidth
-						<< (bScript ? "\ntile_height=" : "x") << mapTileHeight << "\n";
+					auto mapTileSize = map2d->tileSize();
+					std::cout << (bScript ? "tile_width=" : "Tile size: ") << mapTileSize.x
+						<< (bScript ? "\ntile_height=" : "x") << mapTileSize.y << "\n";
 
-					unsigned int mapWidth, mapHeight;
-					map2d->getMapSize(&mapWidth, &mapHeight);
+					auto mapSize = map2d->mapSize();
 					std::cout
-						<< (bScript ? "map_width=" : "Map size: ") << mapWidth
-						<< (bScript ? "\nmap_height=" : "x") << mapHeight
+						<< (bScript ? "map_width=" : "Map size: ") << mapSize.x
+						<< (bScript ? "\nmap_height=" : "x") << mapSize.y
 						<< (bScript ? "" : " tiles")
 						<< "\n";
 
-					if (mapCaps & gm::Map2D::HasViewport) {
+					if (mapCaps & gm::Map2D::Caps::HasViewport) {
+						auto vp = map2d->viewport();
 						std::cout << (bScript ? "viewport_width=" : "Viewport size: ")
-							<< map2d->viewportX
-							<< (bScript ? "\nviewport_height=" : "x") << map2d->viewportY
+							<< vp.x
+							<< (bScript ? "\nviewport_height=" : "x") << vp.y
 							<< (bScript ? "" : " pixels") << "\n";
 					}
 
-					unsigned int layerCount = map2d->getLayerCount();
+					unsigned int layerCount = map2d->layers().size();
 					std::cout << (bScript ? "layercount=" : "Layer count: ")
 						<< layerCount << "\n";
-					for (unsigned int i = 0; i < layerCount; i++) {
-						gm::Map2D::LayerPtr layer = map2d->getLayer(i);
+					unsigned int layerIndex = 0;
+					for (auto& layer : map2d->layers()) {
 						std::string prefix;
 						if (bScript) {
 							std::stringstream ss;
-							ss << "layer" << i << '_';
+							ss << "layer" << layerIndex << '_';
 							prefix = ss.str();
-							std::cout << prefix << "name=" << layer->getTitle() << "\n";
+							std::cout << prefix << "name=" << layer->title() << "\n";
 						} else {
 							prefix = "  ";
-							std::cout << "Layer " << i + 1 << ": \"" << layer->getTitle()
+							std::cout << "Layer " << layerIndex + 1 << ": \"" << layer->title()
 								<< "\"\n";
 						}
-						int layerCaps = layer->getCaps();
-						if (bScript) std::cout << prefix << "caps=" << layerCaps << "\n";
+						auto layerCaps = layer->caps();
+						if (bScript) std::cout << prefix << "caps="
+							<< (unsigned int)layerCaps << "\n";
 						else std::cout << prefix << "Capabilities:"
 							<< MAP2D_LAYER_CAP(HasOwnSize)
-							<< MAP2D_LAYER_CAP(CanResize)
+							<< MAP2D_LAYER_CAP(SetOwnSize)
 							<< MAP2D_LAYER_CAP(HasOwnTileSize)
-							<< MAP2D_LAYER_CAP(ChangeTileSize)
+							<< MAP2D_LAYER_CAP(SetOwnTileSize)
 							<< MAP2D_LAYER_CAP(HasPalette)
 							<< MAP2D_LAYER_CAP(UseImageDims)
 							<< "\n"
 						;
 
-						unsigned int layerTileWidth, layerTileHeight;
+						gg::Point layerTileSize;
 						bool layerTileSame;
-						if (layerCaps & gm::Map2D::Layer::HasOwnTileSize) {
-							layer->getTileSize(&layerTileWidth, &layerTileHeight);
+						if (layerCaps & gm::Map2D::Layer::Caps::HasOwnTileSize) {
+							layerTileSize = layer->tileSize();
 							layerTileSame = false;
 						} else {
-							layerTileWidth = mapTileWidth;
-							layerTileHeight = mapTileHeight;
+							layerTileSize = mapTileSize;
 							layerTileSame = true;
 						}
-						std::cout << prefix << (bScript ? "tile_width=" : "Tile size: ") << layerTileWidth;
+						std::cout << prefix << (bScript ? "tile_width=" : "Tile size: ")
+							<< layerTileSize.x;
 						if (bScript) std::cout << "\n" << prefix << "tile_height=";
 						else std::cout << "x";
-						std::cout << layerTileHeight;
+						std::cout << layerTileSize.y;
 						if (layerTileSame && (!bScript)) {
 							std::cout << " (same as map)";
 						}
 						std::cout << "\n";
 
-						unsigned int layerWidth, layerHeight;
+						gg::Point layerSize;
 						bool layerSame;
-						if (layerCaps & gm::Map2D::Layer::HasOwnSize) {
-							layer->getLayerSize(&layerWidth, &layerHeight);
+						if (layerCaps & gm::Map2D::Layer::Caps::HasOwnSize) {
+							layerSize = layer->layerSize();
 							layerSame = false;
 						} else {
 							// Convert from map tilesize to layer tilesize, leaving final
 							// pixel dimensions unchanged
-							layerWidth = mapWidth * mapTileWidth / layerTileWidth;
-							layerHeight = mapHeight * mapTileHeight / layerTileHeight;
+							layerSize.x = mapSize.x * mapTileSize.x / layerTileSize.x;
+							layerSize.y = mapSize.y * mapTileSize.y / layerTileSize.y;
 							layerSame = true;
 						}
-						std::cout << prefix << (bScript ? "width=" : "Layer size: ") << layerWidth;
+						std::cout << prefix << (bScript ? "width=" : "Layer size: ")
+							<< layerSize.x;
 						if (bScript) std::cout << "\n" << prefix << "height=";
 						else std::cout << "x";
-						std::cout << layerHeight;
+						std::cout << layerSize.y;
 						if (layerSame && (!bScript)) {
 							std::cout << " (same as map)";
 						}
 						std::cout << "\n";
+
+						layerIndex++;
 					}
 
 				} else {
 					std::cout << (bScript ? "unknown" : "Unknown!  Fix this!") << "\n";
 				}
 
-			} else if (i->string_key.compare("print") == 0) {
-				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
+			} else if (i.string_key.compare("print") == 0) {
+				auto map2d = std::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {
-					unsigned int targetLayer = strtoul(i->value[0].c_str(), NULL, 10);
+					unsigned int targetLayer = strtoul(i.value[0].c_str(), NULL, 10);
 					if (targetLayer == 0) {
 						std::cerr << "Invalid layer index passed to --print.  Use --info "
 							"to list layers in this map." << std::endl;
 						iRet = RET_BADARGS;
 						continue;
 					}
-					unsigned int layerCount = map2d->getLayerCount();
-					if (targetLayer > layerCount) {
+					if (targetLayer > map2d->layers().size()) {
 						std::cerr << "Invalid layer index passed to --print.  Use --info "
 							"to list layers in this map." << std::endl;
 						iRet = RET_BADARGS;
 						continue;
 					}
 
-					gm::Map2D::LayerPtr layer = map2d->getLayer(targetLayer - 1);
+					auto layer = map2d->layers().at(targetLayer - 1);
+					// If this fails, the map format returned a null pointer for the layer
+					assert(layer);
 
 					// Figure out the layer size
-					unsigned int layerWidth, layerHeight, tileWidth, tileHeight;
-					getLayerDims(map2d, layer, &layerWidth, &layerHeight, &tileWidth, &tileHeight);
+					gg::Point layerSize, tileSize;
+					getLayerDims(*map2d, *layer, &layerSize, &tileSize);
 
-					const gm::Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-					gm::Map2D::Layer::ItemPtrVector::const_iterator t = items->begin();
-					unsigned int numItems = items->size();
-					if (t != items->end()) {
-						for (unsigned int y = 0; y < layerHeight; y++) {
-							for (unsigned int x = 0; x < layerWidth; x++) {
+					auto items = layer->items();
+					auto t = items.begin();
+					unsigned int numItems = items.size();
+					if (t != items.end()) {
+						for (unsigned int y = 0; y < layerSize.y; y++) {
+							for (unsigned int x = 0; x < layerSize.x; x++) {
 								for (unsigned int i = 0; i < numItems; i++) {
-									if (((*t)->x == x) && ((*t)->y == y)) break;
+									if ((t->pos.x == x) && (t->pos.y == y)) break;
 									t++;
-									if (t == items->end()) t = items->begin();
+									if (t == items.end()) t = items.begin();
 								}
-								if (((*t)->x != x) || ((*t)->y != y)) {
+								if ((t->pos.x != x) || (t->pos.y != y)) {
 									// Grid position with no tile!
 									std::cout << "     ";
 								} else {
 									std::cout << std::hex << std::setw(4)
-										<< (unsigned int)(*t)->code << ' ';
+										<< (unsigned int)t->code << ' ';
 								}
 							}
 							std::cout << "\n";
@@ -956,43 +948,61 @@ finishTesting:
 						"been implemented!" << std::endl;
 				}
 
-			} else if (i->string_key.compare("render") == 0) {
-				if (strGraphics.empty()) {
-					std::cerr << "You must use --graphics to specify a tileset."
-						<< std::endl;
-					iRet = RET_BADARGS;
-					continue;
-				}
-				// Don't need to check i->value[0], program_options does that for us
+			} else if (i.string_key.compare("render") == 0) {
+				// Don't need to check i.value[0], program_options does that for us
 
-				gm::Map2DPtr map2d = boost::dynamic_pointer_cast<gm::Map2D>(pMap);
+				auto map2d = std::dynamic_pointer_cast<gm::Map2D>(pMap);
 				if (map2d) {
-					gm::TilesetCollectionPtr allTilesets(new gm::TilesetCollection);
-					/// @todo Load more than one tileset
-					(*allTilesets)[gm::BackgroundTileset1] = openTileset(strGraphics, strGraphicsType);
-					map2dToPng(map2d, allTilesets, i->value[0]);
+					gm::TilesetCollection allTilesets;
+
+					for (auto& a : manualGfx) {
+						allTilesets[a.first] = openTileset(a.second.filename, a.second.type);
+					}
+
+					for (auto& a : pMap->graphicsFilenames()) {
+						if (allTilesets.find(a.first) == allTilesets.end()) {
+							// This tileset hasn't been specified on the command line, but the
+							// map format handler has given us a filename, so open the file
+							// suggested from the map.
+							allTilesets[a.first] = openTileset(a.second.filename, a.second.type);
+						} else {
+							std::cout << toString(a.first) << " overridden on command-line\n";
+						}
+					}
+
+					if (allTilesets.empty()) {
+						std::cerr << "You must use --graphics to specify a tileset."
+							<< std::endl;
+						iRet = RET_BADARGS;
+						continue;
+					}
+					map2dToPng(*map2d, allTilesets, i.value[0]);
+				} else {
+					std::cerr << PROGNAME ": Rendering this type of map is not yet "
+						"implemented." << std::endl;
+					return RET_SHOWSTOPPER;
 				}
 
 			// Ignore --type/-t
-			} else if (i->string_key.compare("type") == 0) {
-			} else if (i->string_key.compare("t") == 0) {
+			} else if (i.string_key.compare("type") == 0) {
+			} else if (i.string_key.compare("t") == 0) {
 			// Ignore --script/-s
-			} else if (i->string_key.compare("script") == 0) {
-			} else if (i->string_key.compare("s") == 0) {
+			} else if (i.string_key.compare("script") == 0) {
+			} else if (i.string_key.compare("s") == 0) {
 			// Ignore --force/-f
-			} else if (i->string_key.compare("force") == 0) {
-			} else if (i->string_key.compare("f") == 0) {
+			} else if (i.string_key.compare("force") == 0) {
+			} else if (i.string_key.compare("f") == 0) {
 
 			}
 		} // for (all command line elements)
 		//pMap->flush();
 	} catch (const po::error& e) {
 		std::cerr << PROGNAME ": " << e.what()
-			<< ".  Use --help for help." << std::endl;
+			<< "  Use --help for help." << std::endl;
 		return RET_BADARGS;
 	} catch (const stream::error& e) {
 		std::cerr << PROGNAME ": " << e.what()
-			<< ".  Use --help for help." << std::endl;
+			<< "  Use --help for help." << std::endl;
 		return RET_SHOWSTOPPER;
 	}
 
