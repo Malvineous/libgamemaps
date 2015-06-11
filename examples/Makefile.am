@@ -19,9 +19,8 @@ AM_CXXFLAGS += $(libgamecommon_CFLAGS)
 AM_CXXFLAGS += $(libgamegraphics_CFLAGS)
 
 AM_LDFLAGS  = $(top_builddir)/src/libgamemaps.la
-AM_LDFLAGS += $(BOOST_LDFLAGS)
-AM_LDFLAGS += $(BOOST_SYSTEM_LIBS)
-AM_LDFLAGS += $(BOOST_PROGRAM_OPTIONS_LIBS)
+AM_LDFLAGS += $(BOOST_SYSTEM_LIB)
+AM_LDFLAGS += $(BOOST_PROGRAM_OPTIONS_LIB)
 AM_LDFLAGS += $(libpng_LIBS)
 AM_LDFLAGS += $(libgamecommon_LIBS)
 AM_LDFLAGS += $(libgamegraphics_LIBS)
