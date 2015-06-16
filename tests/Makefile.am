@@ -6,6 +6,7 @@ tests_SOURCES += test-map-bash.cpp
 tests_SOURCES += test-map-ccaves.cpp
 tests_SOURCES += test-map-ccomic.cpp
 tests_SOURCES += test-map-cosmo.cpp
+tests_SOURCES += test-map-darkages.cpp
 tests_SOURCES += test-map-ddave.cpp
 tests_SOURCES += test-map-got.cpp
 tests_SOURCES += test-map-harry.cpp
