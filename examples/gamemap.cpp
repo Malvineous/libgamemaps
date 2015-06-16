@@ -277,7 +277,22 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 			break;
 		}
 		// TODO - case gm::Map2D::Background::Attachment::SingleImageCentred:
-		// TODO - case gm::Map2D::Background::Attachment::SingleImageTiled:
+		case gm::Map2D::Background::Attachment::SingleImageTiled: {
+			auto tilePixels = bg.img->convert();
+			auto tileSize = bg.img->dimensions();
+			for (unsigned int y = 0; y < outSize.y; y++) {
+				for (unsigned int x = 0; x < outSize.x; x++) {
+					png[y][x] =
+						// +1 to the colour to skip over transparent (#0)
+						png::index_pixel(
+							tilePixels[
+								(y % tileSize.y) * tileSize.x + (x % tileSize.x)
+							] + (useMask ? 1 : 0)
+						);
+				}
+			}
+			break;
+		}
 	}
 
 	for (auto& layer : map.layers()) {
