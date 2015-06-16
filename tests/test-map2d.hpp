@@ -148,16 +148,45 @@ class test_map2d: public test_main
 		 * normal read/write tests because the output won't be identical to the
 		 * input.
 		 *
-		 * @param content
+		 * @param input
 		 *   Content to pass as a map to Map2D::isInstance() where
 		 *   it will be reported as a valid instance, then passed to
 		 *   Map2D::read(), where an exception should be thrown.
+		 *
+		 * @param output
+		 *   Expected output after the read/write process.
 		 */
 		void conversion(const std::string& input, const std::string& output);
 
 		/// Perform a conversion check now.
 		void test_conversion(const std::string& input, const std::string& output,
 			unsigned int testNumber);
+
+		/// Add an attribute change check to run later.
+		/**
+		 * These checks ensure both an attribute has the correct expected value
+		 * (taken from the initialstate()) as well as ensuring the output data is
+		 * correct after changing the attribute.
+		 *
+		 * @param index
+		 *   Zero-based index of the attribute to change.
+		 *
+		 * @param before
+		 *   Value of the attribute obtained from the initialstate() data.
+		 *
+		 * @param after
+		 *   New value to set for the attribute.
+		 *
+		 * @param output
+		 *   Expected content, the same as initialdata() but with whatever bytes
+		 *   are altered due to the attribute having been changed.
+		 */
+		void changeAttribute(unsigned int index, unsigned int before,
+			unsigned int after, const std::string& output);
+
+		/// Perform an attribute-change check now.
+		void test_changeAttribute(unsigned int index, unsigned int before,
+			unsigned int after, const std::string& output, unsigned int testNumber);
 
 		/// Does the map content match the parameter?
 		boost::test_tools::predicate_result is_content_equal(const std::string& exp);
@@ -189,6 +218,9 @@ class test_map2d: public test_main
 
 		/// Number of conversion tests, used to number them sequentially.
 		unsigned int numConversionTests;
+
+		/// Number of attribute-change tests, used to number them sequentially.
+		unsigned int numAttributeTests;
 
 	public:
 		/// File type code for this format.

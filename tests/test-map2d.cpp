@@ -45,7 +45,8 @@ using namespace camoto::gamemaps;
 test_map2d::test_map2d()
 	:	numIsInstanceTests(0),
 		numInvalidContentTests(1),
-		numConversionTests(1)
+		numConversionTests(1),
+		numAttributeTests(0)
 {
 	this->pxSize = {-1, -1};
 	this->numLayers = -1;
@@ -267,6 +268,60 @@ void test_map2d::test_conversion(const std::string& input,
 	BOOST_CHECK_MESSAGE(
 		this->is_content_equal(output),
 		"Error writing map - data is different to expected"
+	);
+
+	return;
+}
+
+void test_map2d::changeAttribute(unsigned int index, unsigned int before,
+	unsigned int after, const std::string& output)
+{
+	this->addBoundTest(false,
+		std::bind(
+			&test_map2d::test_changeAttribute, this, index, before, after, output,
+			this->numAttributeTests
+		),
+		createString("test_map2d[" << this->basename << "]::changeAttribute_"
+			<< std::setfill('0') << std::setw(2) << this->numAttributeTests)
+	);
+	this->numAttributeTests++;
+	return;
+}
+
+void test_map2d::test_changeAttribute(unsigned int index, unsigned int before,
+	unsigned int after, const std::string& output, unsigned int testNumber)
+{
+	BOOST_TEST_MESSAGE(createString("changeAttribute check (" << this->basename
+		<< "; " << std::setfill('0') << std::setw(2) << testNumber << ")"));
+
+	this->base->truncate(0);
+
+	// Check "before" value
+	auto attributes = this->map->attributes();
+	BOOST_REQUIRE_GT(attributes.size(), index);
+	switch (attributes[index].type) {
+		case Attribute::Type::Enum:
+			BOOST_REQUIRE_EQUAL(attributes[index].enumValue, before);
+			break;
+	}
+
+	// Set "after" value
+	this->map->attribute(index, after);
+
+	// Confirm "after" value stuck
+	attributes = this->map->attributes();
+	BOOST_REQUIRE_GT(attributes.size(), index);
+	switch (attributes[index].type) {
+		case Attribute::Type::Enum:
+			BOOST_REQUIRE_EQUAL(attributes[index].enumValue, after);
+			break;
+	}
+
+	this->map->flush();
+
+	BOOST_CHECK_MESSAGE(
+		this->is_content_equal(output),
+		"Error writing map after attribute change - data is different to expected"
 	);
 
 	return;
