@@ -24,8 +24,8 @@ AX_BOOST_SYSTEM
 AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_UNIT_TEST_FRAMEWORK
 
-PKG_CHECK_MODULES([libgamecommon], [libgamecommon])
-PKG_CHECK_MODULES([libgamegraphics], [libgamegraphics])
+PKG_CHECK_MODULES([libgamecommon], [libgamecommon >= 2])
+PKG_CHECK_MODULES([libgamegraphics], [libgamegraphics >= 2])
 PKG_CHECK_MODULES([libpng], [libpng])
 
 SAVE_CPPFLAGS=$CPPFLAGS
