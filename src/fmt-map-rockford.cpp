@@ -21,225 +21,268 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include "map2d-generic.hpp"
+#include <camoto/util.hpp> // make_unique
+#include "map-core.hpp"
+#include "map2d-core.hpp"
 #include "fmt-map-rockford.hpp"
 
-#define ROCKFORD_TILE_WIDTH  16
-#define ROCKFORD_TILE_HEIGHT 16
+/// Width of a tile, in pixels.
+#define RF_TILE_WIDTH         16
+
+/// Height of a tile, in pixels.
+#define RF_TILE_HEIGHT        16
 
 /// Width of a map, in tiles.
-#define ROCKFORD_MAP_WIDTH   40
+#define RF_MAP_WIDTH          40
 
 /// Height of a map, in tiles.
-#define ROCKFORD_MAP_HEIGHT  22
+#define RF_MAP_HEIGHT         22
+
+/// Length of background layer, in bytes/tiles
+#define RF_LAYER_LEN_BG       (RF_MAP_WIDTH * RF_MAP_HEIGHT)
 
 /// Map code to write for locations with no tile set.
-#define ROCKFORD_DEFAULT_BGTILE     0x00
+#define RF_DEFAULT_BGTILE     0x00
 
 /// This is the largest valid tile code in the background layer.
-#define ROCKFORD_MAX_VALID_TILECODE   (10*20) // number of tiles in tileset
+#define RF_MAX_VALID_TILECODE (10*20) // number of tiles in tileset
 
 namespace camoto {
 namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Layer_RockfordBackground: virtual public GenericMap2D::Layer
+class Layer_Rockford_Background: public Map2DCore::LayerCore
 {
 	public:
-		Layer_RockfordBackground(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Background",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Rockford_Background(stream::input& content)
 		{
+			// Read the background layer
+			std::vector<uint8_t> bg(RF_LAYER_LEN_BG, RF_DEFAULT_BGTILE);
+			content.read(bg.data(), RF_LAYER_LEN_BG);
+
+			this->v_allItems.reserve(RF_LAYER_LEN_BG);
+			for (unsigned int i = 0; i < RF_LAYER_LEN_BG; i++) {
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {i % RF_MAP_WIDTH, i / RF_MAP_WIDTH};
+				t.code = bg[i];
+				if (t.code != RF_DEFAULT_BGTILE) this->v_allItems.push_back(t);
+			}
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void flush(stream::output& content)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
+			// Write the background layer
+			std::vector<uint8_t> bg(RF_LAYER_LEN_BG, RF_DEFAULT_BGTILE);
+			for (auto& i : this->items()) {
+				if ((i.pos.x > RF_MAP_WIDTH) || (i.pos.y > RF_MAP_HEIGHT)) {
+					throw stream::error("Layer has tiles outside map boundary!");
+				}
+				bg[i.pos.y * RF_MAP_WIDTH + i.pos.x] = i.code;
+			}
+			content.write(bg.data(), RF_LAYER_LEN_BG);
+			return;
+		}
 
-			unsigned int index = item->code;
+		virtual std::string title() const
+		{
+			return "Background";
+		}
 
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			unsigned int index = item.code;
 			// Special case for one image!
 			if (index == 3) index++;
 
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = t->second->openImage(images[index]);
-			return Map2D::Layer::Supplied;
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto& images = t->second->files();
+			if (index >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = t->second->openImage(images[index]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<uint8_t> validItemCodes = {
+				0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+				0x08, 0x09, 0x0A, 0x0B, 0x0C,
+				0x10,
+				0x28, 0x2C, 0x2D, 0x2E,
+				0x30, 0x34, 0x35, 0x36, 0x37,
+				0x38,
+				0x53,
+				0x70, 0x74, 0x7C,
+				0x80, 0x82, 0x84, 0x88,
+				0xC4,
+			};
+			std::vector<Item> validItems;
+			for (auto i : validItemCodes) {
+				if (i == RF_DEFAULT_BGTILE) continue;
+
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				validItems.push_back(t);
+			}
+			return validItems;
 		}
 };
 
+class Map_Rockford: public MapCore, public Map2DCore
+{
+	public:
+		Map_Rockford(std::unique_ptr<stream::inout> content)
+			:	content(std::move(content))
+		{
+			this->content->seekg(0, stream::start);
 
-std::string MapType_Rockford::getMapCode() const
+			// Read the background layer
+			this->v_layers.push_back(
+				std::make_shared<Layer_Rockford_Background>(*this->content)
+			);
+		}
+
+		virtual ~Map_Rockford()
+		{
+		}
+
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
+		{
+#warning TODO: Proper graphics filename
+			return {};
+		}
+
+		virtual void flush()
+		{
+			assert(this->layers().size() == 1);
+
+			this->content->truncate(RF_LAYER_LEN_BG);
+			this->content->seekp(0, stream::start);
+
+			// Write the background layer
+			auto layerBG = dynamic_cast<Layer_Rockford_Background*>(this->v_layers[0].get());
+			layerBG->flush(*this->content);
+
+			this->content->flush();
+			return;
+		}
+
+		virtual Caps caps() const
+		{
+			return
+				Map2D::Caps::HasViewport
+				| Map2D::Caps::HasMapSize
+				| Map2D::Caps::HasTileSize
+			;
+		}
+
+		virtual Point viewport() const
+		{
+			return {320, 176};
+		}
+
+		virtual Point mapSize() const
+		{
+			return {RF_MAP_WIDTH, RF_MAP_HEIGHT};
+		}
+
+		virtual Point tileSize() const
+		{
+			return {RF_TILE_WIDTH, RF_TILE_HEIGHT};
+		}
+
+		Background background(const TilesetCollection& tileset) const
+		{
+			return this->backgroundFromTilecode(tileset, RF_DEFAULT_BGTILE);
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+};
+
+
+std::string MapType_Rockford::code() const
 {
 	return "map-rockford";
 }
 
-std::string MapType_Rockford::getFriendlyName() const
+std::string MapType_Rockford::friendlyName() const
 {
 	return "Rockford level";
 }
 
-std::vector<std::string> MapType_Rockford::getFileExtensions() const
+std::vector<std::string> MapType_Rockford::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("bin");
-	return vcExtensions;
+	return {"bin"};
 }
 
-std::vector<std::string> MapType_Rockford::getGameList() const
+std::vector<std::string> MapType_Rockford::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Rockford");
-	return vcGames;
+	return {"Rockford"};
 }
 
-MapType::Certainty MapType_Rockford::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Rockford::isInstance(stream::input& content) const
 {
-	stream::pos lenMap = psMap->size();
+	stream::pos lenMap = content.size();
 
-	// Make sure there's enough data to read the map dimensions
+	// Wrong size
 	// TESTED BY: fmt_map_rockford_isinstance_c01
-	if (lenMap != ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT) return MapType::DefinitelyNo;
+	if (lenMap != RF_LAYER_LEN_BG) return MapType::DefinitelyNo;
 
-	psMap->seekg(0, stream::start);
-
-	// Read in the map and make sure all the tile codes are within range
-	uint8_t *bg = new uint8_t[ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	stream::len r = psMap->try_read(bg, ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT);
-	if (r != ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT) return MapType::DefinitelyNo; // read error
-	for (unsigned int i = 0; i < ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT; i++) {
-		// Make sure each tile is within range
-		// TESTED BY: fmt_map_rockford_isinstance_c03
-		if (bg[i] > ROCKFORD_MAX_VALID_TILECODE) {
-			return MapType::DefinitelyNo;
-		}
+	// Read in the layer and make sure all the tile codes are within range
+	std::vector<uint8_t> bg(RF_LAYER_LEN_BG, RF_DEFAULT_BGTILE);
+	content.seekg(0, stream::start);
+	stream::len r = content.try_read(bg.data(), RF_LAYER_LEN_BG);
+	if (r != RF_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
+	for (unsigned int i = 0; i < RF_LAYER_LEN_BG; i++) {
+		// Invalid tile
+		// TESTED BY: fmt_map_rockford_isinstance_c02
+		if (bg[i] > RF_MAX_VALID_TILECODE) return MapType::DefinitelyNo;
 	}
 
 	// TESTED BY: fmt_map_rockford_isinstance_c00
 	return MapType::DefinitelyYes;
 }
 
-MapPtr MapType_Rockford::create(SuppData& suppData) const
+std::unique_ptr<Map> MapType_Rockford::create(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr MapType_Rockford::open(stream::input_sptr input, SuppData& suppData) const
+std::unique_ptr<Map> MapType_Rockford::open(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	input->seekg(0, stream::start);
-
-	// Read the background layer
-	uint8_t *bg = new uint8_t[ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	input->read(bg, ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT);
-
-	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
-	tiles->reserve(ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT);
-	for (unsigned int i = 0; i < ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT; i++) {
-		// The default tile actually has an image, so don't exclude it
-		//if (bg[i] == ROCKFORD_DEFAULT_BGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = i % ROCKFORD_MAP_WIDTH;
-		t->y = i / ROCKFORD_MAP_WIDTH;
-		t->code = bg[i];
-		tiles->push_back(t);
-	}
-
-	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	unsigned int validItems[] = {
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0A, 0x0B, 0x0C,
-		0x10,
-		0x28, 0x2C, 0x2D, 0x2E,
-		0x30, 0x34, 0x35, 0x36, 0x37,
-		0x38,
-		0x53,
-		0x70, 0x74, 0x7C,
-		0x80, 0x82, 0x84, 0x88,
-		0xC4,
-	};
-	for (unsigned int i = 0; i < sizeof(validItems) / sizeof(unsigned int); i++) {
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validBGItems->push_back(t);
-	}
-	Map2D::LayerPtr bgLayer(new Layer_RockfordBackground(tiles, validBGItems));
-
-	Map2D::LayerPtrVector layers;
-	layers.push_back(bgLayer);
-
-	Map2DPtr map(new GenericMap2D(
-		Map::Attributes(), Map::GraphicsFilenames(),
-		Map2D::HasViewport,
-		320, 176, // viewport size
-		ROCKFORD_MAP_WIDTH, ROCKFORD_MAP_HEIGHT,
-		ROCKFORD_TILE_WIDTH, ROCKFORD_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
-
-	return map;
+	return std::make_unique<Map_Rockford>(std::move(content));
 }
 
-void MapType_Rockford::write(MapPtr map, stream::expanding_output_sptr output,
-	ExpandingSuppData& suppData) const
-{
-	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 1)
-		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned int mapWidth, mapHeight;
-	map2d->getMapSize(&mapWidth, &mapHeight);
-	if ((mapWidth != ROCKFORD_MAP_WIDTH) || (mapHeight != ROCKFORD_MAP_HEIGHT)) {
-		throw stream::error("Incorrect layer size for this format.");
-	}
-
-	Map2D::LayerPtr layer = map2d->getLayer(0);
-
-	// Write the background layer
-	uint8_t *bg = new uint8_t[ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	memset(bg, ROCKFORD_DEFAULT_BGTILE, ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT);
-	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-		i != items->end();
-		i++
-	) {
-		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-			throw stream::error("Layer has tiles outside map boundary!");
-		}
-		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-	}
-
-	output->write(bg, ROCKFORD_MAP_WIDTH * ROCKFORD_MAP_HEIGHT);
-	output->flush();
-	return;
-}
-
-SuppFilenames MapType_Rockford::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Rockford::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
-	SuppFilenames supps;
-	return supps;
+	return {};
 }
 
 } // namespace gamemaps
