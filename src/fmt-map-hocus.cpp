@@ -21,9 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/scoped_array.hpp>
-#include "map2d-generic.hpp"
 #include <camoto/iostream_helpers.hpp>
+#include <camoto/util.hpp> // make_unique
+#include "map-core.hpp"
+#include "map2d-core.hpp"
 #include "fmt-map-hocus.hpp"
 
 /// Width of each tile in pixels
@@ -41,80 +42,237 @@
 /// Number of grid cells in the map
 #define HP_MAP_SIZE  (HP_MAP_WIDTH * HP_MAP_HEIGHT)
 
-/// Width of map view during gameplay, in pixels
-#define HP_VIEWPORT_WIDTH 320
+/// Map code used for 'no tile' in background and foreground layers
+#define HP_DEFAULT_TILE 0xFF
 
-/// Height of map view during gameplay, in pixels
-#define HP_VIEWPORT_HEIGHT 160
-
-/// Map code used for 'no tile' in background layer
-#define HP_DEFAULT_TILE_BG 0xFF
-
-/// Map code used for 'no tile' in foreground layer
-#define HP_DEFAULT_TILE_FG 0xFF
+/// Largest valid tilecode in bg/fg layers
+#warning TODO: Confirm this value is correct
+#define HP_MAX_VALID_TILECODE 0xFF
 
 namespace camoto {
 namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Layer_HocusBackground: virtual public GenericMap2D::Layer
+class Layer_Hocus_8bit: public Map2DCore::LayerCore
 {
 	public:
-		Layer_HocusBackground(const std::string& name, ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					name,
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Hocus_8bit(std::unique_ptr<stream::inout> content)
+			:	content(std::move(content))
+		{
+			// Read the background layer
+			std::vector<uint8_t> bg(HP_MAP_SIZE, HP_DEFAULT_TILE);
+			this->content->seekg(0, stream::start);
+			this->content->read(bg.data(), HP_MAP_SIZE);
+
+			this->v_allItems.reserve(HP_MAP_SIZE);
+			for (unsigned int i = 0; i < HP_MAP_SIZE; i++) {
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {i % HP_MAP_WIDTH, i / HP_MAP_WIDTH};
+				t.code = bg[i];
+				if (t.code != HP_DEFAULT_TILE) this->v_allItems.push_back(t);
+			}
+		}
+
+		virtual ~Layer_Hocus_8bit()
 		{
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void flush()
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
+			// Write the background layer
+			std::vector<uint8_t> bg(HP_MAP_SIZE, HP_DEFAULT_TILE);
+			for (auto& i : this->items()) {
+				if ((i.pos.x >= HP_MAP_WIDTH) || (i.pos.y >= HP_MAP_HEIGHT)) {
+					throw stream::error("Layer has tiles outside map boundary!");
+				}
+				bg[i.pos.y * HP_MAP_WIDTH + i.pos.x] = i.code;
+			}
+			this->content->truncate(HP_MAP_SIZE);
+			this->content->seekp(0, stream::start);
+			this->content->write(bg.data(), HP_MAP_SIZE);
+			this->content->flush();
+			return;
+		}
 
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = t->second->openImage(images[item->code]);
-			return Map2D::Layer::Supplied;
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto& images = t->second->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = t->second->openImage(images[item.code]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> validItems;
+			for (unsigned int i = 0; i <= HP_MAX_VALID_TILECODE; i++) {
+				if (i == HP_DEFAULT_TILE) continue;
+
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				validItems.push_back(t);
+			}
+			return validItems;
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+};
+
+class Layer_Hocus_Background: public Layer_Hocus_8bit
+{
+	public:
+		Layer_Hocus_Background(std::unique_ptr<stream::inout> content)
+			:	Layer_Hocus_8bit(std::move(content))
+		{
+		}
+
+		virtual ~Layer_Hocus_Background()
+		{
+		}
+
+		virtual std::string title() const
+		{
+			return "Background";
+		}
+};
+
+class Layer_Hocus_Foreground: public Layer_Hocus_8bit
+{
+	public:
+		Layer_Hocus_Foreground(std::unique_ptr<stream::inout> content)
+			:	Layer_Hocus_8bit(std::move(content))
+		{
+		}
+
+		virtual ~Layer_Hocus_Foreground()
+		{
+		}
+
+		virtual std::string title() const
+		{
+			return "Foreground";
+		}
+};
+
+class Map_Hocus: public MapCore, public Map2DCore
+{
+	public:
+		Map_Hocus(std::unique_ptr<stream::inout> bg, std::unique_ptr<stream::inout> fg)
+		{
+			// Read the background layer
+			this->v_layers.push_back(
+				std::make_shared<Layer_Hocus_Background>(std::move(bg))
+			);
+			this->v_layers.push_back(
+				std::make_shared<Layer_Hocus_Foreground>(std::move(fg))
+			);
+		}
+
+		virtual ~Map_Hocus()
+		{
+		}
+
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
+		{
+			return {};
+		}
+
+		virtual void flush()
+		{
+			assert(this->layers().size() == 2);
+
+			// Write the background layer
+			auto layerBG = dynamic_cast<Layer_Hocus_Background*>(this->v_layers[0].get());
+			layerBG->flush();
+
+			// Write the foreground layer
+			auto layerFG = dynamic_cast<Layer_Hocus_Foreground*>(this->v_layers[1].get());
+			layerFG->flush();
+
+			return;
+		}
+
+		virtual Caps caps() const
+		{
+			return
+				Map2D::Caps::HasViewport
+				| Map2D::Caps::HasMapSize
+				| Map2D::Caps::HasTileSize
+			;
+		}
+
+		virtual Point viewport() const
+		{
+			return {320, 160};
+		}
+
+		virtual Point mapSize() const
+		{
+			return {HP_MAP_WIDTH, HP_MAP_HEIGHT};
+		}
+
+		virtual Point tileSize() const
+		{
+			return {HP_TILE_WIDTH, HP_TILE_HEIGHT};
+		}
+
+		Background background(const TilesetCollection& tileset) const
+		{
+			Background bg;
+			// Use no background until we work out how to find the background image
+			bg.att = Background::Attachment::NoBackground;
+			return bg;
 		}
 };
 
 
-std::string MapType_Hocus::getMapCode() const
+std::string MapType_Hocus::code() const
 {
 	return "map-hocus";
 }
 
-std::string MapType_Hocus::getFriendlyName() const
+std::string MapType_Hocus::friendlyName() const
 {
 	return "Hocus Pocus level";
 }
 
-std::vector<std::string> MapType_Hocus::getFileExtensions() const
+std::vector<std::string> MapType_Hocus::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("");
-	return vcExtensions;
+	return {};
 }
 
-std::vector<std::string> MapType_Hocus::getGameList() const
+std::vector<std::string> MapType_Hocus::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Hocus Pocus");
-	return vcGames;
+	return {"Hocus Pocus"};
 }
 
-MapType::Certainty MapType_Hocus::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Hocus::isInstance(stream::input& content) const
 {
-	stream::pos lenMap = psMap->size();
+	stream::pos lenMap = content.size();
 	// TESTED BY: fmt_map_hocus_isinstance_c01
 	if (lenMap != 14400) return MapType::DefinitelyNo; // wrong size
 
@@ -122,139 +280,27 @@ MapType::Certainty MapType_Hocus::isInstance(stream::input_sptr psMap) const
 	return MapType::PossiblyYes;
 }
 
-MapPtr MapType_Hocus::create(SuppData& suppData) const
+std::unique_ptr<Map> MapType_Hocus::create(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr MapType_Hocus::open(stream::input_sptr input, SuppData& suppData) const
+std::unique_ptr<Map> MapType_Hocus::open(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	input->seekg(0, stream::start);
-
-	uint8_t code;
-
-	// Read the background layer
-	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
-	bgtiles->reserve(HP_MAP_WIDTH * HP_MAP_HEIGHT);
-
-	for (unsigned int y = 0; y < HP_MAP_HEIGHT; y++) {
-		for (unsigned int x = 0; x < HP_MAP_WIDTH; x++) {
-			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-			t->type = Map2D::Layer::Item::Default;
-			t->x = x;
-			t->y = y;
-			input >> u8(code);
-			t->code = code;
-			if (t->code != HP_DEFAULT_TILE_BG) bgtiles->push_back(t);
-		}
+	auto layer1 = suppData.find(SuppItem::Layer1);
+	if (layer1 == suppData.end()) {
+		throw stream::error("Missing content for layer: Layer1");
 	}
-
-	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr bgLayer(new Layer_HocusBackground("Background", bgtiles, validBGItems));
-
-	stream::input_sptr layerFile = suppData[SuppItem::Layer1];
-	assert(layerFile);
-
-	// Read the foreground layer
-	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
-	fgtiles->reserve(HP_MAP_WIDTH * HP_MAP_HEIGHT);
-
-	for (unsigned int y = 0; y < HP_MAP_HEIGHT; y++) {
-		for (unsigned int x = 0; x < HP_MAP_WIDTH; x++) {
-			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-			t->type = Map2D::Layer::Item::Default;
-			t->x = x;
-			t->y = y;
-			layerFile >> u8(code);
-			t->code = code;
-			if (t->code != HP_DEFAULT_TILE_BG) fgtiles->push_back(t);
-		}
-	}
-
-	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr fgLayer(new Layer_HocusBackground("Foreground", fgtiles, validFGItems));
-
-	Map2D::LayerPtrVector layers;
-	layers.push_back(bgLayer);
-	layers.push_back(fgLayer);
-	//layers.push_back(actorLayer);
-
-	Map2DPtr map(new GenericMap2D(
-		Map::Attributes(), Map::GraphicsFilenames(),
-		Map2D::HasViewport,
-		HP_VIEWPORT_WIDTH, HP_VIEWPORT_HEIGHT,
-		HP_MAP_WIDTH, HP_MAP_HEIGHT,
-		HP_TILE_WIDTH, HP_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
-
-	return map;
+	return std::make_unique<Map_Hocus>(std::move(content), std::move(layer1->second));
 }
 
-void MapType_Hocus::write(MapPtr map, stream::expanding_output_sptr output,
-	ExpandingSuppData& suppData) const
-{
-	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 2)
-		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned int mapWidth, mapHeight;
-	map2d->getMapSize(&mapWidth, &mapHeight);
-
-	Map2D::LayerPtr layer;
-
-	// Write the background layer
-	boost::scoped_array<uint8_t> tiles(new uint8_t[HP_MAP_SIZE]);
-
-	// Set the default background tile
-	memset(tiles.get(), HP_DEFAULT_TILE_BG, HP_MAP_SIZE);
-
-	layer = map2d->getLayer(0);
-	const Map2D::Layer::ItemPtrVectorPtr itemsBG = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = itemsBG->begin();
-		i != itemsBG->end();
-		i++
-	) {
-		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
-		tiles[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-	}
-
-	output->write((char *)tiles.get(), HP_MAP_SIZE);
-	output->flush();
-	assert(output->tellp() == 14400);
-
-	// Write the foreground layer
-	stream::output_sptr layerFile = suppData[SuppItem::Layer1];
-	assert(layerFile);
-
-	// Set the default background tile
-	memset(tiles.get(), HP_DEFAULT_TILE_FG, HP_MAP_SIZE);
-
-	layer = map2d->getLayer(1);
-	const Map2D::Layer::ItemPtrVectorPtr itemsFG = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = itemsFG->begin();
-		i != itemsFG->end();
-		i++
-	) {
-		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
-		tiles[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-	}
-
-	layerFile->seekp(0, stream::start);
-	layerFile->write((char *)tiles.get(), HP_MAP_SIZE);
-	layerFile->flush();
-	assert(layerFile->tellp() == 14400);
-
-	return;
-}
-
-SuppFilenames MapType_Hocus::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Hocus::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
-	SuppFilenames supps;
-	return supps;
+	return {};
 }
 
 } // namespace gamemaps

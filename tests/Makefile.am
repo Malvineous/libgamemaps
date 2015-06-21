@@ -10,6 +10,7 @@ tests_SOURCES += test-map-darkages.cpp
 tests_SOURCES += test-map-ddave.cpp
 tests_SOURCES += test-map-got.cpp
 tests_SOURCES += test-map-harry.cpp
+tests_SOURCES += test-map-hocus.cpp
 tests_SOURCES += test-map-jill.cpp
 tests_SOURCES += test-map-nukem2.cpp
 tests_SOURCES += test-map-rockford.cpp
