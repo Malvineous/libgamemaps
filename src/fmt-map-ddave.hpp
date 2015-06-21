@@ -39,7 +39,7 @@ class MapType_DDave: virtual public MapType
 			SuppData& suppData) const;
 		virtual std::unique_ptr<Map> open(std::unique_ptr<stream::inout> content,
 			SuppData& suppData) const;
-		virtual SuppFilenames getRequiredSupps(stream::input& input,
+		virtual SuppFilenames getRequiredSupps(stream::input& content,
 			const std::string& filename) const;
 };
 

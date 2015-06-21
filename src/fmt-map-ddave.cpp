@@ -53,23 +53,41 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Layer_DDave_Background: virtual public Map2DCore::LayerCore
+class Layer_DDave_Background: public Map2DCore::LayerCore
 {
 	public:
 		Layer_DDave_Background(stream::input& content)
 		{
 			// Read the background layer
-			uint8_t bg[DD_LAYER_LEN_BG];
-			content.read((char *)bg, DD_LAYER_LEN_BG);
+			std::vector<uint8_t> bg(DD_LAYER_LEN_BG, DD_DEFAULT_BGTILE);
+			content.read(bg.data(), DD_LAYER_LEN_BG);
 
-			this->v_allItems.reserve(DD_MAP_WIDTH * DD_MAP_HEIGHT);
+			this->v_allItems.reserve(DD_LAYER_LEN_BG);
 			for (unsigned int i = 0; i < DD_LAYER_LEN_BG; i++) {
-				Map2D::Layer::Item t;
-				t.type = Map2D::Layer::Item::Type::Default;
+				Item t;
+				t.type = Item::Type::Default;
 				t.pos = {i % DD_MAP_WIDTH, i / DD_MAP_WIDTH};
 				t.code = bg[i];
 				if (t.code != DD_DEFAULT_BGTILE) this->v_allItems.push_back(t);
 			}
+		}
+
+		virtual ~Layer_DDave_Background()
+		{
+		}
+
+		void flush(stream::output& content)
+		{
+			// Write the background layer
+			std::vector<uint8_t> bg(DD_LAYER_LEN_BG, DD_DEFAULT_BGTILE);
+			for (auto& i : this->items()) {
+				if ((i.pos.x >= DD_MAP_WIDTH) || (i.pos.y >= DD_MAP_HEIGHT)) {
+					throw stream::error("Layer has tiles outside map boundary!");
+				}
+				bg[i.pos.y * DD_MAP_WIDTH + i.pos.x] = i.code;
+			}
+			content.write(bg.data(), DD_LAYER_LEN_BG);
+			return;
 		}
 
 		virtual std::string title() const
@@ -82,41 +100,41 @@ class Layer_DDave_Background: virtual public Map2DCore::LayerCore
 			return Caps::Default;
 		}
 
-		virtual Map2D::Layer::ImageFromCodeInfo imageFromCode(
-			const Map2D::Layer::Item& item, const TilesetCollection& tileset)
-			const
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
 		{
 			ImageFromCodeInfo ret;
 
 			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
 			if (t == tileset.end()) { // no tileset?!
 				ret.type = ImageFromCodeInfo::ImageType::Unknown;
-			} else {
-				auto& images = t->second->files();
-				if (item.code >= images.size()) { // out of range
-					ret.type = ImageFromCodeInfo::ImageType::Unknown;
-				} else {
-					ret.img = t->second->openImage(images[item.code]);
-					ret.type = ImageFromCodeInfo::ImageType::Supplied;
-				}
+				return ret;
 			}
+
+			auto& images = t->second->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = t->second->openImage(images[item.code]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
 			return ret;
 		}
 
 		virtual std::vector<Item> availableItems() const
 		{
-			std::vector<Item> items;
+			std::vector<Item> validItems;
 			for (unsigned int i = 0; i <= DD_MAX_VALID_TILECODE; i++) {
-				// The default tile actually has an image, so don't exclude it
 				if (i == DD_DEFAULT_BGTILE) continue;
 
-				Map2D::Layer::Item t;
-				t.type = Map2D::Layer::Item::Type::Default;
+				Item t;
+				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
-				items.push_back(t);
+				validItems.push_back(t);
 			}
-			return items;
+			return validItems;
 		}
 };
 
@@ -223,21 +241,13 @@ class Map_DDave: public MapCore, public Map2DCore
 			this->content->write((char *)path, DD_LAYER_LEN_PATH);
 
 			// Write the background layer
-			uint8_t bg[DD_LAYER_LEN_BG];
-			memset(bg, DD_DEFAULT_BGTILE, DD_LAYER_LEN_BG); // default background tile
-			auto layer = this->layers().at(0);
-			for (auto& i : layer->items()) {
-				if ((i.pos.x > DD_MAP_WIDTH) || (i.pos.y > DD_MAP_HEIGHT)) {
-					throw stream::error("Layer has tiles outside map boundary!");
-				}
-				bg[i.pos.y * DD_MAP_WIDTH + i.pos.x] = i.code;
-			}
-			this->content->write((char *)bg, DD_LAYER_LEN_BG);
+			auto layerBG = dynamic_cast<Layer_DDave_Background*>(this->v_layers[0].get());
+			layerBG->flush(*this->content);
 
 			// Write out padding
 			uint8_t pad[DD_PAD_LEN];
 			memset(pad, 0, DD_PAD_LEN);
-			this->content->write((char *)pad, DD_PAD_LEN);
+			this->content->write(pad, DD_PAD_LEN);
 
 			this->content->flush();
 			return;
@@ -269,10 +279,7 @@ class Map_DDave: public MapCore, public Map2DCore
 
 		Background background(const TilesetCollection& tileset) const
 		{
-			Background bg;
-			bg.att = Background::Attachment::SingleColour;
-			bg.clr = gamegraphics::PaletteEntry{0, 0, 0, 255};
-			return bg;
+			return this->backgroundFromTilecode(tileset, DD_DEFAULT_BGTILE);
 		}
 
 	private:
@@ -304,17 +311,19 @@ MapType::Certainty MapType_DDave::isInstance(stream::input& content) const
 {
 	stream::pos lenMap = content.size();
 
+	// Wrong size
 	// TESTED BY: fmt_map_ddave_isinstance_c01
-	if (lenMap != DD_FILESIZE) return MapType::DefinitelyNo; // wrong size
+	if (lenMap != DD_FILESIZE) return MapType::DefinitelyNo;
 
 	// Read in the layer and make sure all the tile codes are within range
-	uint8_t bg[DD_LAYER_LEN_BG];
+	std::vector<uint8_t> bg(DD_LAYER_LEN_BG, DD_DEFAULT_BGTILE);
 	content.seekg(DD_LAYER_OFF_BG, stream::start);
-	stream::len r = content.try_read(bg, DD_LAYER_LEN_BG);
+	stream::len r = content.try_read(bg.data(), DD_LAYER_LEN_BG);
 	if (r != DD_LAYER_LEN_BG) return MapType::DefinitelyNo; // read error
 	for (unsigned int i = 0; i < DD_LAYER_LEN_BG; i++) {
+		// Invalid tile
 		// TESTED BY: fmt_map_ddave_isinstance_c02
-		if (bg[i] > DD_MAX_VALID_TILECODE) return MapType::DefinitelyNo; // invalid tile
+		if (bg[i] > DD_MAX_VALID_TILECODE) return MapType::DefinitelyNo;
 	}
 
 	// TESTED BY: fmt_map_ddave_isinstance_c00
