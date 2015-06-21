@@ -47,8 +47,9 @@ class test_map_wacky: public test_map2d
 			this->type = "map-wacky";
 			this->pxSize = {64 * 32, 64 * 32};
 			this->numLayers = 1;
+			this->mapCode[0].pos = {0, 0};
 			this->mapCode[0].code = 0x20;
-			this->suppResult[SuppItem::Layer1].reset(new test_suppl1_map_wacky());
+			this->suppResult[SuppItem::Layer1] = std::make_shared<test_suppl1_map_wacky>();
 		}
 
 		void addTests()
