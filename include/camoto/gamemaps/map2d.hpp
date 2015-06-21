@@ -288,7 +288,8 @@ class Map2D::Layer
 			/// Which image to display, and which other members are valid
 			ImageType type;
 			/// When type == HexDigit, values 0-15 for digits 0-9,A-F
-			int digit;
+			/// 0x10..0x1F = 0..F, 0x100-0x1FF = 00..FF, 0x10000-0x1FFFF = 0000..FFFF
+			unsigned long digit;
 			/// When type == Supplied, the image to draw
 			std::shared_ptr<camoto::gamegraphics::Image> img;
 		};
@@ -448,6 +449,10 @@ inline Map2D::Layer::Item::Type operator| (Map2D::Layer::Item::Type a, Map2D::La
 	return static_cast<Map2D::Layer::Item::Type>(
 		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
 	);
+}
+
+inline Map2D::Layer::Item::Type operator|= (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
+	return a | b;
 }
 
 inline bool operator& (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {

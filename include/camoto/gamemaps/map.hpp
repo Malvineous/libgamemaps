@@ -168,7 +168,15 @@ struct Attribute
 class HasAttributes
 {
 	public:
-		/// Get a list of attributes for this map.
+		/// Get a copy of the attributes for this map.
+		/**
+		 * @note As the returned value is a copy, any changes will not affect the
+		 *   map.
+		 *
+		 * @return Copy of the map's attributes.  The indices into this vector are
+		 *   used for the index parameter in an attribute() call, to change the
+		 *   value of the attribute.
+		 */
 		virtual std::vector<Attribute> attributes() const = 0;
 
 		/// Change one of the map's integer/enum attributes.
@@ -201,14 +209,6 @@ class HasAttributes
 class Map: public Metadata, public HasAttributes
 {
 	public:
-		/// List of attributes (if any) in this map.
-		/**
-		 * This member is public to avoid having const and non-const getters.
-		 * Attributes should be populated at constructor time, so there's no need
-		 * to do any work in a getter function.
-		 */
-		std::vector<Attribute> attributes;
-
 		/// Information about a graphics file used to render this map.
 		struct GraphicsFilename {
 			std::string filename;  ///< Actual filename

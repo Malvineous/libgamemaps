@@ -663,10 +663,11 @@ finishTesting:
 		// Run through the actions on the command line
 		for (auto& i : pa.options) {
 			if (i.string_key.compare("info") == 0) {
+				auto attributes = pMap->attributes();
 				std::cout << (bScript ? "attribute_count=" : "Number of attributes: ")
-					<< pMap->attributes.size() << "\n";
+					<< attributes.size() << "\n";
 				int attrNum = 0;
-				for (auto& a : pMap->attributes) {
+				for (auto& a : attributes) {
 
 					if (bScript) std::cout << "attribute" << attrNum << "_name=";
 					else std::cout << "Attribute " << attrNum+1 << ": ";
