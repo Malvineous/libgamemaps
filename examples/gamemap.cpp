@@ -315,40 +315,38 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 		srcPal->at(255).blue = 192;
 		srcPal->at(255).alpha = 0;
 	}
+
 	png::palette pal(srcPal->size());
+	png::tRNS transparency(srcPal->size());
 	int j = 0;
-	png::tRNS transparency;
+	png::index_pixel xp(0);
+	bool hasXP = false;
 	for (auto& i : *srcPal) {
 		pal[j] = png::color(i.red, i.green, i.blue);
-		if (i.alpha == 0) transparency.push_back(j);
+		transparency[j] = i.alpha;
+		if (i.alpha == 0) {
+			xp = j;
+			hasXP = true;
+		}
 		j++;
 	}
-	useMask = srcPal->size() < 255; // only mask if enough room in the palette
-	if (useMask) {
-		// Increment any transparent indices because we're going to insert a new
-		// colour for transparency
-		for (png::tRNS::iterator i = transparency.begin(); i != transparency.end(); i++) {
-			(*i)++;
-		}
-		// Make first colour transparent
+	if ((srcPal->size() < 255) && (!hasXP)) {
+		// Palette has no transparent entry but has room for one, so insert entry at
+		// start of palette (this means tRNS block can be only one byte long)
 		pal.insert(pal.begin(), png::color(255, 0, 192));
 		transparency.insert(transparency.begin(), 0);
+		useMask = true; // increment all palette indices from now on
 	}
 	png.set_palette(pal);
-	int transparentIndex = 0;
-	if (transparency.size() > 0) {
-		png.set_tRNS(transparency);
-		transparentIndex = transparency[0];
-	}
+	if (transparency.size() > 0) png.set_tRNS(transparency);
 
 	// Get the map background
 	auto bg = map.background(allTilesets);
 	switch (bg.att) {
 		case gm::Map2D::Background::Attachment::NoBackground: {
-			png::index_pixel clr(transparentIndex);
 			for (unsigned int y = 0; y < outSize.y; y++) {
 				for (unsigned int x = 0; x < outSize.x; x++) {
-					png[y][x] = clr;
+					png[y][x] = xp;
 				}
 			}
 			break;
@@ -379,15 +377,19 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 		// TODO - case gm::Map2D::Background::Attachment::SingleImageCentred:
 		case gm::Map2D::Background::Attachment::SingleImageTiled: {
 			auto tilePixels = bg.img->convert();
+			auto tileMask = bg.img->convert_mask();
 			auto tileSize = bg.img->dimensions();
 			for (unsigned int y = 0; y < outSize.y; y++) {
 				for (unsigned int x = 0; x < outSize.x; x++) {
+					auto pos = (y % tileSize.y) * tileSize.x + (x % tileSize.x);
 					png[y][x] =
-						// +1 to the colour to skip over transparent (#0)
-						png::index_pixel(
-							tilePixels[
-								(y % tileSize.y) * tileSize.x + (x % tileSize.x)
-							] + (useMask ? 1 : 0)
+						(tileMask[pos] & (int)gg::Image::Mask::Transparent) ? (
+							xp
+						) : (
+							png::index_pixel(
+								// +1 to the colour to skip over transparent (#0)
+								tilePixels[pos] + (useMask ? 1 : 0)
+							)
 						);
 				}
 			}
@@ -462,10 +464,17 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 					unsigned int pngX = offX+tX;
 					if (pngX >= outSize.x) break; // don't write past image edge
 					// Only write opaque pixels
-					if ((thisTile.mask[tY * thisTile.dims.x + tX] & 0x01) == 0) {
+					if ((thisTile.mask[tY * thisTile.dims.x + tX] & (int)gg::Image::Mask::Transparent) == 0) {
+						auto pos = tY * thisTile.dims.x + tX;
 						png[pngY][pngX] =
-							// +1 to the colour to skip over transparent (#0)
-							png::index_pixel(thisTile.data[tY * thisTile.dims.x + tX] + (useMask ? 1 : 0));
+							(thisTile.mask[pos] & (int)gg::Image::Mask::Transparent) ? (
+								xp
+							) : (
+								png::index_pixel(
+									// +1 to the colour to skip over transparent (#0)
+									thisTile.data[pos] + (useMask ? 1 : 0)
+								)
+							);
 					} // else let higher layers see through to lower ones
 				}
 			}
