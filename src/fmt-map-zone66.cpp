@@ -21,9 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include "map2d-generic.hpp"
+#include <camoto/util.hpp> // make_unique
+#include "map-core.hpp"
+#include "map2d-core.hpp"
 #include "fmt-map-zone66.hpp"
 
 /// Width of the map, in tiles
@@ -33,7 +34,7 @@
 #define Z66_MAP_HEIGHT 256
 
 /// Length of the background layer, in bytes
-#define Z66_MAP_BG_LEN (Z66_MAP_WIDTH * Z66_MAP_HEIGHT)
+#define Z66_LAYER_LEN_BG (Z66_MAP_WIDTH * Z66_MAP_HEIGHT)
 
 /// Width of each tile, in pixels
 #define Z66_TILE_WIDTH  32
@@ -49,242 +50,288 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Layer_Zone66Background: virtual public GenericMap2D::Layer
+class Layer_Zone66_Background: public Map2DCore::LayerCore
 {
 	public:
-		Layer_Zone66Background(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Background",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Zone66_Background(stream::input& content, stream::input& tilemap)
 		{
+			// Read the background layer
+			std::vector<uint8_t> bg(Z66_LAYER_LEN_BG, Z66_DEFAULT_BGTILE);
+			auto amtRead = content.try_read(bg.data(), Z66_LAYER_LEN_BG);
+			if (amtRead != Z66_LAYER_LEN_BG) {
+				std::cout << "Warning: Zone 66 level file was "
+					<< (Z66_LAYER_LEN_BG - amtRead)
+					<< " bytes short - the last tiles will be left blank" << std::endl;
+			}
+
+			// Read the tile mapping table
+			tilemap.seekg(0, stream::start);
+			uint16_t lenTilemap, unknown;
+			tilemap
+				>> u16le(lenTilemap)
+				>> u16le(unknown)
+			;
+			if (lenTilemap > 256) lenTilemap = 256;
+			std::vector<unsigned int> tm(256, Z66_DEFAULT_BGTILE);
+			for (unsigned int i = 0; i < lenTilemap; i++) {
+				tilemap >> u16le(tm[i]);
+			}
+
+			this->v_allItems.reserve(Z66_LAYER_LEN_BG);
+			for (unsigned int i = 0; i < Z66_LAYER_LEN_BG; i++) {
+				if (bg[i] == Z66_DEFAULT_BGTILE) continue;
+
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {i % Z66_MAP_WIDTH, i / Z66_MAP_WIDTH};
+				t.code = tm[bg[i]];
+				this->v_allItems.push_back(t);
+			}
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void flush(stream::output& content, stream::output& tilemap)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
+			// Write the background layer
+			unsigned int numTileMappings = 0;
+			unsigned int mapBG[256];
 
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = t->second->openImage(images[item->code]);
-			return Map2D::Layer::Supplied;
+			std::vector<uint8_t> bg(Z66_LAYER_LEN_BG, Z66_DEFAULT_BGTILE);
+			for (auto& i : this->items()) {
+				if ((i.pos.x > Z66_MAP_WIDTH) || (i.pos.y > Z66_MAP_HEIGHT)) {
+					throw stream::error("Layer has tiles outside map boundary!");
+				}
+
+				// Look for an existing tile mapping first
+				bool found = false;
+				for (unsigned int m = 0; m < numTileMappings; m++) {
+					if (mapBG[m] == i.code) {
+						bg[i.pos.y * Z66_MAP_WIDTH + i.pos.x] = m;
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					// Have to add this tile to the mapping table
+					if (numTileMappings >= 256) {
+						throw stream::error("There are too many unique tiles in this level - "
+							"Zone 66 only supports up to 256 different tiles in each level.  "
+							"Please remove some tiles and try again.");
+					}
+					bg[i.pos.y * Z66_MAP_WIDTH + i.pos.x] = numTileMappings;
+					mapBG[numTileMappings++] = i.code;
+					/// @todo Use the correct "destroyed" tile code
+					mapBG[numTileMappings++] = i.code;
+				}
+			}
+			content.write(bg.data(), Z66_LAYER_LEN_BG);
+
+			// Write the tile mapping table
+			tilemap.seekp(0, stream::start);
+			tilemap
+				<< u16le(numTileMappings)
+				<< u16le(0) /// @todo Animated tiles
+#warning TODO: Animated tiles
+			;
+			for (unsigned int i = 0; i < numTileMappings; i++) {
+				tilemap
+					<< u16le(mapBG[i * 2])      // normal tile
+					<< u16le(mapBG[i * 2 + 1])  // destroyed tile
+				;
+			}
+
+#warning TODO: Write correct values for tile points/score
+			/// @todo Write correct values for tile points/score
+			tilemap << nullPadded("", numTileMappings);
+
+#warning TODO: Write correct values for canDestroy flags
+			/// @todo Write correct values for canDestroy flags
+			tilemap << nullPadded("", numTileMappings);
+
+			/// @todo Write animated tile info
+#warning TODO: Write animated tile info
+
+			tilemap.flush();
+
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Background";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto& images = t->second->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = t->second->openImage(images[item.code]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> validItems;
+/// @todo Add all tiles instead of just ones already in the map, and rewrite the map on save
+			for (unsigned int i = 0; i < 300; i++) {
+				if (i == Z66_DEFAULT_BGTILE) continue;
+
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				validItems.push_back(t);
+			}
+			return validItems;
 		}
 
 };
 
+class Map_Zone66: public MapCore, public Map2DCore
+{
+	public:
+		Map_Zone66(std::unique_ptr<stream::inout> content,
+			std::unique_ptr<stream::inout> tilemap)
+			:	content(std::move(content)),
+				tilemap(std::move(tilemap))
+		{
+			this->content->seekg(0, stream::start);
 
-std::string MapType_Zone66::getMapCode() const
+			// Read the background layer
+			this->v_layers.push_back(
+				std::make_shared<Layer_Zone66_Background>(*this->content, *this->tilemap)
+			);
+		}
+
+		virtual ~Map_Zone66()
+		{
+		}
+
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
+		{
+#warning TODO: Proper graphics filename
+			return {};
+		}
+
+		virtual void flush()
+		{
+			assert(this->layers().size() == 1);
+
+			this->content->truncate(Z66_LAYER_LEN_BG);
+			this->content->seekp(0, stream::start);
+
+			// Write the background layer
+			auto layerBG = dynamic_cast<Layer_Zone66_Background*>(this->v_layers[0].get());
+			layerBG->flush(*this->content, *this->tilemap);
+
+			this->content->flush();
+			return;
+		}
+
+		virtual Caps caps() const
+		{
+			return
+				Map2D::Caps::HasViewport
+				| Map2D::Caps::HasMapSize
+				| Map2D::Caps::HasTileSize
+			;
+		}
+
+		virtual Point viewport() const
+		{
+			return {320, 200};
+		}
+
+		virtual Point mapSize() const
+		{
+			return {Z66_MAP_WIDTH, Z66_MAP_HEIGHT};
+		}
+
+		virtual Point tileSize() const
+		{
+			return {Z66_TILE_WIDTH, Z66_TILE_HEIGHT};
+		}
+
+		Background background(const TilesetCollection& tileset) const
+		{
+			return this->backgroundFromTilecode(tileset, Z66_DEFAULT_BGTILE);
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+		std::unique_ptr<stream::inout> tilemap;
+};
+
+
+std::string MapType_Zone66::code() const
 {
 	return "map-zone66";
 }
 
-std::string MapType_Zone66::getFriendlyName() const
+std::string MapType_Zone66::friendlyName() const
 {
 	return "Zone 66 level";
 }
 
-std::vector<std::string> MapType_Zone66::getFileExtensions() const
+std::vector<std::string> MapType_Zone66::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("z66");
-	return vcExtensions;
+	return {"z66"};
 }
 
-std::vector<std::string> MapType_Zone66::getGameList() const
+std::vector<std::string> MapType_Zone66::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Zone 66");
-	return vcGames;
+	return {"Zone 66"};
 }
 
-MapType::Certainty MapType_Zone66::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Zone66::isInstance(stream::input& content) const
 {
-	stream::pos lenMap = psMap->size();
+	stream::pos lenMap = content.size();
 
 	// Make sure there's enough data to read the map dimensions
 	// TESTED BY: fmt_map_zone66_isinstance_c01
-	if (lenMap != Z66_MAP_WIDTH * Z66_MAP_HEIGHT) return MapType::DefinitelyNo;
+	if (lenMap != Z66_LAYER_LEN_BG) return MapType::DefinitelyNo;
 
 	// TESTED BY: fmt_map_zone66_isinstance_c00
 	return MapType::PossiblyYes;
 }
 
-MapPtr MapType_Zone66::create(SuppData& suppData) const
+std::unique_ptr<Map> MapType_Zone66::create(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr MapType_Zone66::open(stream::input_sptr input, SuppData& suppData) const
+std::unique_ptr<Map> MapType_Zone66::open(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	// Read the background layer
-	uint8_t *bg = new uint8_t[Z66_MAP_BG_LEN];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	memset(bg, Z66_DEFAULT_BGTILE, Z66_MAP_BG_LEN); // default background tile
-	input->seekg(0, stream::start);
-	stream::len amtRead = input->try_read(bg, Z66_MAP_BG_LEN);
-	if (amtRead != Z66_MAP_BG_LEN) {
-		std::cout << "Warning: Zone 66 level file was "
-			<< (Z66_MAP_BG_LEN - amtRead)
-			<< " bytes short - the last tiles will be left blank" << std::endl;
+	auto tilemap = suppData.find(SuppItem::Extra1);
+	if (tilemap == suppData.end()) {
+		throw stream::error("Missing content for layer: Extra1");
 	}
-
-	// Read the tile mapping table
-	stream::input_sptr dataMapBG = suppData[SuppItem::Extra1];
-	if (!dataMapBG) throw stream::error("Mandatory Extra1 supplementary item (Z66 tile mapping table) was not supplied.");
-	dataMapBG->seekg(0, stream::start);
-	uint16_t lenTilemap, unknown;
-	dataMapBG
-		>> u16le(lenTilemap)
-		>> u16le(unknown)
-	;
-	if (lenTilemap > 256) lenTilemap = 256;
-	unsigned int tilemap[256];
-	for (unsigned int i = 0; i < lenTilemap; i++) {
-		dataMapBG >> u16le(tilemap[i]);
-	}
-	for (unsigned int i = lenTilemap; i < 256; i++) tilemap[i] = Z66_DEFAULT_BGTILE;
-
-	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
-	tiles->reserve(Z66_MAP_BG_LEN);
-	for (unsigned int i = 0; i < Z66_MAP_BG_LEN; i++) {
-		// The default tile actually has an image, so don't exclude it
-		//if (bg[i] == Z66_DEFAULT_BGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = i % Z66_MAP_WIDTH;
-		t->y = i / Z66_MAP_WIDTH;
-		t->code = tilemap[bg[i]];
-		tiles->push_back(t);
-	}
-
-	// Populate the list of permitted tiles
-	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-
-/// @todo Add all tiles instead of just ones already in the map, and rewrite the map on save
-	for (unsigned int i = 0; i < 300; i++) {
-
-		// The default tile actually has an image, so don't exclude it
-		//if (i == Z66_DEFAULT_BGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validBGItems->push_back(t);
-	}
-
-	// Create the map structures
-	Map2D::LayerPtr bgLayer(new Layer_Zone66Background(tiles, validBGItems));
-
-	Map2D::LayerPtrVector layers;
-	layers.push_back(bgLayer);
-
-	Map2DPtr map(new GenericMap2D(
-		Map::Attributes(), Map::GraphicsFilenames(),
-		Map2D::HasViewport,
-		320, 200, // viewport size
-		Z66_MAP_WIDTH, Z66_MAP_HEIGHT,
-		Z66_TILE_WIDTH, Z66_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
-
-	return map;
+	return std::make_unique<Map_Zone66>(std::move(content),
+		std::move(tilemap->second));
 }
 
-void MapType_Zone66::write(MapPtr map, stream::expanding_output_sptr output,
-	ExpandingSuppData& suppData) const
-{
-	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 1)
-		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned int mapWidth, mapHeight;
-	map2d->getMapSize(&mapWidth, &mapHeight);
-	if ((mapWidth != Z66_MAP_WIDTH) || (mapHeight != Z66_MAP_HEIGHT))
-		throw stream::error("Incorrect map dimensions for this format.");
-
-	Map2D::LayerPtr layer = map2d->getLayer(0);
-
-	unsigned int numTileMappings = 0;
-	unsigned int mapBG[256];
-
-	// Prepare the background layer
-	uint8_t *bg = new uint8_t[Z66_MAP_BG_LEN];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	memset(bg, Z66_DEFAULT_BGTILE, Z66_MAP_BG_LEN); // default background tile
-	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-		i != items->end();
-		i++
-	) {
-		if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-			throw stream::error("Layer has tiles outside map boundary!");
-		}
-		// Look for an existing tile mapping first
-		bool found = false;
-		for (unsigned int m = 0; m < numTileMappings; m++) {
-			if (mapBG[m] == (*i)->code) {
-				bg[(*i)->y * mapWidth + (*i)->x] = m;
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			// Have to add this tile to the mapping table
-			if (numTileMappings >= 256) {
-				throw stream::error("There are too many unique tiles in this level - "
-					"Zone 66 only supports up to 256 different tiles in each level.  "
-					"Please remove some tiles and try again.");
-			}
-			bg[(*i)->y * mapWidth + (*i)->x] = numTileMappings;
-			mapBG[numTileMappings++] = (*i)->code;
-			/// @todo Use the correct "destroyed" tile code
-			mapBG[numTileMappings++] = (*i)->code;
-		}
-	}
-	output->seekp(0, stream::start);
-	output->write(bg, Z66_MAP_BG_LEN);
-	output->flush();
-
-	// Write the tile mapping table
-	stream::output_sptr dataMapBG = suppData[SuppItem::Extra1];
-	dataMapBG->seekp(0, stream::start);
-	dataMapBG
-		<< u16le(numTileMappings)
-		<< u16le(0) /// @todo Animated tiles
-	;
-	for (unsigned int i = 0; i < numTileMappings; i++) {
-		dataMapBG
-			<< u16le(mapBG[i * 2])      // normal tile
-			<< u16le(mapBG[i * 2 + 1])  // destroyed tile
-		;
-	}
-
-	/// @todo Write correct values for tile points/score
-	dataMapBG << nullPadded("", numTileMappings);
-
-	/// @todo Write correct values for canDestroy flags
-	dataMapBG << nullPadded("", numTileMappings);
-
-	/// @todo Write animated tile info
-
-	dataMapBG->flush();
-
-	return;
-}
-
-SuppFilenames MapType_Zone66::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Zone66::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
 	SuppFilenames supps;
