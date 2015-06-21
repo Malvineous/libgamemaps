@@ -111,6 +111,18 @@ class test_map2d: public test_main
 		 */
 		void populateSuppData();
 
+		/// Check if main content and all supp data streams match expected values.
+		/**
+		 * @param fnExpected
+		 *   test_map2d member function to call (on the suppitem instance) to
+		 *   get the expected data, e.g. &test_map2d::initialstate
+		 *
+		 * @param msg
+		 *   Error message in case of data mismatch.
+		 */
+		void checkData(std::function<std::string(test_map2d&)> fnExpected,
+			const std::string& msg);
+
 		/// Add an isInstance check to run later.
 		/**
 		 * @param result
@@ -257,9 +269,7 @@ class test_map2d: public test_main
 };
 
 /// Add a test_map2d member function to the test suite
-#define ADD_MAP2D_TEST(create, fn) { \
-	boost::function<void()> fnTest = boost::bind(fn, this); \
-	this->test_map2d::addBoundTest(create, fnTest, BOOST_TEST_STRINGIZE(fn)); \
-}
+#define ADD_MAP2D_TEST(create, fn) \
+	this->test_map2d::addBoundTest(create, std::bind(fn, this), BOOST_TEST_STRINGIZE(fn));
 
 #endif // _CAMOTO_GAMEMAPS_TEST_MAP2D_HPP_

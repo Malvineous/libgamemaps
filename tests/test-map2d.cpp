@@ -26,22 +26,6 @@
 using namespace camoto;
 using namespace camoto::gamemaps;
 
-/// Check whether a supp item is present and if so that the content is correct.
-#define CHECK_ALL_SUPP_ITEMS(check_func, msg) \
-	for (unsigned int i = 0; i < (unsigned int)SuppItem::MaxValue; i++) { \
-		auto s = (SuppItem)i; \
-		if ( \
-			(this->suppResult.find(s) != this->suppResult.end()) \
-			&& (this->suppResult[s]->written) \
-		) { \
-			BOOST_CHECK_MESSAGE( \
-				this->is_supp_equal(s, \
-					this->suppResult[s]->check_func()), \
-				"[SuppItem::" << camoto::suppToString(s) << "] " msg \
-			); \
-		} \
-	}
-
 test_map2d::test_map2d()
 	:	numIsInstanceTests(0),
 		numInvalidContentTests(1),
@@ -87,6 +71,7 @@ void test_map2d::runTest(bool empty, boost::function<void()> fnTest)
 {
 	this->map.reset();
 	this->prepareTest(empty);
+
 	BOOST_REQUIRE_MESSAGE(
 		this->map.unique(),
 		"Map has multiple references (" << this->map.use_count()
@@ -116,7 +101,7 @@ void test_map2d::prepareTest(bool empty)
 
 	std::shared_ptr<Map> basemap;
 	if (empty) {
-		BOOST_TEST_CHECKPOINT("About to create new empty instance of "
+		BOOST_TEST_CHECKPOINT("About to create new empty Map2D instance of "
 			+ this->basename);
 		// This should really use BOOST_REQUIRE_NO_THROW but the message is more
 		// informative without it.
@@ -126,7 +111,7 @@ void test_map2d::prepareTest(bool empty)
 	} else {
 		*this->base << this->initialstate();
 		BOOST_TEST_CHECKPOINT("About to open " + this->basename
-			+ " initialstate as an archive");
+			+ " initialstate to get a Map2D instance");
 		// This should really use BOOST_REQUIRE_NO_THROW but the message is more
 		// informative without it.
 		//BOOST_REQUIRE_NO_THROW(
@@ -168,6 +153,28 @@ void test_map2d::populateSuppData()
 		// Wrap this in a substream to get a unique pointer, with an independent
 		// seek position.
 		this->suppData[item] = stream_wrap(suppSS);
+	}
+	return;
+}
+
+void test_map2d::checkData(std::function<std::string(test_map2d&)> fnExpected,
+	const std::string& msg)
+{
+	// Flush out any changes before we perform the check
+	if (this->map) this->map->flush();
+
+	// Check main data
+	BOOST_CHECK_MESSAGE(
+		this->is_content_equal(fnExpected(*this)),
+		msg
+	);
+
+	// Check all available suppitems
+	for (auto& suppItem : this->suppResult) {
+		BOOST_CHECK_MESSAGE(
+			this->is_supp_equal(suppItem.first, fnExpected(*suppItem.second)),
+			"[SuppItem::" << camoto::suppToString(suppItem.first) << "] " << msg
+		);
 	}
 	return;
 }
@@ -262,6 +269,25 @@ void test_map2d::test_conversion(const std::string& input,
 	BOOST_TEST_MESSAGE(createString("conversion check (" << this->basename
 		<< "; " << std::setfill('0') << std::setw(2) << testNumber << ")"));
 
+	// Reopen the map instance with the input data instead of initialstate
+	this->map.reset();
+	auto mapType = MapManager::byCode(this->type);
+	BOOST_REQUIRE_MESSAGE(mapType, "Could not find map type " + this->type);
+
+	// Make this->suppData valid
+	this->resetSuppData(false);
+	this->populateSuppData();
+
+	this->base = std::make_unique<stream::string>();
+	*this->base << input;
+
+	std::shared_ptr<Map> basemap;
+	BOOST_TEST_CHECKPOINT("About to open " + this->basename
+		+ " initialstate to get a Map2D instance");
+	basemap = mapType->open(stream_wrap(this->base), this->suppData);
+	this->map = std::dynamic_pointer_cast<Map2D>(basemap);
+	BOOST_REQUIRE_MESSAGE(this->map, "Could not create map class");
+
 	this->base->truncate(0);
 	this->map->flush();
 
@@ -269,7 +295,6 @@ void test_map2d::test_conversion(const std::string& input,
 		this->is_content_equal(output),
 		"Error writing map - data is different to expected"
 	);
-
 	return;
 }
 
@@ -411,32 +436,20 @@ void test_map2d::test_read()
 	}
 }
 
-#define ERASE_SUPPITEM(suppitem) \
-	this->suppData[camoto::SuppItem::suppitem]->truncate(0);
-
 void test_map2d::test_write()
 {
 	BOOST_TEST_MESSAGE("Write map codes");
 
+	// Truncate the main content as that should always be written out in full
 	this->base->truncate(0);
 
-	// Erase all the supp items
-	for (unsigned int i = 0; i < (unsigned int)SuppItem::MaxValue; i++) {
-		auto s = (SuppItem)i;
-		if (this->suppResult.find(s) != this->suppResult.end()) {
-			this->suppData[s]->truncate(0);
-		}
-	}
+	// Don't erase any the supp items as the original data will be there in the
+	// game files, and some supp items might not be written out as they do not
+	// need to be changed.
 
-	this->map->flush();
-
-	BOOST_CHECK_MESSAGE(
-		this->is_content_equal(this->initialstate()),
+	this->checkData(&test_map2d::initialstate,
 		"Error writing map to a file - data is different to original"
 	);
-
-	CHECK_ALL_SUPP_ITEMS(initialstate,
-		"Error writing map to a file - data is different to original");
 }
 
 void test_map2d::test_codelist()
