@@ -89,6 +89,90 @@ bool split(const std::string& in, char delim, std::string *out1, std::string *ou
 	return bAltDest;
 }
 
+/// Open an image.
+/**
+ * @param filename
+ *   File to open.
+ *
+ * @param type
+ *   File type if it can't be autodetected.
+ *
+ * @return Shared pointer to the image.
+ *
+ * @throw stream::error on error
+ */
+std::shared_ptr<gg::Image> openImage(const std::string& filename,
+	const std::string& type)
+{
+	std::unique_ptr<stream::inout> psImage;
+	try {
+		psImage = std::make_unique<stream::file>(filename, false);
+	} catch (const stream::open_error& e) {
+		std::cerr << "Error opening " << filename << ": " << e.what()
+			<< std::endl;
+		throw stream::error("Unable to open image " + filename + ": "
+			+ e.get_message());
+	}
+
+	gg::ImageManager::handler_t imageType;
+	if (type.empty()) {
+		// Need to autodetect the file format.
+		for (auto& i : gg::ImageManager::formats()) {
+			switch (i->isInstance(*psImage)) {
+				case gg::ImageType::Certainty::DefinitelyNo:
+					break;
+				case gg::ImageType::Certainty::Unsure:
+					// If we haven't found a match already, use this one
+					if (!imageType) imageType = i;
+					break;
+				case gg::ImageType::Certainty::PossiblyYes:
+					// Take this one as it's better than an uncertain match
+					imageType = i;
+					break;
+				case gg::ImageType::Certainty::DefinitelyYes:
+					imageType = i;
+					// Don't bother checking any other formats if we got a 100% match
+					goto finishTesting;
+			}
+		}
+finishTesting:
+		if (!imageType) {
+			std::cerr << "Unable to automatically determine the graphics file "
+				"type.  Use the --graphicstype option to manually specify the file "
+				"format." << std::endl;
+			throw stream::error("Unable to open image");
+		}
+	} else {
+		imageType = gg::ImageManager::byCode(type);
+		if (!imageType) {
+			std::cerr << "Unknown file type given to -y/--graphicstype: " << type
+				<< std::endl;
+			throw stream::error("Unable to open image");
+		}
+	}
+	assert(imageType);
+
+	// See if the format requires any supplemental files
+	camoto::SuppData suppData;
+	for (auto i : imageType->getRequiredSupps(*psImage, filename)) {
+		try {
+			std::cerr << "Opening supplemental file " << i.second << std::endl;
+			suppData[i.first] = std::make_unique<stream::file>(i.second, false);
+		} catch (const stream::open_error& e) {
+			std::cerr << "Error opening supplemental file " << i.second << ": "
+				<< e.what() << std::endl;
+			throw stream::error("Unable to open supplemental file " + i.second
+				+ ": " +  e.get_message());
+		}
+	}
+
+	// Open the graphics file
+	std::cout << "Opening image " << filename << " as "
+		<< imageType->code() << std::endl;
+
+	return imageType->open(std::move(psImage), suppData);
+}
+
 /// Open a tileset.
 /**
  * @param filename
@@ -104,6 +188,22 @@ bool split(const std::string& in, char delim, std::string *out1, std::string *ou
 std::shared_ptr<gg::Tileset> openTileset(const std::string& filename,
 	const std::string& type)
 {
+	if (type.substr(0, 4).compare("img-") == 0) {
+		// This is an image, not a tileset, so create a tileset with one image in it
+		return gg::make_Tileset_FromImageList(
+			{
+				{
+					openImage(filename, type),
+					gg::Tileset_FromImageList::Item::AttachmentType::Append,
+					gg::Tileset_FromImageList::Item::SplitType::SingleTile,
+					{0, 0}, // tile size
+					{0, 0, 0, 0}, // image size
+					{}
+				}
+			},
+			1
+		);
+	}
 	std::unique_ptr<stream::inout> psTileset;
 	try {
 		psTileset = std::make_unique<stream::file>(filename, false);
