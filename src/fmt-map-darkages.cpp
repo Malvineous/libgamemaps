@@ -21,9 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include "map2d-generic.hpp"
+#include <camoto/util.hpp> // make_unique
+#include "map-core.hpp"
+#include "map2d-core.hpp"
 #include "fmt-map-darkages.hpp"
 
 #define DA_TILE_WIDTH           16
@@ -31,6 +32,7 @@
 
 #define DA_MAP_WIDTH           128 ///< Width of map, in tiles
 #define DA_MAP_HEIGHT            9 ///< Height of map, in tiles
+#define DA_LAYER_LEN_BG         (DA_MAP_WIDTH * DA_MAP_HEIGHT)
 
 /// Map code to write for locations with no tile set.
 #define DA_DEFAULT_BGTILE     0x00
@@ -43,30 +45,67 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Layer_DarkAgesBackground: virtual public GenericMap2D::Layer
+class Layer_DarkAges_Background: public Map2DCore::LayerCore
 {
 	public:
-		Layer_DarkAgesBackground(ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Background",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_DarkAges_Background(stream::input& content)
+		{
+			// Read the background layer
+			std::vector<uint8_t> bg(DA_LAYER_LEN_BG, DA_DEFAULT_BGTILE);
+			content.read(bg.data(), DA_LAYER_LEN_BG);
+
+			this->v_allItems.reserve(DA_LAYER_LEN_BG);
+			for (unsigned int i = 0; i < DA_LAYER_LEN_BG; i++) {
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {i % DA_MAP_WIDTH, i / DA_MAP_WIDTH};
+				t.code = bg[i];
+				if (t.code != DA_DEFAULT_BGTILE) this->v_allItems.push_back(t);
+			}
+		}
+
+		virtual ~Layer_DarkAges_Background()
 		{
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void flush(stream::output& content)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
+			// Write the background layer
+			std::vector<uint8_t> bg(DA_LAYER_LEN_BG, DA_DEFAULT_BGTILE);
+			for (auto& i : this->items()) {
+				if ((i.pos.x >= DA_MAP_WIDTH) || (i.pos.y >= DA_MAP_HEIGHT)) {
+					throw stream::error("Layer has tiles outside map boundary!");
+				}
+				bg[i.pos.y * DA_MAP_WIDTH + i.pos.x] = i.code;
+			}
+
+			content.write(bg.data(), bg.size());
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Background";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
 
 			unsigned int tilesetIndex, imageIndex;
-			switch (item->code) {
+			switch (item.code) {
 				// This mapping was borrowed from Frenkel's DAVIEW.BAS
 				case 100: tilesetIndex = 3; imageIndex = 1; break;
 				case 101: tilesetIndex = 3; imageIndex = 8; break;
@@ -113,164 +152,166 @@ class Layer_DarkAgesBackground: virtual public GenericMap2D::Layer
 				case 142: tilesetIndex = 3; imageIndex = 30; break;
 				case 143: tilesetIndex = 6; imageIndex = 0; break;
 				default:
-					tilesetIndex = item->code / 50;
-					imageIndex = item->code % 50;
+					tilesetIndex = item.code / 50;
+					imageIndex = item.code % 50;
 					break;
 			}
 
-			const Tileset::VC_ENTRYPTR& tilesets = t->second->getItems();
-			if (tilesetIndex >= tilesets.size()) return Map2D::Layer::Unknown; // out of range
+			auto& subtilesets = t->second->files();
+			if (tilesetIndex >= subtilesets.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
 
-			TilesetPtr tls = t->second->openTileset(tilesets[tilesetIndex]);
-			const Tileset::VC_ENTRYPTR& tilesets2 = tls->getItems();
+			auto ts = t->second->openTileset(subtilesets[tilesetIndex]);
+			auto& images = ts->files();
+			if (imageIndex >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
 
-			tls = tls->openTileset(tilesets2[0]);
-			const Tileset::VC_ENTRYPTR& images = tls->getItems();
-			if (imageIndex >= images.size()) return Map2D::Layer::Unknown; // out of range
-
-			*out = tls->openImage(images[imageIndex]);
-
-			return Map2D::Layer::Supplied;
+			ret.img = ts->openImage(images[imageIndex]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
 		}
 
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> validItems;
+			for (unsigned int i = 0; i <= DA_MAX_VALID_TILECODE; i++) {
+				if (i == DA_DEFAULT_BGTILE) continue;
+
+				Item t;
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				validItems.push_back(t);
+			}
+			return validItems;
+		}
+};
+
+class Map_DarkAges: public MapCore, public Map2DCore
+{
+	public:
+		Map_DarkAges(std::unique_ptr<stream::inout> content)
+			:	content(std::move(content))
+		{
+			this->content->seekg(0, stream::start);
+
+			// Read the background layer
+			this->v_layers.push_back(
+				std::make_shared<Layer_DarkAges_Background>(*this->content)
+			);
+		}
+
+		virtual ~Map_DarkAges()
+		{
+		}
+
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
+		{
+#warning Implement graphicsFilename()
+			return {};
+		}
+
+		virtual void flush()
+		{
+			assert(this->layers().size() == 1);
+
+			this->content->truncate(DA_LAYER_LEN_BG);
+			this->content->seekp(0, stream::start);
+			auto layerBG = dynamic_cast<Layer_DarkAges_Background*>(this->v_layers[0].get());
+			assert(layerBG);
+			layerBG->flush(*this->content);
+
+			this->content->flush();
+			return;
+		}
+
+		virtual Caps caps() const
+		{
+			return
+				Map2D::Caps::HasViewport
+				| Map2D::Caps::HasMapSize
+				| Map2D::Caps::HasTileSize
+			;
+		}
+
+		virtual Point viewport() const
+		{
+			return {240, 144};
+		}
+
+		virtual Point mapSize() const
+		{
+			return {DA_MAP_WIDTH, DA_MAP_HEIGHT};
+		}
+
+		virtual Point tileSize() const
+		{
+			return {DA_TILE_WIDTH, DA_TILE_HEIGHT};
+		}
+
+		Background background(const TilesetCollection& tileset) const
+		{
+			return this->backgroundFromTilecode(tileset, DA_DEFAULT_BGTILE);
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
 };
 
 
-std::string MapType_DarkAges::getMapCode() const
+std::string MapType_DarkAges::code() const
 {
 	return "map-darkages";
 }
 
-std::string MapType_DarkAges::getFriendlyName() const
+std::string MapType_DarkAges::friendlyName() const
 {
 	return "Dark Ages level";
 }
 
-std::vector<std::string> MapType_DarkAges::getFileExtensions() const
+std::vector<std::string> MapType_DarkAges::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("dal"); // made up, inside file05.da[123]
-	return vcExtensions;
+	return {"dal"}; // made up, inside file05.da[123]
 }
 
-std::vector<std::string> MapType_DarkAges::getGameList() const
+std::vector<std::string> MapType_DarkAges::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Dark Ages");
-	return vcGames;
+	return {"Dark Ages"};
 }
 
-MapType::Certainty MapType_DarkAges::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_DarkAges::isInstance(stream::input& content) const
 {
-	stream::pos lenMap = psMap->size();
+	stream::pos lenMap = content.size();
 
-	// Make sure there's enough data to read the map dimensions
+	// Wrong length
 	// TESTED BY: fmt_map_darkages_isinstance_c01
-	if (lenMap != 1152) return MapType::DefinitelyNo;
+	if (lenMap != DA_LAYER_LEN_BG) return MapType::DefinitelyNo;
 
 	// TESTED BY: fmt_map_darkages_isinstance_c00
 	return MapType::PossiblyYes;
 }
 
-MapPtr MapType_DarkAges::create(SuppData& suppData) const
+std::unique_ptr<Map> MapType_DarkAges::create(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr MapType_DarkAges::open(stream::input_sptr input, SuppData& suppData) const
+std::unique_ptr<Map> MapType_DarkAges::open(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	input->seekg(0, stream::start);
-	const unsigned int mapLen = DA_MAP_WIDTH * DA_MAP_HEIGHT;
-
-	// Read the background layer
-	uint8_t *bg = new uint8_t[mapLen];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	input->read((char *)bg, mapLen);
-
-	Map2D::Layer::ItemPtrVectorPtr tiles(new Map2D::Layer::ItemPtrVector());
-	tiles->reserve(mapLen);
-	for (unsigned int i = 0; i < mapLen; i++) {
-		// The default tile actually has an image, so don't exclude it
-		//if (bg[i] == DA_DEFAULT_BGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = i % DA_MAP_WIDTH;
-		t->y = i / DA_MAP_WIDTH;
-		t->code = bg[i];
-		tiles->push_back(t);
-	}
-
-	// Populate the list of permitted tiles
-	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i <= DA_MAX_VALID_TILECODE; i++) {
-		// The default tile actually has an image, so don't exclude it
-		//if (i == DA_DEFAULT_BGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validBGItems->push_back(t);
-	}
-
-	// Create the map structures
-	Map2D::LayerPtr bgLayer(new Layer_DarkAgesBackground(tiles, validBGItems));
-
-	Map2D::LayerPtrVector layers;
-	layers.push_back(bgLayer);
-
-	Map2DPtr map(new GenericMap2D(
-		Map::Attributes(), Map::GraphicsFilenames(),
-		Map2D::HasViewport,
-		240, 144, // viewport size
-		DA_MAP_WIDTH, DA_MAP_HEIGHT,
-		DA_TILE_WIDTH, DA_TILE_HEIGHT,
-		layers, Map2D::PathPtrVectorPtr()
-	));
-
-	return map;
+	return std::make_unique<Map_DarkAges>(std::move(content));
 }
 
-void MapType_DarkAges::write(MapPtr map, stream::expanding_output_sptr output,
-	ExpandingSuppData& suppData) const
-{
-	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 1)
-		throw stream::error("Incorrect layer count for this format.");
-
-	Map2D::LayerPtr layer = map2d->getLayer(0);
-
-	// Write the background layer
-	const unsigned int mapLen = DA_MAP_WIDTH * DA_MAP_HEIGHT;
-
-	uint8_t *bg = new uint8_t[mapLen];
-	boost::scoped_array<uint8_t> scoped_bg(bg);
-	memset(bg, DA_DEFAULT_BGTILE, mapLen); // default background tile
-	const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-		i != items->end();
-		i++
-	) {
-		if (((*i)->x > DA_MAP_WIDTH) || ((*i)->y > DA_MAP_HEIGHT)) {
-			throw stream::error("Layer has tiles outside map boundary!");
-		}
-		bg[(*i)->y * DA_MAP_WIDTH + (*i)->x] = (*i)->code;
-	}
-
-	output->write((char *)bg, mapLen);
-	output->flush();
-	return;
-}
-
-SuppFilenames MapType_DarkAges::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_DarkAges::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
-	SuppFilenames supps;
-	return supps;
+	return {};
 }
 
 } // namespace gamemaps
