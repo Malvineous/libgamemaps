@@ -48,6 +48,22 @@ class Map2DCore: virtual public Map2D
 			const;
 
 	protected:
+		/// Use a tilecode for the map background.
+		/**
+		 * This is a helper function for descendent classes to use when implementing
+		 * background(), for those maps that display a specific tile for the map
+		 * background.
+		 *
+		 * Often the map background is the first tile and it's completely black,
+		 * however just using a solid black background would be incorrect because
+		 * then changing that first tile to a different image would cause the map
+		 * background to change in the game, so that behaviour should be mirrored in
+		 * the level editor also.  This means care must be taken to ensure the
+		 * correct background is specified! (first tile vs solid colour)
+		 */
+		Background backgroundFromTilecode(const TilesetCollection& tileset,
+			unsigned int code) const;
+
 		std::vector<std::shared_ptr<Layer>> v_layers; ///< Layers for layers()
 		std::vector<std::shared_ptr<Path>> v_paths; ///< Paths for paths()
 };

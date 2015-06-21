@@ -224,5 +224,24 @@ std::shared_ptr<const gamegraphics::Palette> Map2DCore::LayerCore::palette(
 		"palette but didn't implement getPalette()!");
 }
 
+Map2D::Background Map2DCore::backgroundFromTilecode(
+	const TilesetCollection& tileset, unsigned int code) const
+{
+	Layer::Item item;
+	item.code = code;
+	auto imgInfo = this->v_layers[0]->imageFromCode(item, tileset);
+
+	Background bg;
+	if (imgInfo.type == Layer::ImageFromCodeInfo::ImageType::Supplied) {
+		// Got the image for the default tile, use that
+		bg.att = Background::Attachment::SingleImageTiled;
+		bg.img = imgInfo.img;
+	} else {
+		// Couldn't get the tile image for some reason, use transparent BG
+		bg.att = Background::Attachment::NoBackground;
+	}
+	return bg;
+}
+
 } // namespace gamemaps
 } // namespace camoto
