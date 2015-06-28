@@ -32,9 +32,9 @@ class test_map_sagent: public test_map2d
 			this->type = "map-sagent";
 			this->pxSize = {40 * 16, 4 * 16};
 			this->numLayers = 2;
+			this->mapCode[0].pos = {0, 0};
 			this->mapCode[0].code = ST(5, 14);
-			this->mapCode[1].pos.x = 3;
-			this->mapCode[1].pos.y = 2;
+			this->mapCode[1].pos = {3, 2};
 			this->mapCode[1].code = ST(5, 29);
 
 			this->outputWidth = 42;
