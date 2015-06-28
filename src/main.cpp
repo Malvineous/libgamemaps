@@ -53,7 +53,7 @@ const std::vector<std::shared_ptr<const MapType> > FormatEnumerator<MapType>::fo
 		MapType_CComic,
 		MapType_Cosmo,
 		MapType_DarkAges,
-		MapType_DDave
+		MapType_DDave,
 		MapType_Duke1,
 		MapType_GOT,
 		MapType_Harry,
