@@ -37,7 +37,7 @@ class test_map_duke1: public test_map2d
 			this->test_map2d::addTests();
 
 			// c00: Initial state
-			this->isInstance(MapType::PossiblyYes, this->initialstate());
+			this->isInstance(MapType::DefinitelyYes, this->initialstate());
 
 			// c01: Wrong size
 			this->isInstance(MapType::DefinitelyNo, STRING_WITH_NULLS(
