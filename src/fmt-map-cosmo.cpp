@@ -188,8 +188,16 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 
 		virtual std::vector<Item> availableItems() const
 		{
-#warning TODO
 			std::vector<Item> validItems;
+#warning TODO
+			for (int i = 0; i < 10; i++) {
+				validItems.emplace_back();
+				Item& item = validItems.back();
+				item.type = Item::Type::Default;
+				item.pos = {0, 0};
+				item.code = i + 31;
+				validItems.push_back(item);
+			}
 			return validItems;
 		}
 };
@@ -433,14 +441,19 @@ class Map_Cosmo: public MapCore, public Map2DCore
 			this->attr.push_back(attrMusic);
 
 			// Read in the actor layer
-			this->v_layers.push_back(std::make_shared<Layer_Cosmo_Actors>(
+			auto layerAC = std::make_shared<Layer_Cosmo_Actors>(
 				*this->content, lenMap
-			));
+			);
 
 			// Read the background layer
-			this->v_layers.push_back(std::make_shared<Layer_Cosmo_Background>(
+			auto layerBG = std::make_shared<Layer_Cosmo_Background>(
 				*this->content, lenMap, mapWidth
-			));
+			);
+
+			// Add the layers in the opposite order to what they are in the file, so
+			// the Z-order is correct.
+			this->v_layers.push_back(layerBG);
+			this->v_layers.push_back(layerAC);
 		}
 
 		virtual ~Map_Cosmo()
@@ -479,11 +492,11 @@ class Map_Cosmo: public MapCore, public Map2DCore
 			;
 
 			// Write the actor layer
-			auto layerAC = dynamic_cast<Layer_Cosmo_Actors*>(this->v_layers[0].get());
+			auto layerAC = dynamic_cast<Layer_Cosmo_Actors*>(this->v_layers[1].get());
 			layerAC->flush(*this->content, mapSize);
 
 			// Write the background layer
-			auto layerBG = dynamic_cast<Layer_Cosmo_Background*>(this->v_layers[1].get());
+			auto layerBG = dynamic_cast<Layer_Cosmo_Background*>(this->v_layers[0].get());
 			layerBG->flush(*this->content, mapSize);
 
 			this->content->flush();
