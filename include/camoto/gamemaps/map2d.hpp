@@ -451,8 +451,9 @@ inline Map2D::Layer::Item::Type operator| (Map2D::Layer::Item::Type a, Map2D::La
 	);
 }
 
-inline Map2D::Layer::Item::Type operator|= (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
-	return a | b;
+inline Map2D::Layer::Item::Type operator|= (Map2D::Layer::Item::Type& a, const Map2D::Layer::Item::Type& b) {
+	a = a | b;
+	return a;
 }
 
 inline bool operator& (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
