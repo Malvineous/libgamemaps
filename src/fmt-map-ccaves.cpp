@@ -96,25 +96,15 @@ void setFlags(Map2D::Layer::Item& item, unsigned int flags)
 	return;
 }
 
-class Layer_CCaves_Background: public Map2DCore::LayerCore
+class Layer_CCaves_Common: public Map2DCore::LayerCore
 {
 	public:
-		Layer_CCaves_Background()
+		Layer_CCaves_Common()
 		{
 		}
 
-		virtual ~Layer_CCaves_Background()
+		virtual ~Layer_CCaves_Common()
 		{
-		}
-
-		virtual std::string title() const
-		{
-			return "Background";
-		}
-
-		virtual Caps caps() const
-		{
-			return Caps::Default;
 		}
 
 		virtual ImageFromCodeInfo imageFromCode(const Item& item,
@@ -148,6 +138,28 @@ class Layer_CCaves_Background: public Map2DCore::LayerCore
 			ret.img = subtileset->openImage(images[i]);
 			ret.type = ImageFromCodeInfo::ImageType::Supplied;
 			return ret;
+		}
+};
+
+class Layer_CCaves_Background: public Layer_CCaves_Common
+{
+	public:
+		Layer_CCaves_Background()
+		{
+		}
+
+		virtual ~Layer_CCaves_Background()
+		{
+		}
+
+		virtual std::string title() const
+		{
+			return "Background";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
 		}
 
 		virtual std::vector<Item> availableItems() const
@@ -219,7 +231,7 @@ class Layer_CCaves_Background: public Map2DCore::LayerCore
 		}
 };
 
-class Layer_CCaves_Foreground: public Map2DCore::LayerCore
+class Layer_CCaves_Foreground: public Layer_CCaves_Common
 {
 	public:
 		Layer_CCaves_Foreground()
@@ -238,39 +250,6 @@ class Layer_CCaves_Foreground: public Map2DCore::LayerCore
 		virtual Caps caps() const
 		{
 			return Caps::Default;
-		}
-
-		virtual ImageFromCodeInfo imageFromCode(const Item& item,
-			const TilesetCollection& tileset) const
-		{
-			ImageFromCodeInfo ret;
-
-			unsigned int ti, i;
-			ti = item.code >> 8;
-			i = item.code & 0xFF;
-
-			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
-			if (t == tileset.end()) { // no tileset?!
-				ret.type = ImageFromCodeInfo::ImageType::Unknown;
-				return ret;
-			}
-
-			auto& subtilesets = t->second->files();
-			if (ti >= subtilesets.size()) { // out of range
-				ret.type = ImageFromCodeInfo::ImageType::Unknown;
-				return ret;
-			}
-
-			auto subtileset = t->second->openTileset(subtilesets[ti]);
-			auto& images = subtileset->files();
-			if (i >= images.size()) { // out of range
-				ret.type = ImageFromCodeInfo::ImageType::Unknown;
-				return ret;
-			}
-
-			ret.img = subtileset->openImage(images[i]);
-			ret.type = ImageFromCodeInfo::ImageType::Supplied;
-			return ret;
 		}
 
 		virtual std::vector<Item> availableItems() const
@@ -320,7 +299,8 @@ class Map_CCaves: public MapCore, public Map2DCore
 
 /// Add a tile to the map vector
 #define INSERT_TILE(dx, dy, val, flags) {	  \
-				Layer::Item t; \
+				tilesBG.emplace_back(); \
+				Layer::Item& t = tilesBG.back(); \
 				t.type = Layer::Item::Type::Default; \
 				t.pos = {x + (dx), y + (dy)}; \
 				if (IS_IBEAM(val)) { \
@@ -360,26 +340,25 @@ class Map_CCaves: public MapCore, public Map2DCore
 						t.movementDistDown = Map2D::Layer::Item::DistIndeterminate; \
 						break; \
 				} \
-				tilesBG.push_back(t); \
 			}
 
 /// Return the tile code at the given delta coords
-#define BGTILE(dx, dy) bgdata[(CC_MAP_WIDTH + 1) * dy + dx]
+#define BGTILE(dx, dy) bg[(CC_MAP_WIDTH + 1) * (dy) + (dx)]
 
 /// If the given tile is CCT_NEXT, set the code and blank out the tile
-#define SET_NEXT_TILE(x, y, val)	  \
+#define SET_NEXT_TILE(dx, dy, val)	  \
 			if ( \
 				(val != ___________) \
-				&& ((x) < CC_MAP_WIDTH) \
-				&& ((y) < this->mapHeight) \
-				&& (BGTILE((x), (y)) == CCT_NEXT) \
+				&& (x + (dx) < CC_MAP_WIDTH) \
+				&& (y + (dy) < this->mapHeight) \
+				&& (BGTILE((dx), (dy)) == CCT_NEXT) \
 			) { \
-				INSERT_TILE(x, y, val, CCTF_MV_NONE); \
-				BGTILE(x, y) = CCT_EMPTY; \
+				INSERT_TILE((dx), (dy), val, CCTF_MV_NONE); \
+				BGTILE((dx), (dy)) = CCT_EMPTY; \
 			}
 
-		auto bg = bgdata.begin();
-		for (unsigned int y = 0; y < this->mapHeight; y++) {
+			auto bg = bgdata.begin();
+			for (unsigned int y = 0; y < this->mapHeight; y++) {
 				bg++; // skip row length byte
 				for (unsigned int x = 0; x < CC_MAP_WIDTH; x++, bg++) {
 					// Skip all empty tiles
@@ -452,11 +431,11 @@ class Map_CCaves: public MapCore, public Map2DCore
 							SET_NEXT_TILE(0, 1, m.tileIndexBG[2]);
 							SET_NEXT_TILE(1, 1, m.tileIndexBG[3]);
 							if (m.tileIndexFG != ___________) {
-								Layer::Item t;
+								tilesFG.emplace_back();
+								Layer::Item& t = tilesFG.back();
 								t.type = Layer::Item::Type::Default;
 								t.pos = {x, y};
 								t.code = m.tileIndexFG;
-								tilesFG.push_back(t);
 							}
 							break;
 						}
@@ -514,9 +493,9 @@ class Map_CCaves: public MapCore, public Map2DCore
 			unsigned long lenBG = mapSize.x * mapSize.y;
 
 			// Extract the tile codes into a big array so it's easier to cross reference
-			std::vector<unsigned int> bgsrc(lenBG, (unsigned int)-1);
-			std::vector<unsigned int> bgattr(lenBG, 0);
-			std::vector<unsigned int> fgsrc(lenBG, (unsigned int)-1);
+			std::vector<int> bgsrc(lenBG, -1);
+			std::vector<unsigned int> bgattr(lenBG, CCTF_MV_NONE);
+			std::vector<int> fgsrc(lenBG, -1);
 
 			for (const auto& i : this->v_layers[0]->items()) {
 				if ((i.pos.x >= mapSize.x) || (i.pos.y >= mapSize.y)) {
@@ -549,11 +528,7 @@ class Map_CCaves: public MapCore, public Map2DCore
 						&& (i.movementDistRight == 0)
 					) {
 						bgattr[pos] = CCTF_MV_DROP;
-					} else {
-						bgattr[pos] = CCTF_MV_NONE;
 					}
-				} else {
-					bgattr[pos] = CCTF_MV_NONE;
 				}
 			}
 
@@ -568,9 +543,9 @@ class Map_CCaves: public MapCore, public Map2DCore
 			// Convert our codes into CC ones
 			std::vector<uint8_t> bgdst(lenBG, CCT_EMPTY);
 
-			unsigned int *inbg = bgsrc.data();
-			unsigned int *inattr = bgattr.data();
-			unsigned int *infg = fgsrc.data();
+			auto inbg = bgsrc.data();
+			auto inattr = bgattr.data();
+			auto infg = fgsrc.data();
 			uint8_t *out = bgdst.data();
 #define REL(px, py) (*(inbg + ((py) * mapSize.x) + (px)))
 #define REL_FG(px, py) (*(infg + ((py) * mapSize.x) + (px)))
@@ -578,15 +553,15 @@ class Map_CCaves: public MapCore, public Map2DCore
 #define IF_REL(px, py, pt, pc)	  \
 			if ( \
 				(pt != ___________) \
-				&& ((unsigned)(inbg - bgsrc.data() + (py) * mapSize.x + (px)) < lenBG) \
-				&& (REL((px), (py)) == (unsigned)pt) \
+				&& ((inbg - bgsrc.data() + (py) * mapSize.x + (px)) < (int)lenBG) \
+				&& (REL((px), (py)) == pt) \
 			) { \
 				PUT((px), (py), (pc)); \
-				REL((px), (py)) = (unsigned int)0x20; \
+				REL((px), (py)) = CCT_EMPTY; \
 			}
 
 			for (unsigned int j = 0; j < lenBG; j++, inbg++, inattr++, infg++, out++) {
-				if (*inbg == (unsigned int)-1) continue; // no tile here
+				if (*inbg == -1) continue; // no tile here
 				bool matched = false;
 
 				// Check vines first
@@ -612,25 +587,25 @@ class Map_CCaves: public MapCore, public Map2DCore
 				for (unsigned int i = 0; i < sizeof(tileMapSign) / sizeof(TILE_MAP_SIGN); i++) {
 					TILE_MAP_SIGN& m = tileMapSign[i];
 					if (
-						(REL(0, 0) == (unsigned)m.tileIndexBG[0])
-						&& (REL(1, 0) == (unsigned)m.tileIndexBG[1])
+						(REL(0, 0) == m.tileIndexBG[0])
+						&& (REL(1, 0) == m.tileIndexBG[1])
 					) {
 						unsigned int confidence = 2;
 						if (*inattr == m.flags) confidence++;
-						if ((m.tileIndexBG[2] != -1) && (REL(2, 0) != CCT_EMPTY) && (REL(2, 0) == (unsigned)m.tileIndexBG[2])) confidence++;
-						if ((m.tileIndexBG[3] != -1) && (REL(3, 0) != CCT_EMPTY) && (REL(3, 0) == (unsigned)m.tileIndexBG[3])) confidence++;
-						if ((m.tileIndexBG[4] != -1) && (REL(0, 1) != CCT_EMPTY) && (REL(0, 1) == (unsigned)m.tileIndexBG[4])) confidence++;
-						if ((m.tileIndexBG[5] != -1) && (REL(1, 1) != CCT_EMPTY) && (REL(1, 1) == (unsigned)m.tileIndexBG[5])) confidence++;
-						if ((m.tileIndexBG[6] != -1) && (REL(2, 1) != CCT_EMPTY) && (REL(2, 1) == (unsigned)m.tileIndexBG[6])) confidence++;
-						if ((m.tileIndexBG[7] != -1) && (REL(3, 1) != CCT_EMPTY) && (REL(3, 1) == (unsigned)m.tileIndexBG[7])) confidence++;
-						if ((m.tileIndexBG[8] != -1) && (REL(0, 2) != CCT_EMPTY) && (REL(0, 2) == (unsigned)m.tileIndexBG[8])) confidence++;
-						if ((m.tileIndexBG[9] != -1) && (REL(1, 2) != CCT_EMPTY) && (REL(1, 2) == (unsigned)m.tileIndexBG[9])) confidence++;
-						if ((m.tileIndexBG[10] != -1) && (REL(2, 2) != CCT_EMPTY) && (REL(2, 2) == (unsigned)m.tileIndexBG[10])) confidence++;
-						if ((m.tileIndexBG[11] != -1) && (REL(3, 2) != CCT_EMPTY) && (REL(3, 2) == (unsigned)m.tileIndexBG[11])) confidence++;
-						if ((m.tileIndexBG[12] != -1) && (REL(0, 3) != CCT_EMPTY) && (REL(0, 3) == (unsigned)m.tileIndexBG[12])) confidence++;
-						if ((m.tileIndexBG[13] != -1) && (REL(1, 3) != CCT_EMPTY) && (REL(1, 3) == (unsigned)m.tileIndexBG[13])) confidence++;
-						if ((m.tileIndexBG[14] != -1) && (REL(2, 3) != CCT_EMPTY) && (REL(2, 3) == (unsigned)m.tileIndexBG[14])) confidence++;
-						if ((m.tileIndexBG[15] != -1) && (REL(3, 3) != CCT_EMPTY) && (REL(3, 3) == (unsigned)m.tileIndexBG[15])) confidence++;
+						if ((m.tileIndexBG[ 2] != -1) && (REL(2, 0) != CCT_EMPTY) && (REL(2, 0) == m.tileIndexBG[ 2])) confidence++;
+						if ((m.tileIndexBG[ 3] != -1) && (REL(3, 0) != CCT_EMPTY) && (REL(3, 0) == m.tileIndexBG[ 3])) confidence++;
+						if ((m.tileIndexBG[ 4] != -1) && (REL(0, 1) != CCT_EMPTY) && (REL(0, 1) == m.tileIndexBG[ 4])) confidence++;
+						if ((m.tileIndexBG[ 5] != -1) && (REL(1, 1) != CCT_EMPTY) && (REL(1, 1) == m.tileIndexBG[ 5])) confidence++;
+						if ((m.tileIndexBG[ 6] != -1) && (REL(2, 1) != CCT_EMPTY) && (REL(2, 1) == m.tileIndexBG[ 6])) confidence++;
+						if ((m.tileIndexBG[ 7] != -1) && (REL(3, 1) != CCT_EMPTY) && (REL(3, 1) == m.tileIndexBG[ 7])) confidence++;
+						if ((m.tileIndexBG[ 8] != -1) && (REL(0, 2) != CCT_EMPTY) && (REL(0, 2) == m.tileIndexBG[ 8])) confidence++;
+						if ((m.tileIndexBG[ 9] != -1) && (REL(1, 2) != CCT_EMPTY) && (REL(1, 2) == m.tileIndexBG[ 9])) confidence++;
+						if ((m.tileIndexBG[10] != -1) && (REL(2, 2) != CCT_EMPTY) && (REL(2, 2) == m.tileIndexBG[10])) confidence++;
+						if ((m.tileIndexBG[11] != -1) && (REL(3, 2) != CCT_EMPTY) && (REL(3, 2) == m.tileIndexBG[11])) confidence++;
+						if ((m.tileIndexBG[12] != -1) && (REL(0, 3) != CCT_EMPTY) && (REL(0, 3) == m.tileIndexBG[12])) confidence++;
+						if ((m.tileIndexBG[13] != -1) && (REL(1, 3) != CCT_EMPTY) && (REL(1, 3) == m.tileIndexBG[13])) confidence++;
+						if ((m.tileIndexBG[14] != -1) && (REL(2, 3) != CCT_EMPTY) && (REL(2, 3) == m.tileIndexBG[14])) confidence++;
+						if ((m.tileIndexBG[15] != -1) && (REL(3, 3) != CCT_EMPTY) && (REL(3, 3) == m.tileIndexBG[15])) confidence++;
 
 						if (confidence > best_confidence) {
 							best_confidence = confidence;
@@ -668,8 +643,8 @@ class Map_CCaves: public MapCore, public Map2DCore
 				for (unsigned int i = 0; i < sizeof(tileMap) / sizeof(TILE_MAP); i++) {
 					TILE_MAP& m = tileMap[i];
 					if (
-						(REL(0, 0) == (unsigned)m.tileIndexBG[0])
-						&& (REL_FG(0, 0) == (unsigned)m.tileIndexFG)
+						(REL(0, 0) == m.tileIndexBG[0])
+						&& (REL_FG(0, 0) == m.tileIndexFG)
 						&& (*inattr == m.flags)
 					) {
 						matched = true;
@@ -685,8 +660,8 @@ class Map_CCaves: public MapCore, public Map2DCore
 				for (unsigned int i = 0; i < sizeof(tileMap4x1) / sizeof(TILE_MAP); i++) {
 					TILE_MAP& m = tileMap4x1[i];
 					if (
-						(REL(0, 0) == (unsigned)m.tileIndexBG[0])
-						&& (REL_FG(0, 0) == (unsigned)m.tileIndexFG)
+						(REL(0, 0) == m.tileIndexBG[0])
+						&& (REL_FG(0, 0) == m.tileIndexFG)
 						&& (*inattr == m.flags)
 					) {
 						matched = true;
@@ -703,8 +678,8 @@ class Map_CCaves: public MapCore, public Map2DCore
 				for (unsigned int i = 0; i < sizeof(tileRevMapBlocks) / sizeof(TILE_REVMAP_BLOCKS); i++) {
 					TILE_REVMAP_BLOCKS& m = tileRevMapBlocks[i];
 					if (
-						(REL(0, 0) == (unsigned)m.tileIndexBG)
-						&& (REL_FG(0, 0) == (unsigned)m.tileIndexFG)
+						(REL(0, 0) == m.tileIndexBG)
+						&& (REL_FG(0, 0) == m.tileIndexFG)
 					) {
 						matched = true;
 						PUT(0, 0, m.code);
