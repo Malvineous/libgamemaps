@@ -20,6 +20,22 @@
 
 #include "test-map2d.hpp"
 
+class test_map_ccomic_extra1: public test_map2d
+{
+	public:
+		test_map_ccomic_extra1()
+		{
+			this->type = "map-ccomic.e1";
+		}
+
+		virtual std::string initialstate()
+		{
+			return
+				std::string(0, '\x00')
+				+ "tileset.dat\0\0";
+		}
+};
+
 class test_map_ccomic: public test_map2d
 {
 	public:
@@ -28,7 +44,9 @@ class test_map_ccomic: public test_map2d
 			this->type = "map-ccomic";
 			this->pxSize = {3 * 16, 5 * 16};
 			this->numLayers = 1;
+			this->mapCode[0].pos = {0, 0};
 			this->mapCode[0].code = 0x02;
+			this->suppResult[SuppItem::Extra1] = std::make_shared<test_map_ccomic_extra1>();
 		}
 
 		void addTests()

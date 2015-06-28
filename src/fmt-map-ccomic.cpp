@@ -71,7 +71,7 @@ class Layer_CComic_Background: public Map2DCore::LayerCore
 		void flush(stream::output& content, const Point& mapSize)
 		{
 			// Write the background layer
-			unsigned int mapLen = mapSize.y * mapSize.y;
+			unsigned int mapLen = mapSize.x * mapSize.y;
 
 			std::vector<uint8_t> bg(mapLen, CC_DEFAULT_BGTILE);
 			for (auto& i : this->v_allItems) {
