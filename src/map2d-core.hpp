@@ -109,7 +109,7 @@ class Map2DCore::LayerCore: virtual public Map2D::Layer
 		virtual ImageFromCodeInfo imageFromCode(const Map2D::Layer::Item& item,
 			const TilesetCollection& tileset) const;
 		virtual bool tilePermittedAt(const Map2D::Layer::Item& item,
-			unsigned int x, unsigned int y, unsigned int *maxCount) const;
+			const Point& pos, unsigned int *maxCount) const;
 		virtual std::shared_ptr<const gamegraphics::Palette> palette(
 			const TilesetCollection& tileset) const;
 

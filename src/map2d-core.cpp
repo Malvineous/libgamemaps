@@ -25,25 +25,7 @@ namespace camoto {
 namespace gamemaps {
 
 using namespace camoto::gamegraphics;
-/*
-Map2DCore::Map2DCore(const Attributes& attributes,
-	const GraphicsFilenames& graphicsFilenames, unsigned int caps,
-	unsigned int viewportWidth, unsigned int viewportHeight,
-	unsigned int width, unsigned int height,
-	unsigned int tileWidth, unsigned int tileHeight,
-	const LayerPtrVector& layers, PathPtrVectorPtr paths)
-	:	Map2D(attributes, graphicsFilenames, caps, viewportWidth, viewportHeight),
-		width(width), height(height),
-		tileWidth(tileWidth), tileHeight(tileHeight),
-		layers(layers),
-		paths(paths)
-{
-	assert(width > 0);
-	assert(height > 0);
-	assert(tileWidth > 0);
-	assert(tileHeight > 0);
-}
-*/
+
 Map2DCore::~Map2DCore()
 {
 }
@@ -144,17 +126,7 @@ Map2D::Background Map2DCore::background(const TilesetCollection& tileset)
 	return bg;
 }
 
-/*
-Map2DCore::LayerCore::LayerCore(Point layerSize, Point tileSize,
-	std::vector<std::shared_ptr<Item>> items,
-	std::vector<std::shared_ptr<Item>> validItems)
-	:	v_layerSize(layerSize),
-		v_tileSize(tileSize),
-		v_allItems(items),
-		v_availableItems(validItems)
-{
-}
-*/
+
 Map2DCore::LayerCore::~LayerCore()
 {
 }
@@ -206,7 +178,7 @@ Map2D::Layer::ImageFromCodeInfo Map2DCore::LayerCore::imageFromCode(
 }
 
 bool Map2DCore::LayerCore::tilePermittedAt(const Map2D::Layer::Item& item,
-	unsigned int x, unsigned int y, unsigned int *maxCount) const
+	const Point& pos, unsigned int *maxCount) const
 {
 	assert(maxCount);
 

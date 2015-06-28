@@ -338,7 +338,7 @@ class Map2D::Layer
 		 *  limits notwithstanding) or false if the tile cannot be placed here.
 		 */
 		virtual bool tilePermittedAt(const Map2D::Layer::Item& item,
-			unsigned int x, unsigned int y, unsigned int *maxCount) const = 0;
+			const Point& pos, unsigned int *maxCount) const = 0;
 
 		/// Get the palette to use with this layer.
 		/**
