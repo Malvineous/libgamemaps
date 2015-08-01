@@ -28,8 +28,11 @@ class test_map_harry: public test_map2d
 			this->type = "map-harry";
 			this->pxSize = {4 * 16, 4 * 16};
 			this->numLayers = 3;
+			this->mapCode[0].pos = {0, 0};
 			this->mapCode[0].code = 0x01; // 0x00 is empty tile and thus skipped
+			this->mapCode[1].pos = {0, 0};
 			this->mapCode[1].code = 0x01; // 0x00 is empty tile and thus skipped
+			this->mapCode[2].pos = {0, 0};
 			this->mapCode[2].code = 0x01; // 0x00 is empty tile and thus skipped
 		}
 
@@ -50,10 +53,10 @@ class test_map_harry: public test_map2d
 				"\x11SubZero Lame File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00"
 				"\x00"
 			)
-			+ std::string(768, '\0')
-			+ std::string(256, '\0')
+			+ makePalette()
+			+ makeTileFlags()
+			+ std::string(10, '\0')
 			+ STRING_WITH_NULLS(
-				"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 				"\x01\x00"
 				"\x01" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			)
@@ -78,7 +81,7 @@ class test_map_harry: public test_map2d
 				"\x41\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			)
 			+ std::string(768 - 16, '\0')
-			+ std::string(256, '\0')
+			+ makeTileFlags()
 			+ STRING_WITH_NULLS(
 				"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 				"\x01\x00"
@@ -103,7 +106,7 @@ class test_map_harry: public test_map2d
 				"\x11SubZero Game File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00"
 				"\x00"
 			)
-			+ std::string(768, '\0')
+			+ makePalette()
 			+ STRING_WITH_NULLS(
 				"\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			)
@@ -132,10 +135,10 @@ class test_map_harry: public test_map2d
 				"\x11SubZero Game File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00"
 				"\x00"
 			)
-			+ std::string(768, '\0')
-			+ std::string(256, '\0')
+			+ makePalette()
+			+ makeTileFlags()
+			+ std::string(10, '\0')
 			+ STRING_WITH_NULLS(
-				"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 				"\x00\x20"
 				"\x01" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			)
@@ -157,10 +160,10 @@ class test_map_harry: public test_map2d
 				"\x11SubZero Game File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00"
 				"\x00"
 			)
-			+ std::string(768, '\0')
-			+ std::string(256, '\0')
+			+ makePalette()
+			+ makeTileFlags()
+			+ std::string(10, '\0')
 			+ STRING_WITH_NULLS(
-				"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 				"\x01\x00"
 				"\x01" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			)
@@ -191,14 +194,16 @@ class test_map_harry: public test_map2d
 				"\x11SubZero Game File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00"
 				"\x01"
 			)
-			+ std::string(768, '\0')
-			+ std::string(256, '\0')
+			+ makePalette()
+			+ makeTileFlags()
+			+ std::string(10, '\0')
+			// Actors
 			+ STRING_WITH_NULLS(
-				"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 				"\x01\x00"
 				"\x01" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			)
 			+ std::string(112, '\0')
+			// BG/FG
 			+ STRING_WITH_NULLS(
 				"\x04\x00" "\x04\x00"
 				"\x01\x02\x03\x04"
@@ -211,6 +216,22 @@ class test_map_harry: public test_map2d
 				"\x09\x0a\x0b\x0c"
 				"\x0d\x0e\x0f\x00"
 			);
+		}
+
+		std::string makePalette()
+		{
+			std::string pal(768, '\0');
+			pal[3] = pal[4] = pal[5] = 10;
+			pal[6] = pal[7] = pal[8] = 20;
+			return pal;
+		}
+
+		std::string makeTileFlags()
+		{
+			std::string flags(256, '\0');
+			flags[3] = flags[4] = flags[5] = 1;
+			flags[6] = flags[7] = flags[8] = 1;
+			return flags;
 		}
 };
 
