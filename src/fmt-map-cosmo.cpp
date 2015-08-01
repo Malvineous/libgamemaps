@@ -329,7 +329,9 @@ class Map_Cosmo: public MapCore, public Map2DCore
 			lenMap -= 4;
 
 			// Set the attributes
-			Attribute attrBackdrop;
+			assert(this->attr.size() == ATTR_BACKDROP); // make sure compile-time index is correct
+			this->attr.emplace_back();
+			auto& attrBackdrop = this->attr.back();
 			attrBackdrop.type = Attribute::Type::Enum;
 			attrBackdrop.name = "Backdrop";
 			attrBackdrop.desc = "Index of backdrop to draw behind level.";
@@ -362,37 +364,37 @@ class Map_Cosmo: public MapCore, public Map2DCore
 				"24 - Circuit (bdcircut.mni)",
 				"25 - Circuit PC (bdcircpc.mni)",
 			};
-			assert(this->attr.size() == ATTR_BACKDROP); // make sure compile-time index is correct
-			this->attr.push_back(attrBackdrop);
 
-			Attribute attrRain;
+			assert(this->attr.size() == ATTR_RAIN); // make sure compile-time index is correct
+			this->attr.emplace_back();
+			auto& attrRain = this->attr.back();
 			attrRain.type = Attribute::Type::Enum;
 			attrRain.name = "Rain";
 			attrRain.desc = "Is it raining in this level?";
 			attrRain.enumValue = (flags >> 5) & 1;
 			attrRain.enumValueNames = {"No", "Yes"};
-			assert(this->attr.size() == ATTR_RAIN); // make sure compile-time index is correct
-			this->attr.push_back(attrRain);
 
-			Attribute attrScrollX;
+			assert(this->attr.size() == ATTR_SCROLL_X); // make sure compile-time index is correct
+			this->attr.emplace_back();
+			auto& attrScrollX = this->attr.back();
 			attrScrollX.type = Attribute::Type::Enum;
 			attrScrollX.name = "Scroll X";
 			attrScrollX.desc = "Should the backdrop scroll horizontally?";
 			attrScrollX.enumValue = (flags >> 6) & 1;
 			attrScrollX.enumValueNames = {"No", "Yes"};
-			assert(this->attr.size() == ATTR_SCROLL_X); // make sure compile-time index is correct
-			this->attr.push_back(attrScrollX);
 
-			Attribute attrScrollY;
+			assert(this->attr.size() == ATTR_SCROLL_Y); // make sure compile-time index is correct
+			this->attr.emplace_back();
+			auto& attrScrollY = this->attr.back();
 			attrScrollY.type = Attribute::Type::Enum;
 			attrScrollY.name = "Scroll Y";
 			attrScrollY.desc = "Should the backdrop scroll vertically?";
 			attrScrollY.enumValue = (flags >> 7) & 1;
 			attrScrollY.enumValueNames = {"No", "Yes"};
-			assert(this->attr.size() == ATTR_SCROLL_Y); // make sure compile-time index is correct
-			this->attr.push_back(attrScrollY);
 
-			Attribute attrPalAnim;
+			assert(this->attr.size() == ATTR_PAL_ANIM); // make sure compile-time index is correct
+			this->attr.emplace_back();
+			auto& attrPalAnim = this->attr.back();
 			attrPalAnim.type = Attribute::Type::Enum;
 			attrPalAnim.name = "Palette animation";
 			attrPalAnim.desc = "Type of colour animation to use in this level.  Only "
@@ -408,10 +410,10 @@ class Map_Cosmo: public MapCore, public Map2DCore
 				"6 - Dark magenta -> black, bomb trigger",
 				"7 - Unknown/unused",
 			};
-			assert(this->attr.size() == ATTR_PAL_ANIM); // make sure compile-time index is correct
-			this->attr.push_back(attrPalAnim);
 
-			Attribute attrMusic;
+			assert(this->attr.size() == ATTR_MUSIC); // make sure compile-time index is correct
+			this->attr.emplace_back();
+			auto& attrMusic = this->attr.back();
 			attrMusic.type = Attribute::Type::Enum;
 			attrMusic.name = "Music";
 			attrMusic.desc = "Index of the song to play as background music in the level.";
@@ -437,8 +439,6 @@ class Map_Cosmo: public MapCore, public Map2DCore
 				"17 - Tech 4 (mteck4.mni)",
 				"18 - ZZ Top (mzztop.mni)",
 			};
-			assert(this->attr.size() == ATTR_MUSIC); // make sure compile-time index is correct
-			this->attr.push_back(attrMusic);
 
 			// Read in the actor layer
 			auto layerAC = std::make_shared<Layer_Cosmo_Actors>(
