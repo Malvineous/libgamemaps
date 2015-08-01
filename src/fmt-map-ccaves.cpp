@@ -739,7 +739,7 @@ class Map_CCaves: public MapCore, public Map2DCore
 
 std::string MapType_CCaves::code() const
 {
-	return "map-ccaves";
+	return "map2d-ccaves";
 }
 
 std::string MapType_CCaves::friendlyName() const

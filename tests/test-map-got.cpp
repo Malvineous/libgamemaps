@@ -25,7 +25,7 @@ class test_map_got: public test_map2d
 	public:
 		test_map_got()
 		{
-			this->type = "map-got";
+			this->type = "map2d-got";
 			this->pxSize = {20 * 16, 12 * 16};
 			this->numLayers = 3;
 			this->mapCode[0].pos = {0, 1};

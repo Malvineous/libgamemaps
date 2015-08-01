@@ -289,7 +289,7 @@ class Map_DDave: public MapCore, public Map2DCore
 
 std::string MapType_DDave::code() const
 {
-	return "map-ddave";
+	return "map2d-ddave";
 }
 
 std::string MapType_DDave::friendlyName() const

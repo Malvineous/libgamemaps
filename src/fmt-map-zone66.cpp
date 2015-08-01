@@ -283,7 +283,7 @@ class Map_Zone66: public MapCore, public Map2DCore
 
 std::string MapType_Zone66::code() const
 {
-	return "map-zone66";
+	return "map2d-zone66";
 }
 
 std::string MapType_Zone66::friendlyName() const

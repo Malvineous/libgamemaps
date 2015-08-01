@@ -25,7 +25,7 @@ class test_map_duke1: public test_map2d
 	public:
 		test_map_duke1()
 		{
-			this->type = "map-duke1";
+			this->type = "map2d-duke1";
 			this->pxSize = {128 * 16, 90 * 16};
 			this->numLayers = 1;
 			this->mapCode[0].pos = {0, 0};

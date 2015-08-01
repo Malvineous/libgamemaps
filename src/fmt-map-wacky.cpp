@@ -289,7 +289,7 @@ class Map_Wacky: public MapCore, public Map2DCore
 
 std::string MapType_Wacky::code() const
 {
-	return "map-wacky";
+	return "map2d-wacky";
 }
 
 std::string MapType_Wacky::friendlyName() const

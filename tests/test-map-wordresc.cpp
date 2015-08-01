@@ -25,7 +25,7 @@ class test_map_wordresc: public test_map2d
 	public:
 		test_map_wordresc()
 		{
-			this->type = "map-wordresc";
+			this->type = "map2d-wordresc";
 			this->pxSize = {3 * 16, 5 * 16};
 			this->numLayers = 4;
 			this->mapCode[0].pos.x = 0;

@@ -464,7 +464,7 @@ class Map_Harry: public MapCore, public Map2DCore
 
 std::string MapType_Harry::code() const
 {
-	return "map-harry";
+	return "map2d-harry";
 }
 
 std::string MapType_Harry::friendlyName() const

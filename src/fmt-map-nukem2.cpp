@@ -219,7 +219,7 @@ class Map2D_Nukem2: virtual public GenericMap2D
 
 std::string MapType_Nukem2::getMapCode() const
 {
-	return "map-nukem2";
+	return "map2d-nukem2";
 }
 
 std::string MapType_Nukem2::getFriendlyName() const

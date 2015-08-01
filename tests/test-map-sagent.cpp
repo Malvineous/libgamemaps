@@ -29,7 +29,7 @@ class test_map_sagent: public test_map2d
 	public:
 		test_map_sagent()
 		{
-			this->type = "map-sagent";
+			this->type = "map2d-sagent";
 			this->pxSize = {40 * 16, 4 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].pos = {0, 0};

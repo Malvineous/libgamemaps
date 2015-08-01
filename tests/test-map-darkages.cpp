@@ -25,7 +25,7 @@ class test_map_darkages: public test_map2d
 	public:
 		test_map_darkages()
 		{
-			this->type = "map-darkages";
+			this->type = "map2d-darkages";
 			this->pxSize = {128 * 16, 9 * 16};
 			this->numLayers = 1;
 			this->mapCode[0].pos = {0, 0};

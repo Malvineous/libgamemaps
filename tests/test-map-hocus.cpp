@@ -25,7 +25,7 @@ class test_map_hocus_layer1: public test_map2d
 	public:
 		test_map_hocus_layer1()
 		{
-			this->type = "map-hocus.l1";
+			this->type = "map2d-hocus.l1";
 		}
 
 		virtual std::string initialstate()
@@ -41,7 +41,7 @@ class test_map_hocus: public test_map2d
 	public:
 		test_map_hocus()
 		{
-			this->type = "map-hocus";
+			this->type = "map2d-hocus";
 			this->pxSize = {240 * 16, 60 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].pos = {0, 0};

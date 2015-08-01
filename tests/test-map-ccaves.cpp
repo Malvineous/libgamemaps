@@ -29,7 +29,7 @@ class test_map_ccaves: public test_map2d
 	public:
 		test_map_ccaves()
 		{
-			this->type = "map-ccaves";
+			this->type = "map2d-ccaves";
 			this->pxSize = {40 * 16, 17 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].pos = {33, 0};

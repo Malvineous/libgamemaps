@@ -26,7 +26,7 @@ class test_suppx1_map_jill: public test_map2d
 	public:
 		test_suppx1_map_jill()
 		{
-			this->type = "map-jill.x1";
+			this->type = "map2d-jill.x1";
 			this->written = false;
 		}
 
@@ -51,7 +51,7 @@ class test_map_jill: public test_map2d
 	public:
 		test_map_jill()
 		{
-			this->type = "map-jill";
+			this->type = "map2d-jill";
 			this->pxSize = {128 * 16, 64 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].code = 0x01;

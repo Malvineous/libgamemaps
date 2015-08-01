@@ -225,7 +225,7 @@ class Map_CComic: public MapCore, public Map2DCore
 
 std::string MapType_CComic::code() const
 {
-	return "map-ccomic";
+	return "map2d-ccomic";
 }
 
 std::string MapType_CComic::friendlyName() const

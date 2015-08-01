@@ -252,7 +252,7 @@ class Map_Hocus: public MapCore, public Map2DCore
 
 std::string MapType_Hocus::code() const
 {
-	return "map-hocus";
+	return "map2d-hocus";
 }
 
 std::string MapType_Hocus::friendlyName() const

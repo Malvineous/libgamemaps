@@ -265,7 +265,7 @@ class Map_DarkAges: public MapCore, public Map2DCore
 
 std::string MapType_DarkAges::code() const
 {
-	return "map-darkages";
+	return "map2d-darkages";
 }
 
 std::string MapType_DarkAges::friendlyName() const

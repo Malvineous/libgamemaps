@@ -561,7 +561,7 @@ class Map_GOT: public MapCore, public Map2DCore
 
 std::string MapType_GOT::code() const
 {
-	return "map-got";
+	return "map2d-got";
 }
 
 std::string MapType_GOT::friendlyName() const

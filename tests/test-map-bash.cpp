@@ -25,7 +25,7 @@ class test_suppl1_map_bash: public test_map2d
 	public:
 		test_suppl1_map_bash()
 		{
-			this->type = "map-bash.l1";
+			this->type = "map2d-bash.l1";
 		}
 
 		virtual std::string initialstate()
@@ -51,7 +51,7 @@ class test_suppl2_map_bash: public test_map2d
 	public:
 		test_suppl2_map_bash()
 		{
-			this->type = "map-bash.l2";
+			this->type = "map2d-bash.l2";
 		}
 
 		virtual std::string initialstate()
@@ -77,7 +77,7 @@ class test_suppl3_map_bash: public test_map2d
 	public:
 		test_suppl3_map_bash()
 		{
-			this->type = "map-bash.l3";
+			this->type = "map2d-bash.l3";
 		}
 
 		virtual std::string initialstate()
@@ -125,7 +125,7 @@ class test_suppx1_map_bash: public test_map2d
 	public:
 		test_suppx1_map_bash()
 		{
-			this->type = "map-bash.x1";
+			this->type = "map2d-bash.x1";
 		}
 
 		virtual std::string initialstate()
@@ -184,7 +184,7 @@ class test_map_bash: public test_map2d
 	public:
 		test_map_bash()
 		{
-			this->type = "map-bash";
+			this->type = "map2d-bash";
 			this->pxSize = {16 * 16, 2 * 16};
 			this->numLayers = 5;
 			this->mapCode[0].code = 0x01; // code at (0,0)

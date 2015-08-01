@@ -25,7 +25,7 @@ class test_map_harry: public test_map2d
 	public:
 		test_map_harry()
 		{
-			this->type = "map-harry";
+			this->type = "map2d-harry";
 			this->pxSize = {4 * 16, 4 * 16};
 			this->numLayers = 3;
 			this->mapCode[0].pos = {0, 0};

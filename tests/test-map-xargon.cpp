@@ -25,7 +25,7 @@ class test_suppx1_map_xargon: public test_map2d
 	public:
 		test_suppx1_map_xargon()
 		{
-			this->type = "map-xargon.x1";
+			this->type = "map2d-xargon.x1";
 			this->written = false;
 		}
 
@@ -50,7 +50,7 @@ class test_map_xargon: public test_map2d
 	public:
 		test_map_xargon()
 		{
-			this->type = "map-xargon";
+			this->type = "map2d-xargon";
 			this->pxSize = {128 * 16, 64 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].code = 0x01;

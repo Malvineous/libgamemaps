@@ -663,9 +663,9 @@ class Map_SAgent: public MapCore, public Map2DCore
 std::string MapType_SAgent::code() const
 {
 	if (this->isWorldMap()) {
-		return "map-sagent-world";
+		return "map2d-sagent-world";
 	}
-	return "map-sagent";
+	return "map2d-sagent";
 }
 
 std::string MapType_SAgent::friendlyName() const

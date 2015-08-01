@@ -419,7 +419,7 @@ class Map2D_Bash: virtual public GenericMap2D
 
 std::string MapType_Bash::getMapCode() const
 {
-	return "map-bash";
+	return "map2d-bash";
 }
 
 std::string MapType_Bash::getFriendlyName() const

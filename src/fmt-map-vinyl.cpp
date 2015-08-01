@@ -76,7 +76,7 @@ class Layer_VinylMap: virtual public GenericMap2D::Layer
 
 std::string MapType_Vinyl::getMapCode() const
 {
-	return "map-vinyl";
+	return "map2d-vinyl";
 }
 
 std::string MapType_Vinyl::getFriendlyName() const

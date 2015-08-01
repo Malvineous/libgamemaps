@@ -198,7 +198,7 @@ MapType_Jill::MapType_Jill()
 
 std::string MapType_Jill::getMapCode() const
 {
-	return "map-jill";
+	return "map2d-jill";
 }
 
 std::string MapType_Jill::getFriendlyName() const
@@ -244,7 +244,7 @@ MapType_Xargon::MapType_Xargon()
 
 std::string MapType_Xargon::getMapCode() const
 {
-	return "map-xargon";
+	return "map2d-xargon";
 }
 
 std::string MapType_Xargon::getFriendlyName() const

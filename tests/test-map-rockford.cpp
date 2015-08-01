@@ -25,7 +25,7 @@ class test_map_rockford: public test_map2d
 	public:
 		test_map_rockford()
 		{
-			this->type = "map-rockford";
+			this->type = "map2d-rockford";
 			this->pxSize = {40 * 16, 22 * 16};
 			this->numLayers = 1;
 			this->mapCode[0].pos.x = 1;

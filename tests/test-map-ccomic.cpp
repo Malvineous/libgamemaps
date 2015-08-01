@@ -25,7 +25,7 @@ class test_map_ccomic_extra1: public test_map2d
 	public:
 		test_map_ccomic_extra1()
 		{
-			this->type = "map-ccomic.e1";
+			this->type = "map2d-ccomic.e1";
 		}
 
 		virtual std::string initialstate()
@@ -41,7 +41,7 @@ class test_map_ccomic: public test_map2d
 	public:
 		test_map_ccomic()
 		{
-			this->type = "map-ccomic";
+			this->type = "map2d-ccomic";
 			this->pxSize = {3 * 16, 5 * 16};
 			this->numLayers = 1;
 			this->mapCode[0].pos = {0, 0};

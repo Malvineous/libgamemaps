@@ -25,7 +25,7 @@ class test_map_vinyl: public test_map2d
 	public:
 		test_map_vinyl()
 		{
-			this->type = "map-vinyl";
+			this->type = "map2d-vinyl";
 			this->pxSize = {5 * 16, 4 * 16};
 			this->numLayers = 2;
 			this->mapCode[0].code = 0x0001;

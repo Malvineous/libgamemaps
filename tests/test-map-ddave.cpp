@@ -25,7 +25,7 @@ class test_map_ddave: public test_map2d
 	public:
 		test_map_ddave()
 		{
-			this->type = "map-ddave";
+			this->type = "map2d-ddave";
 			this->pxSize = {100 * 16, 10 * 16};
 			this->numLayers = 1;
 			this->mapCode[0].pos = {0, 0};

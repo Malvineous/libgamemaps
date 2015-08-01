@@ -25,7 +25,7 @@ class test_suppl1_map_wacky: public test_map2d
 	public:
 		test_suppl1_map_wacky()
 		{
-			this->type = "map-wacky.l1";
+			this->type = "map2d-wacky.l1";
 		}
 
 		virtual std::string initialstate()
@@ -44,7 +44,7 @@ class test_map_wacky: public test_map2d
 	public:
 		test_map_wacky()
 		{
-			this->type = "map-wacky";
+			this->type = "map2d-wacky";
 			this->pxSize = {64 * 32, 64 * 32};
 			this->numLayers = 1;
 			this->mapCode[0].pos = {0, 0};

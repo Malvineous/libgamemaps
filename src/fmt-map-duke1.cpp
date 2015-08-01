@@ -245,7 +245,7 @@ class Map_Duke1: public MapCore, public Map2DCore
 
 std::string MapType_Duke1::code() const
 {
-	return "map-duke1";
+	return "map2d-duke1";
 }
 
 std::string MapType_Duke1::friendlyName() const

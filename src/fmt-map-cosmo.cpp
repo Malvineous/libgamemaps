@@ -589,7 +589,7 @@ class Map_Cosmo: public MapCore, public Map2DCore
 
 std::string MapType_Cosmo::code() const
 {
-	return "map-cosmo";
+	return "map2d-cosmo";
 }
 
 std::string MapType_Cosmo::friendlyName() const

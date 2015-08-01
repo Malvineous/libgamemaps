@@ -349,7 +349,7 @@ int rleWrite(stream::output_sptr output, uint8_t *data, int len)
 
 std::string MapType_WordRescue::getMapCode() const
 {
-	return "map-wordresc";
+	return "map2d-wordresc";
 }
 
 std::string MapType_WordRescue::getFriendlyName() const

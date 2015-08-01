@@ -25,7 +25,7 @@ class test_map_cosmo: public test_map2d
 	public:
 		test_map_cosmo()
 		{
-			this->type = "map-cosmo";
+			this->type = "map2d-cosmo";
 			this->pxSize = {64 * 8, 512 * 8};
 			this->numLayers = 2;
 			this->mapCode[0].pos = {1, 0};

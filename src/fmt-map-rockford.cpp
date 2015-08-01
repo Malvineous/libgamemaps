@@ -225,7 +225,7 @@ class Map_Rockford: public MapCore, public Map2DCore
 
 std::string MapType_Rockford::code() const
 {
-	return "map-rockford";
+	return "map2d-rockford";
 }
 
 std::string MapType_Rockford::friendlyName() const
