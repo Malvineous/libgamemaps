@@ -72,4 +72,10 @@ const std::vector<std::shared_ptr<const MapType> > FormatEnumerator<MapType>::fo
 	return list;
 }
 
+namespace gamemaps {
+
+constexpr const char* const MapType::obj_t_name;
+
+} // namespace gamegraphics
+
 } // namespace camoto
