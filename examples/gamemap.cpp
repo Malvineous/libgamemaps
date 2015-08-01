@@ -584,14 +584,22 @@ int main(int iArgC, char *cArgV[])
 				bool b = split(temp, ':', &gf.type, &gf.filename);
 				if (!a || !b) {
 					std::cerr << "Malformed -g/--graphics parameter.  Must be of the "
-						"form purpose=type:filename.  Use --help for details." << std::endl;
+						"form purpose=type:filename.\n"
+						"Use --help or --list-types for details." << std::endl;
 					return RET_BADARGS;
 				}
+				bool found = false;
 				for (unsigned int i = 0; i < (unsigned int)gm::ImagePurpose::ImagePurposeCount; i++) {
 					gm::ImagePurpose p = (gm::ImagePurpose)i;
 					if (purpose.compare(toString(p)) == 0) {
 						manualGfx[p] = gf;
+						found = true;
 					}
+				}
+				if (!found) {
+					std::cerr << "No match for tileset purpose: " << purpose << "\n"
+						<< "Use --list-types for details." << std::endl;
+					return RET_BADARGS;
 				}
 			} else if (
 				(i.string_key.compare("s") == 0) ||
@@ -606,7 +614,32 @@ int main(int iArgC, char *cArgV[])
 			} else if (
 				(i.string_key.compare("list-types") == 0)
 			) {
-				std::cout << "Map types: (--type)\n";
+				std::cout << "Tileset purposes: (--graphics purpose=type:file)\n";
+				for (unsigned int i = 0; i < (unsigned int)gm::ImagePurpose::ImagePurposeCount; i++) {
+					gm::ImagePurpose p = (gm::ImagePurpose)i;
+					std::cout << "  " << toString(p) << "\n";
+				}
+
+				std::cout << "\nTileset types: (--graphics purpose=type:file)\n";
+				for (auto& tilesetType : gg::TilesetManager::formats()) {
+					std::string code = tilesetType->code();
+					std::cout << "  " << code;
+					int len = code.length();
+					if (len < 20) std::cout << std::string(20-code.length(), ' ');
+					std::cout << ' ' << tilesetType->friendlyName();
+					auto ext = tilesetType->fileExtensions();
+					if (ext.size()) {
+						auto i = ext.begin();
+						std::cout << " (*." << *i;
+						for (i++; i != ext.end(); i++) {
+							std::cout << "; *." << *i;
+						}
+						std::cout << ")";
+					}
+					std::cout << '\n';
+				}
+
+				std::cout << "\nMap types: (--type)\n";
 				for (auto& mapType : gm::MapManager::formats()) {
 					std::string code = mapType->code();
 					std::cout << "  " << code;
@@ -625,24 +658,6 @@ int main(int iArgC, char *cArgV[])
 					std::cout << '\n';
 				}
 
-				std::cout << "\nMap tilesets: (--graphicstype)\n";
-				for (auto& tilesetType : gg::TilesetManager::formats()) {
-					std::string code = tilesetType->code();
-					std::cout << "  " << code;
-					int len = code.length();
-					if (len < 20) std::cout << std::string(20-code.length(), ' ');
-					std::cout << ' ' << tilesetType->friendlyName();
-					auto ext = tilesetType->fileExtensions();
-					if (ext.size()) {
-						auto i = ext.begin();
-						std::cout << " (*." << *i;
-						for (i++; i != ext.end(); i++) {
-							std::cout << "; *." << *i;
-						}
-						std::cout << ")";
-					}
-					std::cout << '\n';
-				}
 				return RET_OK;
 			}
 		}
@@ -1081,6 +1096,10 @@ finishTesting:
 					gm::TilesetCollection allTilesets;
 
 					for (auto& a : manualGfx) {
+						if (!bScript) {
+							std::cout << "Loading " << a.second.type << " from "
+								<< a.second.filename << std::endl;
+						}
 						allTilesets[a.first] = openTileset(a.second.filename, a.second.type);
 					}
 
