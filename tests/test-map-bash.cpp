@@ -20,6 +20,7 @@
 
 #include "test-map2d.hpp"
 
+/// Layer1: Background tiles
 class test_suppl1_map_bash: public test_map2d
 {
 	public:
@@ -46,6 +47,7 @@ class test_suppl1_map_bash: public test_map2d
 		}
 };
 
+/// Layer2: Foreground tiles
 class test_suppl2_map_bash: public test_map2d
 {
 	public:
@@ -72,6 +74,7 @@ class test_suppl2_map_bash: public test_map2d
 		}
 };
 
+/// Layer3: Sprites
 class test_suppl3_map_bash: public test_map2d
 {
 	public:
@@ -120,6 +123,7 @@ class test_suppl3_map_bash: public test_map2d
 		}
 };
 
+/// Extra1: Sprite list
 class test_suppx1_map_bash: public test_map2d
 {
 	public:
@@ -179,6 +183,136 @@ class test_suppx1_map_bash: public test_map2d
 		}
 };
 
+/// Extra2: Background tile properties
+class test_suppx2_map_bash: public test_map2d
+{
+	public:
+		test_suppx2_map_bash()
+		{
+			this->type = "map2d-bash.x2";
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+			);
+		}
+};
+
+/// Extra3: Foreground tile properties
+class test_suppx3_map_bash: public test_map2d
+{
+	public:
+		test_suppx3_map_bash()
+		{
+			this->type = "map2d-bash.x3";
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+			);
+		}
+};
+
+/// Extra4: Bonus tile properties
+class test_suppx4_map_bash: public test_map2d
+{
+	public:
+		test_suppx4_map_bash()
+		{
+			this->type = "map2d-bash.x4";
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"00 00 00 00 00 00 00 10 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+				"00 00 00 00 00 00 00 00 "
+			);
+		}
+};
+
+/// Extra5: Full list of sprites and dependencies
+class test_suppx5_map_bash: public test_map2d
+{
+	public:
+		test_suppx5_map_bash()
+		{
+			this->type = "map2d-bash.x5";
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"*=arrows\n"
+				"*=axe\n"
+				"*=blank\n"
+				"*=bomb\n"
+				"*=bone1\n"
+				"*=bone2\n"
+				"*=bone3\n"
+				"*=border\n"
+				"*=border2\n"
+				"*=cat\n"
+				"*=chunk\n"
+				"*=dog\n"
+				"*=flag\n"
+				"*=float100\n"
+				"*=guage\n"
+				"*=heart\n"
+				"*=leaf\n"
+				"*=plank\n"
+				"*=plank_r\n"
+				"*=rock\n"
+				"*=score\n"
+				"*=skullw\n"
+				"*=splat\n"
+				"*=white\n"
+				"main_r=break_screen\n"
+				"main_r=crack\n"
+				"main_r=crawlleft\n"
+				"main_r=crawlright\n"
+				"main_r=dirt_l\n"
+				"main_r=dirt_r\n"
+				"main_r=main_die\n"
+				"main_r=main_exit\n"
+				"main_r=main_hat_l\n"
+				"main_r=main_hat_r\n"
+				"main_r=main_l\n"
+				"main_r=main_meter\n"
+				"main_r=main_stars\n"
+				"zb_l=zb_r\n"
+				"zb_l=zbh_l\n"
+				"zb_l=zbh_r\n"
+				"zb_l=zhead\n"
+				"zb_l=zhead_r\n"
+			);
+		}
+};
+
 class test_map_bash: public test_map2d
 {
 	public:
@@ -186,16 +320,29 @@ class test_map_bash: public test_map2d
 		{
 			this->type = "map2d-bash";
 			this->pxSize = {16 * 16, 2 * 16};
-			this->numLayers = 5;
-			this->mapCode[0].code = 0x01; // code at (0,0)
-			this->mapCode[1].code = 0x01; // code at (0,0)
-			this->mapCode[2].code = 1000085; // code at (0,0)
-			this->mapCode[3].code = 0x04; // code at (0,0)
-			this->mapCode[4].code = 0x01; // code at (0,0)
+			this->numLayers = 4;
+
+			// BG
+			this->mapCode[0].code = 0x01;
+			this->mapCode[0].pos = {0, 0};
+			// FG
+			this->mapCode[1].code = 0x01;
+			this->mapCode[1].pos = {0, 0};
+			// AT
+			this->mapCode[2].code = 0x08;
+			this->mapCode[2].pos = {3, 0};
+			// SP
+			this->mapCode[3].code = 1000025;
+			this->mapCode[3].pos = {0, 0};
+
 			this->suppResult[SuppItem::Layer1].reset(new test_suppl1_map_bash());
 			this->suppResult[SuppItem::Layer2].reset(new test_suppl2_map_bash());
 			this->suppResult[SuppItem::Layer3].reset(new test_suppl3_map_bash());
 			this->suppResult[SuppItem::Extra1].reset(new test_suppx1_map_bash());
+			this->suppResult[SuppItem::Extra2].reset(new test_suppx2_map_bash());
+			this->suppResult[SuppItem::Extra3].reset(new test_suppx3_map_bash());
+			this->suppResult[SuppItem::Extra4].reset(new test_suppx4_map_bash());
+			this->suppResult[SuppItem::Extra5].reset(new test_suppx5_map_bash());
 		}
 
 		void addTests()

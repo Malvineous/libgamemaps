@@ -424,6 +424,10 @@ void test_map2d::test_read()
 				(i.pos.x == target.x)
 				&& (i.pos.y == target.y)
 			) {
+				BOOST_REQUIRE_MESSAGE(foundFirstTile == false,
+					"Test design error - there are multiple tiles at (" << target.x << ","
+					<< target.y << ") in layer #" << l << ".  Pick another position "
+					"with only one tile for testing the map code.");
 				foundFirstTile = true;
 				BOOST_REQUIRE_EQUAL(i.code, this->mapCode[l].code);
 			}

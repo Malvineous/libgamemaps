@@ -429,6 +429,7 @@ class Map2D::Layer::Item
 		unsigned int movementSpeedY;      ///< Vertical speed, in milliseconds per pixel
 
 		enum class BlockingFlags {
+			Default       = 0x0000, ///< No blocking
 			BlockLeft     = 0x0001, ///< Prevent movement right, through the left edge
 			BlockRight    = 0x0002, ///< Prevent movement left, through the right edge
 			BlockTop      = 0x0004, ///< Prevent movement down through the top edge (can stand on)
@@ -468,6 +469,11 @@ inline Map2D::Layer::Item::MovementFlags operator| (Map2D::Layer::Item::Movement
 	);
 }
 
+inline Map2D::Layer::Item::MovementFlags operator|= (Map2D::Layer::Item::MovementFlags& a, const Map2D::Layer::Item::MovementFlags& b) {
+	a = a | b;
+	return a;
+}
+
 inline bool operator& (Map2D::Layer::Item::MovementFlags a, Map2D::Layer::Item::MovementFlags b) {
 	return
 		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
@@ -478,6 +484,11 @@ inline Map2D::Layer::Item::BlockingFlags operator| (Map2D::Layer::Item::Blocking
 	return static_cast<Map2D::Layer::Item::BlockingFlags>(
 		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
 	);
+}
+
+inline Map2D::Layer::Item::BlockingFlags operator|= (Map2D::Layer::Item::BlockingFlags& a, const Map2D::Layer::Item::BlockingFlags& b) {
+	a = a | b;
+	return a;
 }
 
 inline bool operator& (Map2D::Layer::Item::BlockingFlags a, Map2D::Layer::Item::BlockingFlags b) {

@@ -21,10 +21,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <set>
-#include <boost/scoped_array.hpp>
+#include <cerrno>
 #include <camoto/iostream_helpers.hpp>
-#include "map2d-generic.hpp"
+#include <camoto/util.hpp> // make_unique
+#include "map-core.hpp"
+#include "map2d-core.hpp"
 #include "fmt-map-bash.hpp"
 
 /// Width of map tiles
@@ -32,12 +35,6 @@
 
 /// Height of map tiles
 #define MB_TILE_HEIGHT          16
-
-/// Width of map view during gameplay, in pixels
-#define MB_VIEWPORT_WIDTH      320
-
-/// Height of map view during gameplay, in pixels
-#define MB_VIEWPORT_HEIGHT     200
 
 /// Map code to write for locations with no tile set.
 #define MB_DEFAULT_BGTILE     0x00
@@ -57,161 +54,12 @@
 /// Index of attribute for .snd file, which never gets its extension removed.
 #define MB_ATTR_KEEP_EXT         5
 
+/// All sprite tilecodes are offset by this amount, so there is no confusion
+/// about the "fake" nature of the code.
+#define BASH_SPRITE_OFFSET 1000000
+
 namespace camoto {
 namespace gamemaps {
-
-/// List of sprites, used to convert between names and internal map codes.
-static const char *spriteFilenames[] = {
-	"apogee_logo",
-	"arrows",
-	"axe",
-	"badguy",
-	"blank",
-	"block",
-	"blocky",
-	"bomb",
-	"bone1",
-	"bone2",
-	"bone3",
-	"border",
-	"border2",
-	"bounce",
-	"box_slide",
-	"break_screen",
-	"bshelf",
-	"cat",
-	"chunk",
-	"cloud",
-	"crack",
-	"cracked_block",
-	"crawlleft",
-	"crawlright",
-	"cursor_arm",
-	"cursor_xhair",
-	"cyc_horn_l",
-	"cyc_horn_r",
-	"cyclops_l",
-	"cyclops_r",
-	"demo",
-	"devil_l",
-	"devil_r",
-	"dirt_l",
-	"dirt_r",
-	"disolve1",
-	"disolve2",
-	"dog",
-	"drag_b",
-	"drag_eye",
-	"drag_fire",
-	"drag_l",
-	"end_gargoyle",
-	"end_gargoyle2",
-	"end_hellfire",
-	"end_main",
-	"explode",
-	"faces",
-	"fire_bit",
-	"flag",
-	"float100",
-	"glass",
-	"grenade",
-	"guage",
-	"guy_jump",
-	"hand_l",
-	"hand_r",
-	"hat",
-	"heart",
-	"horse",
-	"i_main_shoot",
-	"i_rock",
-	"i_splat",
-	"i_zombie_bot",
-	"i_zombie_hand",
-	"i_zombie_top",
-	"iman_l",
-	"iman_r",
-	"intro1",
-	"intro2",
-	"intro3",
-	"jaw_l",
-	"jaw_r",
-	"knife",
-	"knifee",
-	"knifee_ud",
-	"leaf",
-	"lightn",
-	"main_broom",
-	"main_die",
-	"main_exit",
-	"main_hat_l",
-	"main_hat_r",
-	"main_l",
-	"main_meter",
-	"main_r",
-	"main_stars",
-	"main_workout",
-	"main_workout2",
-	"main_workout3",
-	"main_workout4",
-	"mouse",
-	"msm",
-	"nemesis",
-	"numbers",
-	"pellet_h",
-	"pfork_l",
-	"pfork_r",
-	"plank",
-	"plank_r",
-	"platfall",
-	"platform",
-	"platform_v",
-	"plug",
-	"preview",
-	"rock",
-	"saw",
-	"score",
-	"score1up",
-	"skelet_l",
-	"skelet_r",
-	"skullw",
-	"smoke1",
-	"smoke_cloud",
-	"snake",
-	"spear_plat",
-	"splat",
-	"swamp2_l",
-	"swamp2_r",
-	"swamp_l",
-	"swamp_r",
-	"swamp_scum2_l",
-	"swamp_scum2_r",
-	"swamp_scum_l",
-	"swamp_scum_r",
-	"teeth_l",
-	"teeth_r",
-	"tman_bl",
-	"tman_br",
-	"tman_ld",
-	"tman_lu",
-	"tman_rd",
-	"tman_ru",
-	"tman_tl",
-	"tman_tr",
-	"vegies",
-	"visa",
-	"vulture",
-	"vulture_l",
-	"vulture_r",
-	"white",
-	"witch_eye",
-	"witch_sill",
-	"zb_l",
-	"zb_r",
-	"zbh_l",
-	"zbh_r",
-	"zhead",
-	"zhead_r",
-};
 
 static const char *validTypes[] = {
 	"tbg",
@@ -225,226 +73,1037 @@ static const char *validTypes[] = {
 
 using namespace camoto::gamegraphics;
 
-class Layer_BashForeground: virtual public GenericMap2D::Layer
+class Layer_Bash_Background: public Map2DCore::LayerCore
 {
 	public:
-		Layer_BashForeground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Foreground",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Bash_Background(std::unique_ptr<stream::inout> content,
+			unsigned long* mapWidth, unsigned long* mapHeight,
+			std::vector<uint16_t>* bgdata)
+			:	content(std::move(content))
 		{
+			// Read the background layer
+			stream::pos lenBG = this->content->size();
+			this->content->seekg(0, stream::start);
+
+			// Read the background layer
+			uint16_t unknown, mapPixelWidth, mapPixelHeight;
+			*this->content
+				>> u16le(unknown)
+				>> u16le(this->mapWidth)
+				>> u16le(mapPixelWidth)
+				>> u16le(mapPixelHeight)
+			;
+			lenBG -= 8;
+
+			if (lenBG < 2) throw stream::error("Background layer file too short");
+
+			this->mapWidth >>= 1; // convert from # of bytes to # of ints (tiles)
+			this->mapHeight = mapPixelHeight / MB_TILE_HEIGHT;
+
+			std::vector<Item> bgattributes;
+			std::vector<Item> bgpoints;
+			auto lenLayer = this->mapWidth * this->mapHeight;
+			this->v_allItems.reserve(lenLayer);
+			bgdata->reserve(lenLayer);
+			for (unsigned int y = 0; y < this->mapHeight; y++) {
+				for (unsigned int x = 0; x < this->mapWidth; x++) {
+					uint16_t code;
+					*this->content >> u16le(code);
+					lenBG -= 2;
+					bgdata->push_back(code);
+
+					if ((code & 0x1FF) != MB_DEFAULT_BGTILE) {
+						this->v_allItems.emplace_back();
+						auto& t = this->v_allItems.back();
+						t.type = Map2D::Layer::Item::Type::Default;
+						t.pos = {x, y};
+						t.code = code & 0x1FF;
+					}
+
+					if (lenBG < 2) break;
+				}
+				if (lenBG < 2) break;
+			}
+			*mapWidth = this->mapWidth;
+			*mapHeight = this->mapHeight;
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		// Populate an array with the tile codes
+		void populate(std::vector<uint16_t>* tiles)
 		{
-			ImagePurpose purpose = ((item->code >> 7) & 1) ?
-				ForegroundTileset1 : ForegroundTileset2;
-			TilesetCollection::const_iterator t = tileset->find(purpose);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
+			for (auto& i : this->items()) {
+				if (
+					(i.pos.x >= (signed long)this->mapWidth)
+					|| (i.pos.y >= (signed long)this->mapHeight)
+				) {
+					throw stream::error("Background layer has tiles outside map boundary!");
+				}
+				(*tiles)[i.pos.y * this->mapWidth + i.pos.x] = i.code;
+			}
+			return;
+		}
 
-			unsigned int index = item->code & 0x7F;
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = t->second->openImage(images[index]);
+		// Write a tile code array to the underlying file
+		void flush(const std::vector<uint16_t>& tiles)
+		{
+			this->content->truncate(2*4 + tiles.size()*2);
+			this->content->seekp(0, stream::start);
+			uint16_t mapStripe = this->mapHeight * (MB_TILE_WIDTH * MB_TILE_HEIGHT)
+				+ this->mapWidth;
+			uint16_t mapWidthBytes = this->mapWidth * 2; // 2 == sizeof(uint16_t)
+			uint16_t mapPixelWidth = this->mapWidth * MB_TILE_WIDTH;
+			uint16_t mapPixelHeight = this->mapHeight * MB_TILE_HEIGHT;
+			*this->content
+				<< u16le(mapStripe)
+				<< u16le(mapWidthBytes)
+				<< u16le(mapPixelWidth)
+				<< u16le(mapPixelHeight)
+			;
+			for (auto& i : tiles) {
+				*this->content << u16le(i);
+			}
+			this->content->flush();
+			return;
+		}
 
+		virtual std::string title() const
+		{
+			return "Background";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto& images = t->second->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = t->second->openImage(images[item.code]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> items;
+			for (unsigned int i = 0; i <= MB_MAX_VALID_BG_TILECODE; i++) {
+				// The default tile actually has an image, so don't exclude it
+				if (i == MB_DEFAULT_BGTILE) continue;
+
+				Map2D::Layer::Item t;
+				t.type = Map2D::Layer::Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				items.push_back(t);
+			}
+			return items;
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+		unsigned long mapWidth;
+		unsigned long mapHeight;
+};
+
+class Layer_Bash_Foreground: public Map2DCore::LayerCore
+{
+	public:
+		Layer_Bash_Foreground(std::unique_ptr<stream::inout> content,
+			unsigned long mapWidth, unsigned long mapHeight,
+			std::vector<uint8_t>* fgdata)
+			:	content(std::move(content)),
+				mapWidth(mapWidth),
+				mapHeight(mapHeight)
+		{
+			// Read the foreground layer
+			unsigned long lenFG = this->content->size();
+			this->content->seekg(2, stream::start); // skip width field
+			lenFG -= 2;
+
+			unsigned long lenLayer = this->mapWidth * this->mapHeight;
+			this->v_allItems.reserve(lenLayer);
+			fgdata->resize(lenLayer, MB_DEFAULT_FGTILE);
+			auto fg = fgdata->data();
+			this->content->read(fg, std::min(lenLayer, lenFG));
+			for (unsigned int y = 0; y < this->mapHeight; y++) {
+				for (unsigned int x = 0; x < this->mapWidth; x++) {
+					uint8_t code = *fg++;
+					if (code != MB_DEFAULT_FGTILE) {
+						this->v_allItems.emplace_back();
+						auto& t = this->v_allItems.back();
+						t.type = Item::Type::Default;
+						t.pos = {x, y};
+						t.code = code;
+					}
+				}
+			}
+		}
+
+		// Populate an array with the tile codes
+		void populate(std::vector<uint8_t>* tiles,
+			std::set<std::string>* usedSprites)
+		{
+			for (auto& i : this->items()) {
+				if (
+					(i.pos.x >= (signed long)this->mapWidth)
+					|| (i.pos.y >= (signed long)this->mapHeight)
+				) {
+					throw stream::error("Foreground layer has tiles outside map boundary!");
+				}
+				(*tiles)[i.pos.y * this->mapWidth + i.pos.x] = i.code;
+#warning TODO: If the foreground layer contains a skull or collapsing walkway, add the sprites to usedSprites (and remove from "*" in the XML)
+			}
+			return;
+		}
+
+		// Write a tile code array to the underlying file
+		void flush(const std::vector<uint8_t>& tiles)
+		{
+			this->content->truncate(2 + tiles.size());
+			this->content->seekp(0, stream::start);
+			uint16_t mapWidthBytes = this->mapWidth;
+			*this->content
+				<< u16le(mapWidthBytes)
+			;
+			// Only byte-length fields, so can write as a block
+			this->content->write(tiles.data(), tiles.size());
+			this->content->flush();
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Foreground";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			auto purpose = (item.code & 0x80) ? ImagePurpose::ForegroundTileset1 : ImagePurpose::ForegroundTileset2;
+			auto t = tileset.find(purpose);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			unsigned int index = item.code & 0x7F;
+			auto& images = t->second->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = t->second->openImage(images[index]);
 			if (
-				(purpose == ForegroundTileset1)
-				&& ((item->code & 0x7F) < 16)
-				&& ((item->code & 0x7F) > 0)
+				(purpose == ImagePurpose::ForegroundTileset1)
+				&& (index > 0)
+				&& (index < 16)
 			) {
 				// The first 16 bytes can be special if no image is set
-				StdImageDataPtr mask = (*out)->toStandardMask();
-				unsigned int width, height;
-				(*out)->getDimensions(&width, &height);
+				auto mask = ret.img->convert_mask();
 				bool completelyInvisible = true;
-				uint8_t *pixel = mask.get();
-				for (unsigned int i = 0; i < width * height; i++) {
-					if ((*pixel++ & Image::Mask_Visibility) == Image::Mask_Vis_Opaque) {
+				for (auto& p : mask) {
+					if (!(p & (uint8_t)Image::Mask::Transparent)) {
 						completelyInvisible = false;
 						break;
 					}
 				}
 				if (completelyInvisible) {
 					// Return a number instead
-					return (Map2D::Layer::ImageType)
-						(Map2D::Layer::Digit0 + index);
+					ret.type = ImageFromCodeInfo::ImageType::HexDigit;
+					ret.digit = 0x10 | index;
+					return ret;
 				}
 			}
 
-			return Map2D::Layer::Supplied;
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
 		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> items;
+			for (unsigned int i = 0; i <= MB_MAX_VALID_FG_TILECODE; i++) {
+				if (i == MB_DEFAULT_FGTILE) continue;
+
+				Map2D::Layer::Item t;
+				t.type = Map2D::Layer::Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				items.push_back(t);
+			}
+			return items;
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+		unsigned long mapWidth;
+		unsigned long mapHeight;
 };
 
-class Layer_BashBackground: virtual public GenericMap2D::Layer
+class Layer_Bash_Sprite: public Map2DCore::LayerCore
 {
 	public:
-		Layer_BashBackground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Background",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Bash_Sprite(std::unique_ptr<stream::inout> content,
+			std::unique_ptr<stream::inout> contentSGL,
+			std::unique_ptr<stream::input> contentSpriteDeps)
+			:	content(std::move(content)),
+				contentSGL(std::move(contentSGL))
 		{
+			// Read the list of sprite dependencies
+			auto lenSpriteDeps = contentSpriteDeps->size();
+			if (lenSpriteDeps > 1048576) {
+				throw stream::error("List of sprite dependencies (in XML file) is too "
+					"large.");
+			}
+			auto depText = contentSpriteDeps->read(lenSpriteDeps);
+			std::string sprite, dep;
+			int state = 0;
+			// Append a space so the last element always gets processed
+			depText.append(1, ' ');
+			for (auto& c : depText) {
+				switch (state) {
+					case 0:
+						// Ignore any leading whitespace
+						if (isspace(c)) break;
+						state = 1;
+						// fall through
+					case 1:
+						// Read sprite name
+						if (c != '=') {
+							sprite.append(1, c);
+							break;
+						}
+						// Found an equals sign
+						state = 2;
+						break;
+					case 2:
+						if (!isspace(c)) {
+							dep.append(1, c);
+							break;
+						}
+						// Reached end of dep
+						this->spriteDeps.insert(std::make_pair(sprite, dep));
+						if (std::find(this->spriteFilenames.begin(),
+								this->spriteFilenames.end(), sprite) == this->spriteFilenames.end()
+						) {
+							this->spriteFilenames.push_back(sprite);
+						}
+						if (std::find(this->spriteFilenames.begin(),
+								this->spriteFilenames.end(), dep) == this->spriteFilenames.end()
+						) {
+							this->spriteFilenames.push_back(dep);
+						}
+						sprite.clear();
+						dep.clear();
+						state = 0;
+						break;
+				}
+			}
+			// Make sure the last element got added, which it should because we
+			// always end with a space.
+			assert(sprite.empty());
+			assert(dep.empty());
+
+			// Read the sprite layer
+			stream::pos lenSpr = this->content->size();
+			this->content->seekg(2, stream::start); // skip unknown field
+			lenSpr -= 2;
+
+			while (lenSpr > 4) {
+				this->v_allItems.emplace_back();
+				auto& t = this->v_allItems.back();
+				t.type = Item::Type::Default;
+				uint32_t lenEntry;
+				uint32_t unknown1, unknown2;
+				uint16_t unknown3;
+				*this->content
+					>> u32le(lenEntry)
+					>> u32le(unknown1)
+					>> u32le(unknown2)
+					>> u16le(unknown3)
+					>> u32le(t.pos.x)
+					>> u32le(t.pos.y)
+				;
+				if (lenEntry > lenSpr) break; // corrupted file
+				this->content->seekg(22, stream::cur); // skip padding
+				std::string filename;
+				*this->content >> nullPadded(filename, lenEntry - (4+4+4+2+4+4+22));
+				auto it = std::find(this->spriteFilenames.begin(),
+					this->spriteFilenames.end(), filename);
+				if (it != this->spriteFilenames.end()) {
+					t.code = BASH_SPRITE_OFFSET
+						+ std::distance(this->spriteFilenames.begin(), it);
+				} else {
+					std::cout << "ERROR: Encounted Monster Bash sprite with unexpected "
+						"name \"" << filename << "\" - unable to add to map.\n";
+					t.code = 0;
+				}
+				lenSpr -= lenEntry;
+			}
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void flush(std::set<std::string>& usedSprites)
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
+			// Write the sprite layer
 
-			unsigned int index = item->code & 0x1FF;
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = t->second->openImage(images[index]);
-			return Map2D::Layer::Supplied;
-		}
-};
-
-class Layer_BashSprite: virtual public GenericMap2D::Layer
-{
-	public:
-		Layer_BashSprite(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Sprites",
-					Map2D::Layer::HasOwnTileSize | Map2D::Layer::UseImageDims,
-					0, 0,
-					1, 1,
-					items, validItems
-				)
-		{
-		}
-
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
-		{
-			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
-
-			if (item->code < 1000000) return Map2D::Layer::Unknown; // unknown sprite filename
-			if (item->code - 1000000 > sizeof(spriteFilenames) / sizeof(const char *)) {
-				return Map2D::Layer::Unknown; // out of range somehow
+			// These sprites must always be present in a level
+			auto extraSprites = this->spriteDeps.equal_range("*");
+			for (auto i = extraSprites.first; i != extraSprites.second; i++) {
+				usedSprites.insert(i->second);
 			}
 
-			const char *img = spriteFilenames[item->code - 1000000];
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			for (Tileset::VC_ENTRYPTR::const_iterator
-				i = images.begin(); i != images.end(); i++
-			) {
-				if ((*i)->getName().compare(img) == 0) {
-					TilesetPtr ts = t->second->openTileset(*i);
-					const Tileset::VC_ENTRYPTR& tiles = ts->getItems();
-					if (tiles.size() < 1) return Map2D::Layer::Unknown; // no images
-					*out = ts->openImage(tiles[0]);
-					return Map2D::Layer::Supplied;
+			auto items = this->items();
+
+			// Figure out how much data we have to write
+			stream::len lenTotal = 2;
+			for (auto& i : items) {
+				if (i.code < BASH_SPRITE_OFFSET) continue;
+				unsigned int code = i.code - BASH_SPRITE_OFFSET;
+				if (code >= this->spriteFilenames.size()) {
+					std::cerr << "ERROR: Tried to write out-of-range sprite to Monster Bash map\n";
+					continue;
+				}
+				std::string filename = this->spriteFilenames[code];
+				int lenFilename = filename.length() + 2; // need two terminating nulls
+				stream::len lenEntry = 4+4+4+2+4+4+22+lenFilename;
+				lenTotal += lenEntry;
+			}
+			this->content->truncate(lenTotal);
+			this->content->seekp(0, stream::start);
+
+			// Write the signature (purpose is actually unknown)
+			*this->content << u16le(0xFFFE);
+
+			// Write the data
+			for (auto& i : items) {
+				if (i.code < BASH_SPRITE_OFFSET) continue;
+				std::string filename = this->spriteFilenames[i.code - BASH_SPRITE_OFFSET];
+				int lenFilename = filename.length() + 2; // need two terminating nulls
+				uint32_t lenEntry = 4+4+4+2+4+4+22+lenFilename;
+				*this->content
+					<< u32le(lenEntry)
+					<< u32le(0)
+					<< u32le(0)
+					<< u16le(0)
+					<< u32le(i.pos.x)
+					<< u32le(i.pos.y)
+					<< nullPadded("", 22)
+					<< nullPadded(filename, lenFilename);
+				;
+
+				usedSprites.insert(filename);
+
+				// Add any dependent sprites to the list
+				auto extraSprites = this->spriteDeps.equal_range(filename);
+				for (auto i = extraSprites.first; i != extraSprites.second; i++) {
+					usedSprites.insert(i->second);
+				}
+			}
+			this->content->flush();
+			assert(this->content->tellp() == lenTotal);
+
+			// Write out a list of all required sprites
+			this->contentSGL->truncate(usedSprites.size() * 31);
+			this->contentSGL->seekp(0, stream::start);
+			for (auto& i : usedSprites) {
+				*this->contentSGL << nullPadded(i, 31);
+			}
+			this->contentSGL->flush();
+			assert(this->contentSGL->tellp() == usedSprites.size() * 31);
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Sprites";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::HasOwnTileSize | Caps::UseImageDims;
+		}
+
+		virtual Point tileSize() const
+		{
+			return {1, 1};
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			auto t = tileset.find(ImagePurpose::SpriteTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			if (item.code < BASH_SPRITE_OFFSET) {
+				// Unknown sprite filename
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+			if (item.code - BASH_SPRITE_OFFSET > this->spriteFilenames.size()) {
+				// Out of range somehow
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto img = this->spriteFilenames[item.code - BASH_SPRITE_OFFSET];
+			auto& images = t->second->files();
+			for (auto& i : images) {
+				if (i->strName.compare(img) == 0) {
+					auto ts = t->second->openTileset(i);
+					auto frames = ts->files();
+					if (frames.size() < 1) {
+						// No images
+						ret.type = ImageFromCodeInfo::ImageType::Unknown;
+						return ret;
+					}
+					ret.img = ts->openImage(frames[0]);
+					ret.type = ImageFromCodeInfo::ImageType::Supplied;
+					return ret;
 				}
 			}
 			std::cerr << "ERROR: Could not find image for Monster Bash sprite \""
 				<< img << "\"" << std::endl;
-			return Map2D::Layer::Unknown;
+
+			ret.type = ImageFromCodeInfo::ImageType::Unknown;
+			return ret;
 		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> items;
+			for (unsigned int i = 0; i < this->spriteFilenames.size(); i++) {
+				items.emplace_back();
+				auto& t = items.back();
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = BASH_SPRITE_OFFSET + i;
+			}
+			return items;
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content; // sprite layer
+		std::unique_ptr<stream::inout> contentSGL; // sprite filename list
+
+		/// List of sprites and which additional sprites they require (can have
+		/// multiple entries for each sprite)
+		std::multimap<std::string, std::string> spriteDeps;
+
+		/// Unique list of all known sprite names
+		std::vector<std::string> spriteFilenames;
 };
 
-class Layer_BashInvisible: virtual public GenericMap2D::Layer
+class Layer_Bash_Attribute: virtual public Map2DCore::LayerCore
 {
 	public:
-		Layer_BashInvisible(const std::string& name, ItemPtrVectorPtr& items,
-			ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					name,
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Bash_Attribute(std::unique_ptr<stream::input> contentPropBG,
+			std::unique_ptr<stream::input> contentPropFG,
+			std::unique_ptr<stream::input> contentPropBO,
+			const std::vector<uint16_t>& bgdata,
+			const std::vector<uint8_t>& fgdata,
+			unsigned long mapWidth, unsigned long mapHeight)
+			:	mapWidth(mapWidth),
+				mapHeight(mapHeight)
 		{
+			this->parseValues(*contentPropBG, &this->propBG);
+			this->parseValues(*contentPropFG, &this->propFG);
+			this->parseValues(*contentPropBO, &this->propBO);
+
+			// Process the attributes read in from the background layer, and create
+			// items in this layer for them - but only if they don't match the tile
+			// attributes parsed above.
+			int x = 0, y = 0;
+			assert(bgdata.size() == this->mapWidth * this->mapHeight);
+			assert(fgdata.size() == this->mapWidth * this->mapHeight);
+			for (auto& i : bgdata) {
+				unsigned int attr = i >> 9;
+				unsigned int bg = i & 0x1FF;
+				if (bg < this->propBG.size()) {
+					// We have a tile property for this tile
+					auto propStd = this->propBG[bg];
+					if (propStd != attr) {
+						// This tile has a non-standard attribute, see which bits are
+						// different
+						if (attr & 0x0F) { // blocking flags
+							this->v_allItems.emplace_back();
+							auto& t = this->v_allItems.back();
+							t.type = Item::Type::Blocking;
+							t.pos = {x, y};
+							t.code = attr & 0x0F;
+							t.blockingFlags = Item::BlockingFlags::Default;
+							if (attr & 1) t.blockingFlags |= Item::BlockingFlags::BlockLeft;
+							if (attr & 2) t.blockingFlags |= Item::BlockingFlags::BlockRight;
+							if (attr & 4) t.blockingFlags |= Item::BlockingFlags::BlockTop;
+							if (attr & 8) t.blockingFlags |= Item::BlockingFlags::BlockBottom;
+						}
+						if (attr & 16) { // point item
+							this->v_allItems.emplace_back();
+							auto& t = this->v_allItems.back();
+							t.type = Item::Type::Flags;
+							t.pos = {x, y};
+							t.code = 16;
+							t.generalFlags = Item::GeneralFlags::Interactive;
+						}
+						if (attr & 32) { // slanted tile
+							this->v_allItems.emplace_back();
+							auto& t = this->v_allItems.back();
+							t.type = Item::Type::Blocking;
+							t.pos = {x, y};
+							t.code = 32;
+							t.blockingFlags = Item::BlockingFlags::Default;
+							t.blockingFlags |= Item::BlockingFlags::Slant45;
+						}
+						if (attr & 64) { // ladder
+							this->v_allItems.emplace_back();
+							auto& t = this->v_allItems.back();
+							t.type = Item::Type::Movement;
+							t.pos = {x, y};
+							t.code = 64;
+							t.movementFlags = Item::MovementFlags::DistanceLimit;
+							t.movementDistLeft = 0;
+							t.movementDistRight = 0;
+							t.movementDistUp = Item::DistIndeterminate;
+							t.movementDistDown = Item::DistIndeterminate;
+						}
+					}
+				} // else attribute is standard, ignore
+
+				x++;
+				if (x >= (signed long)this->mapWidth) {
+					x = 0;
+					y++;
+				}
+			}
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void parseValues(stream::input& content, std::vector<uint8_t>* values)
 		{
-			return Map2D::Layer::Blank; // no images
+			auto len = content.size();
+			if (len > 1048576) throw stream::error("Tile property data (<content/> in XML for tile properties) too large.");
+			std::vector<char> data(len, 0);
+			char *d = data.data();
+			char *end = d;
+			content.read(d, len);
+			do {
+				d = end;
+				errno = 0;
+				auto val = strtoul(d, &end, 16);
+				if (errno) {
+					throw stream::error("Error parsing tileinfo content - ensure this "
+						"part of the XML file contains hex digits and whitespace only!");
+				}
+				values->push_back(val);
+			} while (end != d);
+			return;
 		}
+
+		// Run through the tile properties for the layers, and update
+		// the flags in the BG layer as needed
+		void populate(std::vector<uint16_t>* bgdata, std::vector<uint8_t>* fgdata)
+		{
+			// Retrieve the attribute tiles
+			auto lenLayer = this->mapWidth * this->mapHeight;
+			std::vector<uint8_t> atdata(lenLayer, 0);
+			for (auto& i : this->items()) {
+				if (
+					(i.pos.x >= (signed long)this->mapWidth)
+					|| (i.pos.y >= (signed long)this->mapHeight)
+				) {
+					throw stream::error("Attribute layer has tiles outside map boundary!");
+				}
+				// Multiple tiles can go in the same spot, so combine them
+				atdata[i.pos.y * this->mapWidth + i.pos.x] |= i.code;
+			}
+
+			// Merge everything together
+			const auto sizeBG = this->propBG.size();
+			const auto sizeFG = this->propFG.size();
+			const auto sizeBO = this->propBO.size();
+			auto bg = bgdata->data();
+			auto fg = fgdata->data();
+			auto at = atdata.data();
+			while (lenLayer-- > 0) {
+				if (*at) {
+					// There is an item in the attribute layer, so this trumps all the
+					// standard codes.
+					*bg |= *at << 9;
+				} else {
+					// bg has no flags set yet, so just here it's a raw tilecode
+					if (*bg < sizeBG) {
+						*bg |= propBG[*bg] << 9;
+					}
+					// bg now has flags set, so it's no longer a raw tilecode
+
+					// Combine the value from the foreground layer
+					auto& propFGBO = (*fg & 0x80) ? propFG : propBO;
+					auto& sizeFGBO = (*fg & 0x80) ? sizeFG : sizeBO;
+					if ((*fg & 0x7F) < sizeFGBO) {
+						// Set background flags from foreground tile (not a typo, we want to
+						// update *bg)
+						*bg |= propFGBO[*fg & 0x7F] << 9;
+					}
+				}
+				bg++;
+				fg++;
+				at++;
+			}
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Attributes";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+			ret.type = ImageFromCodeInfo::ImageType::Blank;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> items;
+			for (unsigned int i = 0; i < 16; i++) {
+				items.emplace_back();
+				auto& t = items.back();
+				t.type = Item::Type::Blocking;
+				t.pos = {0, 0};
+				t.code = i;
+				t.blockingFlags = Item::BlockingFlags::Default;
+				if (i & 1) t.blockingFlags |= Item::BlockingFlags::BlockLeft;
+				if (i & 2) t.blockingFlags |= Item::BlockingFlags::BlockRight;
+				if (i & 4) t.blockingFlags |= Item::BlockingFlags::BlockTop;
+				if (i & 8) t.blockingFlags |= Item::BlockingFlags::BlockBottom;
+			}
+			{
+				// Interactive (point) item
+				items.emplace_back();
+				auto& t = items.back();
+				t.type = Item::Type::Flags;
+				t.pos = {0, 0};
+				t.code = 16;
+				t.generalFlags = Item::GeneralFlags::Interactive;
+			}
+			{
+				items.emplace_back();
+				auto& t = items.back();
+				t.type = Item::Type::Blocking;
+				t.pos = {0, 0};
+				t.code = 32;
+				t.blockingFlags = Item::BlockingFlags::Default;
+				t.blockingFlags |= Item::BlockingFlags::Slant45;
+			}
+			{
+				// Ladder
+				items.emplace_back();
+				auto& t = items.back();
+				t.type = Item::Type::Movement;
+				t.pos = {0, 0};
+				t.code = 64;
+				t.movementFlags = Item::MovementFlags::DistanceLimit;
+				t.movementDistLeft = 0;
+				t.movementDistRight = 0;
+				t.movementDistUp = Item::DistIndeterminate;
+				t.movementDistDown = Item::DistIndeterminate;
+			}
+			return items;
+		}
+
+	private:
+		std::vector<uint8_t> propBG, propFG, propBO;
+		unsigned long mapWidth;
+		unsigned long mapHeight;
 };
 
-class Map2D_Bash: virtual public GenericMap2D
+class Map_Bash: public MapCore, public Map2DCore
 {
 	public:
-		Map2D_Bash(const Attributes& attributes,
-			unsigned int width, unsigned int height,
-			LayerPtrVector& layers)
-			:	GenericMap2D(
-					attributes, GraphicsFilenames(),
-					Map2D::HasViewport,
-					MB_VIEWPORT_WIDTH, MB_VIEWPORT_HEIGHT,
-					width, height,
-					MB_TILE_WIDTH, MB_TILE_HEIGHT,
-					layers, Map2D::PathPtrVectorPtr()
-				)
+		Map_Bash(
+			std::unique_ptr<stream::inout> contentInf,
+			std::unique_ptr<stream::inout> contentBG,
+			std::unique_ptr<stream::inout> contentFG,
+			std::unique_ptr<stream::inout> contentSP,
+			std::unique_ptr<stream::inout> contentSGL,
+			std::unique_ptr<stream::input> contentPropBG,
+			std::unique_ptr<stream::input> contentPropFG,
+			std::unique_ptr<stream::input> contentPropBO,
+			std::unique_ptr<stream::input> contentSpriteDeps
+		)
+			:	content(std::move(contentInf))
 		{
-			// Populate the graphics filenames
-			assert(this->attributes.size() == MB_NUM_ATTRIBUTES);
+			assert(this->content);
 
-			Map::GraphicsFilename gf;
-			gf.type = "tls-bash-bg";
-			gf.filename = this->attributes[0].filenameValue;
-			if (!gf.filename.empty()) {
-				this->graphicsFilenames[BackgroundTileset1] = gf; // bg tiles
+			// Read the map info file
+			static const char *attrNames[] = {
+				"Background tileset",
+				"Foreground tileset",
+				"Bonus tileset",
+				"Sprite list",
+				"Palette",
+				"Sound effects",
+				"Unknown",
+			};
+			static const char *attrDesc[] = {
+				"Filename of the tileset to use for drawing the map background layer",
+				"Filename of the first tileset to use for drawing the map foreground layer",
+				"Filename of the second tileset to use for drawing the map foreground layer",
+				"Filename of sprite list - where the list of sprites used in this level is "
+				"stored.  Don't change this unless you have just renamed the file in the "
+				"main .DAT.",
+				"EGA palette to use",
+				"Filename to load PC speaker sounds from",
+				"Unknown",
+			};
+			this->content->seekg(0, stream::start);
+			for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
+				this->attr.emplace_back();
+				auto& attr = this->attr.back();
+				attr.type = Attribute::Type::Filename;
+				attr.name = attrNames[i];
+				attr.desc = attrDesc[i];
+				*this->content >> nullPadded(attr.filenameValue, 31);
+				if (attr.filenameValue.compare("UNNAMED") == 0) {
+					attr.filenameValue.clear();
+				} else {
+					// Add the fake extension
+					if (
+						(!attr.filenameValue.empty())
+						&& (i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
+					) {
+						attr.filenameValue += ".";
+						attr.filenameValue += validTypes[i];
+					}
+				}
+				attr.filenameValidExtension = validTypes[i];
 			}
 
-			gf.type = "tls-bash-fg";
-			gf.filename = this->attributes[1].filenameValue;
-			if (!gf.filename.empty()) {
-				this->graphicsFilenames[ForegroundTileset1] = gf; // fg tiles
-			}
+			std::vector<uint16_t> bgdata;
+			std::vector<uint8_t> fgdata;
 
-			gf.filename = this->attributes[2].filenameValue;
-			if (!gf.filename.empty()) {
-				this->graphicsFilenames[ForegroundTileset2] = gf; // bon tiles
-			}
+			// Read each layer
+			auto layerBG = std::make_shared<Layer_Bash_Background>(
+				std::move(contentBG),
+				&this->mapWidth,
+				&this->mapHeight,
+				&bgdata
+			);
+			this->v_layers.push_back(layerBG);
+
+			this->v_layers.push_back(
+				std::make_shared<Layer_Bash_Foreground>(
+					std::move(contentFG),
+					this->mapWidth,
+					this->mapHeight,
+					&fgdata
+				)
+			);
+
+			this->v_layers.push_back(
+				std::make_shared<Layer_Bash_Attribute>(
+					std::move(contentPropBG),
+					std::move(contentPropFG),
+					std::move(contentPropBO),
+					bgdata,
+					fgdata,
+					this->mapWidth,
+					this->mapHeight
+				)
+			);
+
+			this->v_layers.push_back(
+				std::make_shared<Layer_Bash_Sprite>(
+					std::move(contentSP),
+					std::move(contentSGL),
+					std::move(contentSpriteDeps)
+				)
+			);
 		}
+
+		virtual ~Map_Bash()
+		{
+		}
+
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
+		{
+			return {
+				// Background tiles
+				std::make_pair(
+					ImagePurpose::BackgroundTileset1,
+					GraphicsFilename{this->attr[0].filenameValue, "tls-bash-bg"}
+				),
+				// Foreground tiles
+				std::make_pair(
+					ImagePurpose::ForegroundTileset1,
+					GraphicsFilename{this->attr[1].filenameValue, "tls-bash-fg"}
+				),
+				// Bonus tiles
+				std::make_pair(
+					ImagePurpose::ForegroundTileset2,
+					GraphicsFilename{this->attr[2].filenameValue, "tls-bash-fg"}
+				),
+			};
+		}
+
+		virtual void flush()
+		{
+			// Write map info file
+			assert(this->attr.size() == MB_NUM_ATTRIBUTES);
+			this->content->seekp(0, stream::start);
+			std::string val;
+			unsigned int i = 0;
+			for (auto& attr : this->attributes()) {
+				if (attr.filenameValue.empty()) {
+					val = "UNNAMED";
+				} else {
+					auto dot = attr.filenameValue.find_last_of('.');
+					if (
+						(i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
+						&& (dot != std::string::npos)
+						&& (attr.filenameValue.substr(dot + 1).compare(validTypes[i]) == 0)
+					) {
+						// Extension matches, remove it
+						val = attr.filenameValue.substr(0, dot);
+					} else {
+						val = attr.filenameValue; // don't chop off extension
+					}
+				}
+				*this->content << nullPadded(val, 31);
+				i++;
+			}
+
+			auto lenLayer = this->mapWidth * this->mapHeight;
+			std::set<std::string> usedSprites;
+
+			auto layerBG = dynamic_cast<Layer_Bash_Background*>(this->v_layers[0].get());
+			auto layerFG = dynamic_cast<Layer_Bash_Foreground*>(this->v_layers[1].get());
+			auto layerAT = dynamic_cast<Layer_Bash_Attribute*>(this->v_layers[2].get());
+			auto layerSP = dynamic_cast<Layer_Bash_Sprite*>(this->v_layers[3].get());
+
+			// Populate the background data.  We can't write it yet as it contains
+			// flags which might be changed by tiles in the the foreground layer.
+			std::vector<uint16_t> bgdata(lenLayer, MB_DEFAULT_BGTILE);
+			layerBG->populate(&bgdata);
+
+			// Populate the foreground data.  We can't write this yet either, as the
+			// background data must be written first.
+			std::vector<uint8_t> fgdata(lenLayer, MB_DEFAULT_FGTILE);
+			layerFG->populate(&fgdata, &usedSprites);
+
+			// Run through the tile properties for the foreground layer, and update
+			// the flags in the BG layer as needed
+			layerAT->populate(&bgdata, &fgdata);
+
+			// Now write the data to the underlying files
+			layerBG->flush(bgdata);
+			layerFG->flush(fgdata);
+			layerSP->flush(usedSprites);
+
+			return;
+		}
+
+		virtual Caps caps() const
+		{
+			return
+				Map2D::Caps::HasViewport
+				| Map2D::Caps::HasMapSize
+				| Map2D::Caps::HasTileSize
+			;
+		}
+
+		virtual Point viewport() const
+		{
+			return {320, 200};
+		}
+
+		virtual Point mapSize() const
+		{
+			return {(signed long)this->mapWidth, (signed long)this->mapHeight};
+		}
+
+		virtual Point tileSize() const
+		{
+			return {MB_TILE_WIDTH, MB_TILE_HEIGHT};
+		}
+
+		Background background(const TilesetCollection& tileset) const
+		{
+			Background bg;
+			bg.att = Background::Attachment::SingleColour;
+			bg.clr = gamegraphics::PaletteEntry{0, 0, 0, 255};
+			return bg;
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+		unsigned long mapWidth;
+		unsigned long mapHeight;
 };
 
 
-std::string MapType_Bash::getMapCode() const
+std::string MapType_Bash::code() const
 {
 	return "map2d-bash";
 }
 
-std::string MapType_Bash::getFriendlyName() const
+std::string MapType_Bash::friendlyName() const
 {
 	return "Monster Bash level";
 }
 
-std::vector<std::string> MapType_Bash::getFileExtensions() const
+std::vector<std::string> MapType_Bash::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("mif");
-	return vcExtensions;
+	return {"mif"};
 }
 
-std::vector<std::string> MapType_Bash::getGameList() const
+std::vector<std::string> MapType_Bash::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Monster Bash");
-	return vcGames;
+	return {
+		"Monster Bash",
+		"Realms of Chaos (beta)",
+		"Scubaventure",
+	};
 }
 
-MapType::Certainty MapType_Bash::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Bash::isInstance(stream::input& content) const
 {
 	bool maybe = false;
-	stream::len len = psMap->size();
+	stream::len len = content.size();
 
 	// Make sure the file is large enough...
 	// TESTED BY: fmt_map_bash_isinstance_c01
@@ -457,8 +1116,8 @@ MapType::Certainty MapType_Bash::isInstance(stream::input_sptr psMap) const
 	uint8_t data[218]; // 7*31+1
 	memset(data, 0, sizeof(data));
 	uint8_t *d = data;
-	psMap->seekg(0, stream::start);
-	psMap->read(d, len);
+	content.seekg(0, stream::start);
+	content.read(d, len);
 	for (int n = 0; n < 7; n++) {
 		bool null = false;
 		for (int i = 0; i < 31; i++) {
@@ -483,679 +1142,46 @@ MapType::Certainty MapType_Bash::isInstance(stream::input_sptr psMap) const
 	return MapType::DefinitelyYes;
 }
 
-MapPtr MapType_Bash::create(SuppData& suppData) const
+std::unique_ptr<Map> MapType_Bash::create(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr MapType_Bash::open(stream::input_sptr input, SuppData& suppData) const
+std::unique_ptr<Map> MapType_Bash::open(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	stream::input_sptr bg = suppData[SuppItem::Layer1];
-	stream::input_sptr fg = suppData[SuppItem::Layer2];
-	stream::input_sptr spr = suppData[SuppItem::Layer3];
-	assert(bg);
-	assert(fg);
-	assert(spr);
-
-	// Read the map info file
-	static const char *attrNames[] = {
-		"Background tileset",
-		"Foreground tileset",
-		"Bonus tileset",
-		"Sprite list",
-		"Palette",
-		"Sound effects",
-		"Unknown",
-	};
-	static const char *attrDesc[] = {
-		"Filename of the tileset to use for drawing the map background layer",
-		"Filename of the first tileset to use for drawing the map foreground layer",
-		"Filename of the second tileset to use for drawing the map foreground layer",
-		"Filename of sprite list - where the list of sprites used in this level is "
-			"stored.  Don't change this unless you have just renamed the file in the "
-			"main .DAT.",
-		"EGA palette to use",
-		"Filename to load PC speaker sounds from",
-		"Unknown",
-	};
-	input->seekg(0, stream::start);
-	Map::Attributes attributes;
-	for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
-		Map::Attribute attr;
-		attr.type = Map::Attribute::Filename;
-		attr.name = attrNames[i];
-		attr.desc = attrDesc[i];
-		input >> nullPadded(attr.filenameValue, 31);
-		if (attr.filenameValue.compare("UNNAMED") == 0) {
-			attr.filenameValue.clear();
-		} else {
-			// Add the fake extension
-			if (
-				(!attr.filenameValue.empty())
-				&& (i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
-			) {
-				attr.filenameValue += ".";
-				attr.filenameValue += validTypes[i];
-			}
-		}
-		attr.filenameValidExtension = validTypes[i];
-		attributes.push_back(attr);
-	}
-
-	// Read the background layer
-	stream::pos lenBG = bg->size();
-	bg->seekg(0, stream::start);
-
-	// Read the background layer
-	uint16_t unknown, mapWidth, mapPixelWidth, mapPixelHeight;
-	bg
-		>> u16le(unknown)
-		>> u16le(mapWidth)
-		>> u16le(mapPixelWidth)
-		>> u16le(mapPixelHeight)
-	;
-	lenBG -= 8;
-
-	if (lenBG < 2) throw stream::error("Background layer file too short");
-
-	mapWidth >>= 1; // convert from # of bytes to # of ints (tiles)
-	unsigned int mapHeight = mapPixelHeight / MB_TILE_HEIGHT;
-
-	Map2D::Layer::ItemPtrVectorPtr bgtiles(new Map2D::Layer::ItemPtrVector());
-	Map2D::Layer::ItemPtrVectorPtr bgattributes(new Map2D::Layer::ItemPtrVector());
-	Map2D::Layer::ItemPtrVectorPtr bgpoints(new Map2D::Layer::ItemPtrVector());
-	bgtiles->reserve(mapWidth * mapHeight);
-	bgattributes->reserve(mapWidth * mapHeight);
-	for (unsigned int y = 0; y < mapHeight; y++) {
-		for (unsigned int x = 0; x < mapWidth; x++) {
-			uint16_t code;
-			bg >> u16le(code);
-			lenBG -= 2;
-
-			if ((code & 0x1FF) != MB_DEFAULT_BGTILE) {
-				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-				t->type = Map2D::Layer::Item::Default;
-				t->x = x;
-				t->y = y;
-				t->code = code & 0x1FF;
-				bgtiles->push_back(t);
-			}
-
-			if ((code >> 9) & ~16) {
-				Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-				ta->type = Map2D::Layer::Item::Blocking;
-				ta->x = x;
-				ta->y = y;
-				ta->code = (code >> 9) & ~16; // deselect point item flag
-				ta->blockingFlags = 0;
-				if (code & (1<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
-				if (code & (2<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
-				if (code & (4<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
-				if (code & (8<<9)) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
-				if (code & (32<<9)) ta->blockingFlags |= Map2D::Layer::Item::Slant45;
-				if (code & (64<<9)) {
-					ta->type |= Map2D::Layer::Item::Movement;
-					ta->movementFlags = Map2D::Layer::Item::DistanceLimit;
-					ta->movementDistLeft = 0;
-					ta->movementDistRight = 0;
-					ta->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
-					ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
-				}
-				bgattributes->push_back(ta);
-			}
-
-			if (code & (16<<9)) {
-				Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-				ta->type = Map2D::Layer::Item::Flags;
-				ta->x = x;
-				ta->y = y;
-				ta->code = 1;
-				ta->generalFlags = Map2D::Layer::Item::Interactive;
-				bgpoints->push_back(ta);
-			}
-
-			if (lenBG < 2) break;
-		}
-		if (lenBG < 2) break;
-	}
-
-	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i <= MB_MAX_VALID_BG_TILECODE; i++) {
-		if (i == MB_DEFAULT_BGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validBGItems->push_back(t);
-	}
-	Map2D::LayerPtr bgLayer(new Layer_BashBackground(bgtiles, validBGItems));
-
-	Map2D::Layer::ItemPtrVectorPtr validAttrItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i < 16; i++) {
-		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-		ta->type = Map2D::Layer::Item::Blocking;
-		ta->x = 0;
-		ta->y = 0;
-		ta->code = i;
-		ta->blockingFlags = 0;
-		if (i & 1) ta->blockingFlags |= Map2D::Layer::Item::BlockLeft;
-		if (i & 2) ta->blockingFlags |= Map2D::Layer::Item::BlockRight;
-		if (i & 4) ta->blockingFlags |= Map2D::Layer::Item::BlockTop;
-		if (i & 8) ta->blockingFlags |= Map2D::Layer::Item::BlockBottom;
-		validAttrItems->push_back(ta);
-	}
-	{
-		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-		ta->type = Map2D::Layer::Item::Blocking;
-		ta->x = 0;
-		ta->y = 0;
-		ta->code = 32;
-		ta->blockingFlags = 0;
-		ta->blockingFlags |= Map2D::Layer::Item::Slant45;
-		validAttrItems->push_back(ta);
-	}
-	{
-		// Ladder
-		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-		ta->type = Map2D::Layer::Item::Movement;
-		ta->x = 0;
-		ta->y = 0;
-		ta->code = 64;
-		ta->movementFlags = Map2D::Layer::Item::DistanceLimit;
-		ta->movementDistLeft = 0;
-		ta->movementDistRight = 0;
-		ta->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
-		ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
-		validAttrItems->push_back(ta);
-	}
-	{
-		// Top of ladder (can stand on)
-		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-		ta->type = Map2D::Layer::Item::Blocking | Map2D::Layer::Item::Movement;
-		ta->x = 0;
-		ta->y = 0;
-		ta->code = 64 | 4;
-		ta->blockingFlags = Map2D::Layer::Item::BlockTop;
-		ta->movementFlags = Map2D::Layer::Item::DistanceLimit;
-		ta->movementDistLeft = 0;
-		ta->movementDistRight = 0;
-		ta->movementDistUp = Map2D::Layer::Item::DistIndeterminate;
-		ta->movementDistDown = Map2D::Layer::Item::DistIndeterminate;
-		validAttrItems->push_back(ta);
-	}
-	Map2D::LayerPtr attrLayer(new Layer_BashInvisible("Attributes", bgattributes, validAttrItems));
-
-	Map2D::Layer::ItemPtrVectorPtr validPointItems(new Map2D::Layer::ItemPtrVector());
-	{
-		Map2D::Layer::ItemPtr ta(new Map2D::Layer::Item());
-		ta->type = Map2D::Layer::Item::Flags;
-		ta->x = 0;
-		ta->y = 0;
-		ta->code = 1;
-		ta->generalFlags = Map2D::Layer::Item::Interactive;
-		validPointItems->push_back(ta);
-	}
-	Map2D::LayerPtr pointLayer(new Layer_BashInvisible("Interactive flags", bgpoints, validPointItems));
-
-	// Read the foreground layer
-	stream::pos lenFG = fg->size();
-	fg->seekg(2, stream::start); // skip width field
-	lenFG -= 2;
-
-	Map2D::Layer::ItemPtrVectorPtr fgtiles(new Map2D::Layer::ItemPtrVector());
-	fgtiles->reserve(mapWidth * mapHeight);
-	for (unsigned int y = 0; y < mapHeight; y++) {
-		for (unsigned int x = 0; x < mapWidth; x++) {
-			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-			t->type = Map2D::Layer::Item::Default;
-			t->x = x;
-			t->y = y;
-			uint8_t code;
-			fg >> u8(code);
-			lenFG--;
-			t->code = code;
-			if (code != MB_DEFAULT_FGTILE) fgtiles->push_back(t);
-			if (lenFG < 1) break;
-		}
-		if (lenFG < 1) break;
-	}
-
-	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i <= MB_MAX_VALID_FG_TILECODE; i++) {
-		// The default tile actually has an image, so don't exclude it
-		if (i == MB_DEFAULT_FGTILE) continue;
-
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validFGItems->push_back(t);
-	}
-	Map2D::LayerPtr fgLayer(new Layer_BashForeground(fgtiles, validFGItems));
-
-	// Read the sprite layer
-	stream::pos lenSpr = spr->size();
-	spr->seekg(2, stream::start); // skip unknown field
-	lenSpr -= 2;
-
-	Map2D::Layer::ItemPtrVectorPtr sprtiles(new Map2D::Layer::ItemPtrVector());
-	while (lenSpr > 4) {
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		uint32_t lenEntry;
-		uint32_t unknown1, unknown2;
-		uint16_t unknown3;
-		spr
-			>> u32le(lenEntry)
-			>> u32le(unknown1)
-			>> u32le(unknown2)
-			>> u16le(unknown3)
-			>> u32le(t->x)
-			>> u32le(t->y)
-		;
-		if (lenEntry > lenSpr) break; // corrupted file
-		spr->seekg(22, stream::cur); // skip padding
-		std::string filename;
-		spr >> nullPadded(filename, lenEntry - (4+4+4+2+4+4+22));
-		t->code = 0;
-		for (unsigned int s = 0; s < sizeof(spriteFilenames) / sizeof(const char *); s++) {
-			if (filename.compare(spriteFilenames[s]) == 0) {
-				t->code = 1000000 + s;
-			}
-		}
-		if (t->code == 0) {
-			std::cout << "ERROR: Encounted Monster Bash sprite with unexpected name \""
-				<< filename << "\" - unable to add to map.\n";
-		}
-		sprtiles->push_back(t);
-		lenSpr -= lenEntry;
-	}
-
-	Map2D::Layer::ItemPtrVectorPtr validSprites(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int s = 0; s < sizeof(spriteFilenames) / sizeof(const char *); s++) {
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = 1000000 + s;
-		validSprites->push_back(t);
-	}
-	Map2D::LayerPtr sprLayer(new Layer_BashSprite(sprtiles, validSprites));
-
-
-	Map2D::LayerPtrVector layers;
-	layers.push_back(bgLayer);
-	layers.push_back(fgLayer);
-	layers.push_back(sprLayer);
-	layers.push_back(attrLayer);
-	layers.push_back(pointLayer);
-
-	Map2DPtr map(new Map2D_Bash(attributes, mapWidth, mapHeight, layers));
-
-	return map;
+	auto suppBG = suppData.find(SuppItem::Layer1);
+	auto suppFG = suppData.find(SuppItem::Layer2);
+	auto suppSP = suppData.find(SuppItem::Layer3);
+	auto suppSGL = suppData.find(SuppItem::Extra1);
+	auto suppPropBG = suppData.find(SuppItem::Extra2);
+	auto suppPropFG = suppData.find(SuppItem::Extra3);
+	auto suppPropBO = suppData.find(SuppItem::Extra4);
+	auto suppDepsSP = suppData.find(SuppItem::Extra5);
+	if (suppBG == suppData.end()) throw stream::error("Missing content for Layer1 (background) supplementary item");
+	if (suppFG == suppData.end()) throw stream::error("Missing content for Layer2 (foreground) supplementary item");
+	if (suppSP == suppData.end()) throw stream::error("Missing content for Layer3 (sprite) supplementary item");
+	if (suppSGL == suppData.end()) throw stream::error("Missing content for Extra1 (sprite list) supplementary item");
+	if (suppPropBG == suppData.end()) throw stream::error("Missing content for Extra2 (background tile properties) supplementary item");
+	if (suppPropFG == suppData.end()) throw stream::error("Missing content for Extra3 (foreground tile properties) supplementary item");
+	if (suppPropBO == suppData.end()) throw stream::error("Missing content for Extra4 (bonus tile properties) supplementary item");
+	if (suppDepsSP == suppData.end()) throw stream::error("Missing content for Extra5 (full sprite list) supplementary item");
+	return std::make_unique<Map_Bash>(
+		std::move(content),
+		std::move(suppBG->second),
+		std::move(suppFG->second),
+		std::move(suppSP->second),
+		std::move(suppSGL->second),
+		std::move(suppPropBG->second),
+		std::move(suppPropFG->second),
+		std::move(suppPropBO->second),
+		std::move(suppDepsSP->second)
+	);
 }
 
-void MapType_Bash::write(MapPtr map, stream::expanding_output_sptr output,
-	ExpandingSuppData& suppData) const
-{
-	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 5)
-		throw stream::error("Incorrect layer count for this format.");
-
-	unsigned int mapWidth, mapHeight;
-	map2d->getMapSize(&mapWidth, &mapHeight);
-
-	stream::output_sptr bg = suppData[SuppItem::Layer1];
-	stream::output_sptr fg = suppData[SuppItem::Layer2];
-	stream::output_sptr spr = suppData[SuppItem::Layer3];
-	stream::output_sptr sgl = suppData[SuppItem::Extra1];
-	assert(bg);
-	assert(fg);
-	assert(spr);
-	assert(sgl);
-
-	// Write map info file
-	{
-		if (map->attributes.size() != MB_NUM_ATTRIBUTES) {
-			throw stream::error("Cannot write map as there is an incorrect number "
-				"of attributes set.");
-		}
-		std::string val;
-		for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
-			Map::Attribute *attr = &map->attributes[i];
-			if (attr->filenameValue.empty()) {
-				val = "UNNAMED";
-			} else {
-				std::string::size_type dot = attr->filenameValue.find_last_of('.');
-				if (
-					(i != MB_ATTR_KEEP_EXT) // need to keep .snd extension
-					&& (dot != std::string::npos)
-					&& (attr->filenameValue.substr(dot + 1).compare(validTypes[i]) == 0)
-				) {
-					// Extension matches, remove it
-					val = attr->filenameValue.substr(0, dot);
-				} else {
-					val = attr->filenameValue; // don't chop off extension
-				}
-			}
-			output << nullPadded(val, 31);
-		}
-	}
-
-	// Write the background layer
-	{
-		const unsigned int lenBG = mapWidth * mapHeight;
-
-		boost::scoped_array<uint16_t> bgdata(new uint16_t[lenBG]);
-		memset(bgdata.get(), 0, lenBG * sizeof(uint16_t)); // default background tile
-
-		Map2D::LayerPtr layer;
-		{
-			layer = map2d->getLayer(0);
-			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-			for (Map2D::Layer::ItemPtrVector::const_iterator
-				i = items->begin(); i != items->end(); i++
-			) {
-				if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-					throw stream::error("Background layer has tiles outside map boundary!");
-				}
-				bgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-			}
-		}
-
-		{
-			// Merge in attribute layer
-			layer = map2d->getLayer(3);
-			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-			for (Map2D::Layer::ItemPtrVector::const_iterator
-				i = items->begin(); i != items->end(); i++
-			) {
-				const Map2D::Layer::ItemPtr& ta = (*i);
-				if ((ta->x > mapWidth) || (ta->y > mapHeight)) {
-					throw stream::error("Attribute layer has tiles outside map boundary!");
-				}
-				uint16_t code = 0;
-				if (ta->type & Map2D::Layer::Item::Blocking) {
-					if (ta->blockingFlags & Map2D::Layer::Item::BlockLeft) code |= (1<<9);
-					if (ta->blockingFlags & Map2D::Layer::Item::BlockRight) code |= (2<<9);
-					if (ta->blockingFlags & Map2D::Layer::Item::BlockTop) code |= (4<<9);
-					if (ta->blockingFlags & Map2D::Layer::Item::BlockBottom) code |= (8<<9);
-					if (ta->blockingFlags & Map2D::Layer::Item::Slant45) code |= (32<<9);
-				}
-				if (ta->type & Map2D::Layer::Item::Movement) {
-					if (ta->movementFlags & Map2D::Layer::Item::DistanceLimit) code |= (64<<9);
-				}
-				bgdata[(*i)->y * mapWidth + (*i)->x] |= code;
-			}
-		}
-
-		{
-			// Merge in interactive layer
-			layer = map2d->getLayer(4);
-			const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-			for (Map2D::Layer::ItemPtrVector::const_iterator
-				i = items->begin(); i != items->end(); i++
-			) {
-				const Map2D::Layer::ItemPtr& ta = (*i);
-				if ((ta->x > mapWidth) || (ta->y > mapHeight)) continue;
-
-				// This is a point item, mark it as such
-				bgdata[(*i)->y * mapWidth + (*i)->x] |= 16<<9;
-			}
-		}
-
-		uint16_t mapStripe = mapHeight * (MB_TILE_WIDTH * MB_TILE_HEIGHT) + mapWidth;
-		uint16_t mapWidthBytes = mapWidth * 2; // 2 == sizeof(uint16_t)
-		uint16_t mapPixelWidth = mapWidth * MB_TILE_WIDTH;
-		uint16_t mapPixelHeight = mapHeight * MB_TILE_HEIGHT;
-		bg->seekp(0, stream::start);
-		bg
-			<< u16le(mapStripe)
-			<< u16le(mapWidthBytes)
-			<< u16le(mapPixelWidth)
-			<< u16le(mapPixelHeight)
-		;
-		uint16_t *pbg = bgdata.get();
-		for (unsigned int i = 0; i < lenBG; i++) {
-			bg << u16le(*pbg++);
-		}
-	}
-
-	// Write the foreground layer
-	{
-		const unsigned int lenFG = mapWidth * mapHeight;
-
-		boost::scoped_array<uint8_t> fgdata(new uint8_t[lenFG]);
-		memset(fgdata.get(), 0, lenFG); // default background tile
-		Map2D::LayerPtr layer = map2d->getLayer(1);
-		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		for (Map2D::Layer::ItemPtrVector::const_iterator
-			i = items->begin(); i != items->end(); i++
-		) {
-			if (((*i)->x > mapWidth) || ((*i)->y > mapHeight)) {
-				throw stream::error("Foreground layer has tiles outside map boundary!");
-			}
-			fgdata[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-		}
-
-		uint16_t mapWidthBytes = mapWidth;
-		fg->seekp(0, stream::start);
-		fg
-			<< u16le(mapWidthBytes)
-		;
-		uint8_t *pfg = fgdata.get();
-		for (unsigned int i = 0; i < lenFG; i++) {
-			fg << u8(*pfg++);
-		}
-	}
-
-	std::set<std::string> usedSprites;
-	// Write the sprite layer
-	{
-		// These sprites must always be present in a level
-		usedSprites.insert("arrows");
-usedSprites.insert("axe");
-		usedSprites.insert("blank");
-usedSprites.insert("bomb");
-usedSprites.insert("bone1");
-usedSprites.insert("bone2");
-usedSprites.insert("bone3");
-		usedSprites.insert("border");
-		usedSprites.insert("border2");
-		usedSprites.insert("cat");
-		usedSprites.insert("chunk");
-		usedSprites.insert("dog");
-		usedSprites.insert("flag");
-usedSprites.insert("float100");
-		usedSprites.insert("guage");
-		usedSprites.insert("heart");
-		usedSprites.insert("leaf");
-usedSprites.insert("plank");
-usedSprites.insert("plank_r");
-usedSprites.insert("rock");
-		usedSprites.insert("score");
-		usedSprites.insert("skullw"); // only needed if skulls present
-		usedSprites.insert("splat");
-		usedSprites.insert("white");
-
-		Map2D::LayerPtr layer = map2d->getLayer(2);
-		const Map2D::Layer::ItemPtrVectorPtr items = layer->getAllItems();
-		spr->seekp(0, stream::start);
-		spr
-			<< u16le(0xFFFE) /// @todo calculate correct value
-		;
-		for (Map2D::Layer::ItemPtrVector::const_iterator i = items->begin();
-			i != items->end();
-			i++
-		) {
-			if ((*i)->code < 1000000) continue;
-			unsigned int code = (*i)->code - 1000000;
-			if (code >= sizeof(spriteFilenames) / sizeof(const char *)) {
-				std::cerr << "ERROR: Tried to write out-of-range sprite to Monster Bash map\n";
-				continue;
-			}
-			std::string filename(spriteFilenames[code]);
-			int lenFilename = filename.length() + 2; // need two terminating nulls
-			uint32_t lenEntry = 4+4+4+2+4+4+22+lenFilename;
-			spr
-				<< u32le(lenEntry)
-				<< u32le(0)
-				<< u32le(0)
-				<< u16le(0)
-				<< u32le((*i)->x)
-				<< u32le((*i)->y)
-				<< nullPadded("", 22)
-				<< nullPadded(filename, lenFilename);
-			;
-			usedSprites.insert(filename);
-			if (
-				(filename.compare("main_l") == 0) ||
-				(filename.compare("main_r") == 0)
-			) {
-				usedSprites.insert("main_l");
-				usedSprites.insert("main_r");
-				usedSprites.insert("break_screen");
-				usedSprites.insert("crack");
-				usedSprites.insert("crawlleft");
-				usedSprites.insert("crawlright");
-				usedSprites.insert("dirt_l");
-				usedSprites.insert("dirt_r");
-				usedSprites.insert("main_die");
-				usedSprites.insert("main_exit");
-				usedSprites.insert("main_hat_l");
-				usedSprites.insert("main_hat_r");
-				usedSprites.insert("main_l");
-				usedSprites.insert("main_meter");
-				usedSprites.insert("main_r");
-				usedSprites.insert("main_stars");
-			} else if (
-				(filename.compare("cyclops_l") == 0) ||
-				(filename.compare("cyclops_r") == 0)
-			) {
-				usedSprites.insert("cyclops_l");
-				usedSprites.insert("cyclops_r");
-				usedSprites.insert("cyc_horn_l");
-				usedSprites.insert("cyc_horn_r");
-			} else if (
-				(filename.compare("devil_l") == 0) ||
-				(filename.compare("devil_r") == 0)
-			) {
-				usedSprites.insert("devil_l");
-				usedSprites.insert("devil_r");
-				usedSprites.insert("pfork_l");
-				usedSprites.insert("pfork_r");
-			} else if (
-				(filename.compare("hand_l") == 0) ||
-				(filename.compare("hand_r") == 0)
-			) {
-				usedSprites.insert("hand_l");
-				usedSprites.insert("hand_r");
-			} else if (
-				(filename.compare("iman_l") == 0) ||
-				(filename.compare("iman_r") == 0)
-			) {
-				usedSprites.insert("iman_l");
-				usedSprites.insert("iman_r");
-				usedSprites.insert("hat");
-			} else if (
-				(filename.compare("knifee") == 0) ||
-				(filename.compare("knifee_ud") == 0)
-			) {
-				usedSprites.insert("knife");
-			} else if (
-				(filename.compare("nemesis") == 0)
-			) {
-				usedSprites.insert("main_broom");
-			} else if (
-				(filename.compare("skelet_l") == 0) ||
-				(filename.compare("skelet_r") == 0)
-			) {
-				usedSprites.insert("skelet_l");
-				usedSprites.insert("sketet_r");
-				usedSprites.insert("jaw_l");
-				usedSprites.insert("jaw_r");
-			} else if (
-				(filename.compare("teeth_l") == 0) ||
-				(filename.compare("teeth_r") == 0)
-			) {
-				usedSprites.insert("teeth_l");
-				usedSprites.insert("teeth_r");
-			} else if (
-				(filename.compare("tman_bl") == 0) ||
-				(filename.compare("tman_br") == 0)
-			) {
-				usedSprites.insert("tman_bl");
-				usedSprites.insert("tman_br");
-				usedSprites.insert("pellet_h");
-			} else if (
-				(filename.compare("tman_ld") == 0) ||
-				(filename.compare("tman_lu") == 0)
-			) {
-				usedSprites.insert("tman_ld");
-				usedSprites.insert("tman_lu");
-				usedSprites.insert("pellet_h");
-			} else if (
-				(filename.compare("tman_rd") == 0) ||
-				(filename.compare("tman_ru") == 0)
-			) {
-				usedSprites.insert("tman_rd");
-				usedSprites.insert("tman_ru");
-				usedSprites.insert("pellet_h");
-			} else if (
-				(filename.compare("tman_tl") == 0) ||
-				(filename.compare("tman_tr") == 0)
-			) {
-				usedSprites.insert("tman_tl");
-				usedSprites.insert("tman_tr");
-				usedSprites.insert("pellet_h");
-			} else if (
-				(filename.compare("vulture") == 0) ||
-				(filename.compare("vulture_l") == 0) ||
-				(filename.compare("vulture_r") == 0)
-			) {
-				usedSprites.insert("vulture");
-				usedSprites.insert("vulture_l");
-				usedSprites.insert("vulture_r");
-			} else if (
-				(filename.compare("zb_l") == 0) ||
-				(filename.compare("zb_r") == 0)
-			) {
-				usedSprites.insert("zb_l");
-				usedSprites.insert("zb_r");
-				usedSprites.insert("zbh_l"); // optional unless spawning zombie (then the others are needed too)
-				usedSprites.insert("zbh_r"); // ditto
-				usedSprites.insert("zhead");
-				usedSprites.insert("zhead_r");
-			}
-		}
-	}
-
-	// Write out a list of all required sprites
-	sgl->seekp(0, stream::start);
-	for (std::set<std::string>::const_iterator
-		i = usedSprites.begin(); i != usedSprites.end(); i++
-	) {
-		sgl
-			<< nullPadded(*i, 31)
-		;
-	}
-
-	// No need to truncate as we're writing into empty expanding streams.
-
-	bg->flush();
-	fg->flush();
-	spr->flush();
-	sgl->flush();
-	output->flush();
-	return;
-}
-
-SuppFilenames MapType_Bash::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Bash::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
 	SuppFilenames supps;
@@ -1164,9 +1190,9 @@ SuppFilenames MapType_Bash::getRequiredSupps(stream::input_sptr input,
 	supps[SuppItem::Layer2] = baseName + "mfg";
 	supps[SuppItem::Layer3] = baseName + "msp";
 
-	input->seekg(31*3, stream::start);
+	content.seekg(31*3, stream::start);
 	std::string sgl;
-	input >> nullPadded(sgl, 31);
+	content >> nullPadded(sgl, 31);
 	supps[SuppItem::Extra1] = sgl + ".sgl";
 	return supps;
 }
