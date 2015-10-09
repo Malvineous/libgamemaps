@@ -2,6 +2,8 @@ bin_PROGRAMS = gamemap
 noinst_PROGRAMS = hello
 
 gamemap_SOURCES = gamemap.cpp
+EXTRA_gamemap_SOURCES = pngutil.hpp
+
 hello_SOURCES = hello.cpp
 
 WARNINGS = -Wall -Wextra -Wno-unused-parameter

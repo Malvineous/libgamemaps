@@ -29,6 +29,8 @@
 #include <camoto/stream_file.hpp>
 #include <png++/png.hpp>
 
+#include "pngutil.hpp"
+
 namespace po = boost::program_options;
 namespace gm = camoto::gamemaps;
 namespace gg = camoto::gamegraphics;
@@ -300,45 +302,25 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 	png::image<png::index_pixel> png(outSize.x, outSize.y);
 
 	bool useMask;
-	std::shared_ptr<gg::Palette> srcPal;
+	std::shared_ptr<const gg::Palette> srcPal;
+	gg::ColourDepth depth = gg::ColourDepth::VGA; // default, should never be used
 	for (auto& i : allTilesets) {
+		depth = i.second->colourDepth();
 		if (i.second->caps() & gg::Tileset::Caps::HasPalette) {
-			srcPal = std::make_shared<gg::Palette>(*i.second->palette());
+			srcPal = i.second->palette();
 			break;
 		}
 	}
-	if (!srcPal) {
-		srcPal = gg::createPalette_DefaultVGA();
-		// Force last colour to be transparent
-		srcPal->at(255).red = 255;
-		srcPal->at(255).green = 0;
-		srcPal->at(255).blue = 192;
-		srcPal->at(255).alpha = 0;
-	}
 
-	png::palette pal(srcPal->size());
-	png::tRNS transparency(srcPal->size());
-	int j = 0;
-	png::index_pixel xp(0);
-	bool hasXP = false;
-	for (auto& i : *srcPal) {
-		pal[j] = png::color(i.red, i.green, i.blue);
-		transparency[j] = i.alpha;
-		if (i.alpha == 0) {
-			xp = j;
-			hasXP = true;
-		}
-		j++;
-	}
-	if ((srcPal->size() < 255) && (!hasXP)) {
-		// Palette has no transparent entry but has room for one, so insert entry at
-		// start of palette (this means tRNS block can be only one byte long)
-		pal.insert(pal.begin(), png::color(255, 0, 192));
-		transparency.insert(transparency.begin(), 0);
-		useMask = true; // increment all palette indices from now on
-	}
-	png.set_palette(pal);
-	if (transparency.size() > 0) png.set_tRNS(transparency);
+	int forceXP = -1;
+	png::palette pngPal;
+	png::tRNS pngTNS;
+	int palOffset;
+	auto transparentIndex = preparePalette(depth, srcPal.get(), &pngPal, &pngTNS,
+		&palOffset, forceXP);
+
+	png.set_palette(pngPal);
+	if (pngTNS.size() > 0) png.set_tRNS(pngTNS);
 
 	// Get the map background
 	auto bg = map.background(allTilesets);
@@ -346,21 +328,21 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 		case gm::Map2D::Background::Attachment::NoBackground: {
 			for (unsigned int y = 0; y < outSize.y; y++) {
 				for (unsigned int x = 0; x < outSize.x; x++) {
-					png[y][x] = xp;
+					png[y][x] = transparentIndex;
 				}
 			}
 			break;
 		}
 		case gm::Map2D::Background::Attachment::SingleColour: {
-			// Find the background colour in the palette
+			// Find the background colour in the palette.  This won't find transparent
+			// colours, but that's what NoBackground is for.
 			png::index_pixel clr(0);
 			unsigned int palIndex = 0;
-			for (auto& i : *srcPal) {
+			for (auto& i : pngPal) {
 				if (
 					(bg.clr.red == i.red)
 					&& (bg.clr.green == i.green)
 					&& (bg.clr.blue == i.blue)
-					&& (bg.clr.alpha == i.alpha)
 				) {
 					clr = palIndex;
 					break;
@@ -382,15 +364,10 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 			for (unsigned int y = 0; y < outSize.y; y++) {
 				for (unsigned int x = 0; x < outSize.x; x++) {
 					auto pos = (y % tileSize.y) * tileSize.x + (x % tileSize.x);
-					png[y][x] =
-						(tileMask[pos] & (int)gg::Image::Mask::Transparent) ? (
-							xp
-						) : (
-							png::index_pixel(
-								// +1 to the colour to skip over transparent (#0)
-								tilePixels[pos] + (useMask ? 1 : 0)
-							)
-						);
+					png[y][x] = png::index_pixel(
+						(tileMask[pos] & (int)gg::Image::Mask::Transparent)
+						? transparentIndex : (tilePixels[pos] + palOffset)
+					);
 				}
 			}
 			break;
@@ -464,17 +441,9 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 					unsigned int pngX = offX+tX;
 					if (pngX >= outSize.x) break; // don't write past image edge
 					// Only write opaque pixels
-					if ((thisTile.mask[tY * thisTile.dims.x + tX] & (int)gg::Image::Mask::Transparent) == 0) {
-						auto pos = tY * thisTile.dims.x + tX;
-						png[pngY][pngX] =
-							(thisTile.mask[pos] & (int)gg::Image::Mask::Transparent) ? (
-								xp
-							) : (
-								png::index_pixel(
-									// +1 to the colour to skip over transparent (#0)
-									thisTile.data[pos] + (useMask ? 1 : 0)
-								)
-							);
+					auto pos = tY * thisTile.dims.x + tX;
+					if ((thisTile.mask[pos] & (int)gg::Image::Mask::Transparent) == 0) {
+						png[pngY][pngX] = png::index_pixel(thisTile.data[pos] + palOffset);
 					} // else let higher layers see through to lower ones
 				}
 			}
