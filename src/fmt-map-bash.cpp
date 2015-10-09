@@ -1160,14 +1160,14 @@ std::unique_ptr<Map> MapType_Bash::open(
 	auto suppPropFG = suppData.find(SuppItem::Extra3);
 	auto suppPropBO = suppData.find(SuppItem::Extra4);
 	auto suppDepsSP = suppData.find(SuppItem::Extra5);
-	if (suppBG == suppData.end()) throw stream::error("Missing content for Layer1 (background) supplementary item");
-	if (suppFG == suppData.end()) throw stream::error("Missing content for Layer2 (foreground) supplementary item");
-	if (suppSP == suppData.end()) throw stream::error("Missing content for Layer3 (sprite) supplementary item");
-	if (suppSGL == suppData.end()) throw stream::error("Missing content for Extra1 (sprite list) supplementary item");
-	if (suppPropBG == suppData.end()) throw stream::error("Missing content for Extra2 (background tile properties) supplementary item");
-	if (suppPropFG == suppData.end()) throw stream::error("Missing content for Extra3 (foreground tile properties) supplementary item");
-	if (suppPropBO == suppData.end()) throw stream::error("Missing content for Extra4 (bonus tile properties) supplementary item");
-	if (suppDepsSP == suppData.end()) throw stream::error("Missing content for Extra5 (full sprite list) supplementary item");
+	if (suppBG == suppData.end()) throw stream::error("Missing content for Layer1 (background) supplementary item.");
+	if (suppFG == suppData.end()) throw stream::error("Missing content for Layer2 (foreground) supplementary item.");
+	if (suppSP == suppData.end()) throw stream::error("Missing content for Layer3 (sprite) supplementary item.");
+	if (suppSGL == suppData.end()) throw stream::error("Missing content for Extra1 (sprite list) supplementary item.");
+	if (suppPropBG == suppData.end()) throw stream::error("Missing content for Extra2 (background tile properties) supplementary item.");
+	if (suppPropFG == suppData.end()) throw stream::error("Missing content for Extra3 (foreground tile properties) supplementary item.");
+	if (suppPropBO == suppData.end()) throw stream::error("Missing content for Extra4 (bonus tile properties) supplementary item.");
+	if (suppDepsSP == suppData.end()) throw stream::error("Missing content for Extra5 (full sprite list) supplementary item.");
 	return std::make_unique<Map_Bash>(
 		std::move(content),
 		std::move(suppBG->second),
