@@ -1194,6 +1194,13 @@ SuppFilenames MapType_Bash::getRequiredSupps(stream::input& content,
 	std::string sgl;
 	content >> nullPadded(sgl, 31);
 	supps[SuppItem::Extra1] = sgl + ".sgl";
+
+	// These filenames aren't part of the game, but are extra data we need
+	// to make editing the maps managable.
+	supps[SuppItem::Extra2] = baseName + "xbg";
+	supps[SuppItem::Extra3] = baseName + "xfg";
+	supps[SuppItem::Extra4] = baseName + "xbn";
+	supps[SuppItem::Extra5] = baseName + "xsp";
 	return supps;
 }
 
