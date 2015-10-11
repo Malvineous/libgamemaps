@@ -170,8 +170,15 @@ class Map_Rockford: public MapCore, public Map2DCore
 
 		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
 		{
-#warning TODO: Proper graphics filename
-			return {};
+			// Graphics filenames aren't stored in the map file, so we can't return
+			// anything here, they'll have to be supplied manually.  We just return
+			// which tileset types are needed.
+			return {
+				std::make_pair(
+					ImagePurpose::BackgroundTileset1,
+					GraphicsFilename{"", ""}
+				),
+			};
 		}
 
 		virtual void flush()
