@@ -431,6 +431,7 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 			if ((thisTile.dims.x == 0) || (thisTile.dims.y == 0)) continue; // no image
 
 			// Draw tile onto png
+			unsigned int tnsSize = pngTNS.size();
 			unsigned int offX = t.pos.x * tileSize.x;
 			unsigned int offY = t.pos.y * tileSize.y;
 			for (unsigned int tY = 0; tY < thisTile.dims.y; tY++) {
@@ -439,10 +440,14 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 				for (unsigned int tX = 0; tX < thisTile.dims.x; tX++) {
 					unsigned int pngX = offX+tX;
 					if (pngX >= outSize.x) break; // don't write past image edge
-					// Only write opaque pixels
 					auto pos = tY * thisTile.dims.x + tX;
+					// Only write opaque pixels
 					if ((thisTile.mask[pos] & (int)gg::Image::Mask::Transparent) == 0) {
-						png[pngY][pngX] = png::index_pixel(thisTile.data[pos] + palOffset);
+						unsigned int pix = thisTile.data[pos] + palOffset;
+						// Also skip pixels if they are using palette transparency
+						if ((pix >= tnsSize) || (pngTNS[pix] > 0)) {
+							png[pngY][pngX] = png::index_pixel(pix);
+						}
 					} // else let higher layers see through to lower ones
 				}
 			}
