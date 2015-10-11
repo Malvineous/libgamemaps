@@ -211,8 +211,12 @@ class Map_DarkAges: public MapCore, public Map2DCore
 
 		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
 		{
-#warning Implement graphicsFilename()
-			return {};
+			return {
+				std::make_pair(
+					ImagePurpose::BackgroundTileset1,
+					GraphicsFilename{"", ""}
+				),
+			};
 		}
 
 		virtual void flush()
