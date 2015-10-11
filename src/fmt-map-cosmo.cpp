@@ -23,6 +23,7 @@
 
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/util.hpp> // make_unique
+#include <camoto/gamegraphics/image-memory.hpp>
 #include "map-core.hpp"
 #include "map2d-core.hpp"
 #include "fmt-map-cosmo.hpp"
@@ -183,13 +184,41 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 
 			ret.img = tsActor->openImage(actorFrames[0]);
 			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+
+			// Special image tweaks
+			switch (item.code) {
+				case 127: { // Pink eye plant (upside down)
+					auto pix = ret.img->convert();
+					auto mask = ret.img->convert_mask();
+					auto len = pix.size();
+					Pixels pix_flip(len);
+					Pixels mask_flip(len);
+					auto pix_s = pix.data();
+					auto mask_s = mask.data();
+					auto pix_d = pix_flip.data() + pix_flip.size();
+					auto mask_d = mask_flip.data() + mask_flip.size();
+					for (unsigned int i = 0; i < len; i++) {
+						*--pix_d = *pix_s++;
+						*--mask_d = *mask_s++;
+					}
+					ret.img = std::make_unique<Image_Memory>(
+						ret.img->dimensions(),
+						pix_flip,
+						mask_flip,
+						Point{0, 0},
+						Point{0, 0},
+						nullptr
+					);
+					break;
+				}
+			}
 			return ret;
 		}
 
 		virtual std::vector<Item> availableItems() const
 		{
 			std::vector<Item> validItems;
-#warning TODO
+			/// @todo Populate proper item list
 			for (int i = 0; i < 10; i++) {
 				validItems.emplace_back();
 				Item& item = validItems.back();
