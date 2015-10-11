@@ -23,6 +23,7 @@
 
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/util.hpp> // make_unique
+#include <camoto/gamegraphics/util.hpp>
 #include "map-core.hpp"
 #include "map2d-core.hpp"
 #include "fmt-map-duke1.hpp"
@@ -103,25 +104,170 @@ class Layer_Duke1_Background: public Map2DCore::LayerCore
 			unsigned int index = item.code / 32;
 			unsigned int ts_num = index / 48;
 			unsigned int ts_index = index % 48;
+			ImagePurpose purpose = (ImagePurpose)((int)ImagePurpose::BackgroundTileset1 + ts_num);
 
 			ImageFromCodeInfo ret;
+			int box = 0; // 1=grey,2=blue,3=red,4=door
+			if (item.code >= 0x3000) {
+				switch (item.code) {
+					case 0x3000: purpose = ImagePurpose::ForegroundTileset1; ts_index = 0; break;
+					case 0x3001: purpose = ImagePurpose::ForegroundTileset1; ts_index = 5; break;
+//case 0x3002: Left-moving conveyor belt start, must be left of end tile
+//case 0x3003: Left-moving conveyor belt end, must be on right of start tile
+//case 0x3004: Right-moving conveyor belt start, must be left of end tile
+//case 0x3005: Right-moving conveyor belt end, must be on right of start tile
+					case 0x3006: purpose = ImagePurpose::ForegroundTileset1; ts_index = 10; box = 1; break;
 
-			ImagePurpose purpose = (ImagePurpose)((int)ImagePurpose::BackgroundTileset1 + ts_num);
+					/// @todo: Draw whole rocket instead of just the nosecone
+					case 0x3007: purpose = ImagePurpose::ForegroundTileset1; ts_index = 11; break;
+
+					/// @todo: Draw whole flame
+					case 0x3008: purpose = ImagePurpose::ForegroundTileset1; ts_index = 24; break;
+					case 0x3009: purpose = ImagePurpose::ForegroundTileset1; ts_index = 18; box = 1; break;
+
+					/// @todo: Draw whole flame
+					case 0x300A: purpose = ImagePurpose::ForegroundTileset1; ts_index = 29; break;
+					case 0x300B: purpose = ImagePurpose::SpriteTileset1; ts_index = 0; break;
+					case 0x300C: purpose = ImagePurpose::SpriteTileset1; ts_index = 10; break;
+					case 0x300D: purpose = ImagePurpose::SpriteTileset1; ts_index = 34; break;
+					case 0x300E: purpose = ImagePurpose::SpriteTileset2; ts_index = 0; break;
+					case 0x300F: purpose = ImagePurpose::ForegroundTileset1; ts_index = 43; box = 1; break;
+					case 0x3010: purpose = ImagePurpose::SpriteTileset2; ts_index = 32; break;
+//case 0x3011: Unused, shows as blank in a level {{TODO|Confirm it doesn't to something special if placed next to another tile}}
+					case 0x3012: purpose = ImagePurpose::SpriteTileset3; ts_index = 17; box = 1; break;
+					case 0x3013: purpose = ImagePurpose::SpriteTileset3; ts_index = 24; break;
+//case 0x3014: Shimmering water effect, also affects tile below this one
+					case 0x3015: purpose = ImagePurpose::SpriteTileset3; ts_index = 32; box = 3; break;
+					case 0x3016: purpose = ImagePurpose::SpriteTileset3; ts_index = 40; break;
+					case 0x3017: purpose = ImagePurpose::SpriteTileset3; ts_index = 44; break;
+					case 0x3018: purpose = ImagePurpose::ForegroundTileset1; ts_index = 44; box = 3; break;
+					case 0x3019: purpose = ImagePurpose::SpriteTileset4; ts_index = 0; break;
+					case 0x301A: purpose = ImagePurpose::ForegroundTileset2; ts_index = 0; break;
+					case 0x301B: purpose = ImagePurpose::SpriteTileset4; ts_index = 12; break;
+					case 0x301C: purpose = ImagePurpose::SpriteTileset4; ts_index = 12; break;
+					case 0x301D: purpose = ImagePurpose::ForegroundTileset2; ts_index = 8; box = 2; break;
+					case 0x301E: purpose = ImagePurpose::ForegroundTileset2; ts_index = 9; box = 2; break;
+					case 0x301F: purpose = ImagePurpose::ForegroundTileset2; ts_index = 10; box = 2; break;
+					case 0x3020: purpose = ImagePurpose::ForegroundTileset2; ts_index = 13; box = 2; break;
+					case 0x3021: purpose = ImagePurpose::ForegroundTileset2; ts_index = 15; break;
+					case 0x3022: purpose = ImagePurpose::SpriteTileset4; ts_index = 20; break;
+					case 0x3023: purpose = ImagePurpose::ForegroundTileset2; ts_index = 19; break;
+					case 0x3024: purpose = ImagePurpose::SpriteTileset5; ts_index = 8; break;
+					case 0x3025: purpose = ImagePurpose::SpriteTileset5; ts_index = 11; break;
+					case 0x3026: purpose = ImagePurpose::SpriteTileset5; ts_index = 12; break;
+					case 0x3027: purpose = ImagePurpose::SpriteTileset5; ts_index = 13; break;
+					case 0x3028: purpose = ImagePurpose::SpriteTileset5; ts_index = 14; break;
+					case 0x3029: purpose = ImagePurpose::ForegroundTileset2; ts_index = 24; box = 1; break;
+					case 0x302A: purpose = ImagePurpose::ForegroundTileset2; ts_index = 33; break;
+					case 0x302B: purpose = ImagePurpose::ForegroundTileset2; ts_index = 34; break;
+					case 0x302C: purpose = ImagePurpose::ForegroundTileset2; ts_index = 45; break;
+					case 0x302D: purpose = ImagePurpose::ForegroundTileset2; ts_index = 47; box = 2; break;
+					case 0x302E: purpose = ImagePurpose::ForegroundTileset3; ts_index = 2; box = 2; break;
+					case 0x302F: purpose = ImagePurpose::SpriteTileset5; ts_index = 20; break;
+					case 0x3030: purpose = ImagePurpose::SpriteTileset5; ts_index = 20; break;
+					case 0x3031: purpose = ImagePurpose::SpriteTileset5; ts_index = 31; break;
+//case 0x3032: Player start point
+					case 0x3033: purpose = ImagePurpose::ForegroundTileset2; ts_index = 14; box = 1; break;
+					case 0x3034: purpose = ImagePurpose::ForegroundTileset3; ts_index = 5; break;
+					case 0x3035: purpose = ImagePurpose::ForegroundTileset3; ts_index = 14; break;
+//case 0x3036: Red girder - does this get removed when something is activated?
+					case 0x3037: purpose = ImagePurpose::ForegroundTileset3; ts_index = 21; box = 1; break;
+					case 0x3038: purpose = ImagePurpose::ForegroundTileset3; ts_index = 21; box = 1; break;
+					case 0x3039: purpose = ImagePurpose::ForegroundTileset3; ts_index = 21; box = 1; break;
+					case 0x303A: purpose = ImagePurpose::ForegroundTileset3; ts_index = 21; box = 1; break;
+					case 0x303B: purpose = ImagePurpose::SpriteTileset3; ts_index = 18; break;
+					case 0x303C: purpose = ImagePurpose::SpriteTileset6; ts_index = 1; break;
+					case 0x303D: purpose = ImagePurpose::SpriteTileset6; ts_index = 12; break;
+					case 0x303E: purpose = ImagePurpose::SpriteTileset6; ts_index = 13; break;
+					case 0x303F: purpose = ImagePurpose::SpriteTileset6; ts_index = 14; break;
+					case 0x3040: purpose = ImagePurpose::ForegroundTileset3; ts_index = 23; break;
+//case 0x3041: Unknown - behaviour seems to change depending on tile before it
+					case 0x3042: purpose = ImagePurpose::SpriteTileset6; ts_index = 30; break;
+					case 0x3043: purpose = ImagePurpose::SpriteTileset6; ts_index = 30; break;
+					case 0x3044: purpose = ImagePurpose::ForegroundTileset3; ts_index = 24; break;
+					case 0x3045: purpose = ImagePurpose::ForegroundTileset3; ts_index = 25; break;
+					case 0x3046: purpose = ImagePurpose::ForegroundTileset3; ts_index = 26; break;
+					case 0x3047: purpose = ImagePurpose::ForegroundTileset3; ts_index = 27; break;
+					case 0x3048: purpose = ImagePurpose::ForegroundTileset3; ts_index = 37; break;
+					case 0x3049: purpose = ImagePurpose::ForegroundTileset3; ts_index = 38; break;
+					case 0x304A: purpose = ImagePurpose::ForegroundTileset3; ts_index = 39; break;
+					case 0x304B: purpose = ImagePurpose::ForegroundTileset3; ts_index = 40; break;
+					case 0x304C: purpose = ImagePurpose::ForegroundTileset3; ts_index = 24; box = 4; break; // door
+					case 0x304D: purpose = ImagePurpose::ForegroundTileset3; ts_index = 25; box = 4; break; // door
+					case 0x304E: purpose = ImagePurpose::ForegroundTileset3; ts_index = 26; box = 4; break; // door
+					case 0x304F: purpose = ImagePurpose::ForegroundTileset3; ts_index = 27; box = 4; break; // door
+					case 0x3050: purpose = ImagePurpose::ForegroundTileset2; ts_index = 8; break;
+					case 0x3051: purpose = ImagePurpose::ForegroundTileset1; ts_index = 44; break;
+					case 0x3052: purpose = ImagePurpose::SpriteTileset3; ts_index = 32; break;
+					case 0x3053: purpose = ImagePurpose::ForegroundTileset2; ts_index = 10; break;
+					case 0x3054: purpose = ImagePurpose::ForegroundTileset2; ts_index = 9; break;
+					case 0x3055: purpose = ImagePurpose::ForegroundTileset2; ts_index = 47; break;
+					case 0x3056: purpose = ImagePurpose::ForegroundTileset3; ts_index = 2; break;
+					case 0x3057: purpose = ImagePurpose::SpriteTileset5; ts_index = 31; break;
+					case 0x3058: purpose = ImagePurpose::ForegroundTileset3; ts_index = 48; break;
+					case 0x3059: purpose = ImagePurpose::ForegroundTileset3; ts_index = 49; break;
+					default:
+						std::cout << "Unknown interactive tilecode 0x" << std::hex
+							<< item.code << "\n";
+						ret.type = ImageFromCodeInfo::ImageType::Unknown;
+						return ret;
+				}
+				ts_num = 999999; // make error message below print purpose instead of ts_num
+			}
 
 			auto t = tileset.find(purpose);
 			if (t == tileset.end()) { // no tileset?!
+				std::cout << "fmt-map-duke1: Tileset ";
+				if (ts_num < 1000) std::cout << "#" << ts_num;
+				else std::cout << toString(purpose);
+				std::cout << " not supplied.\n";
 				ret.type = ImageFromCodeInfo::ImageType::Unknown;
 				return ret;
 			}
 
 			auto& images = t->second->files();
 			if (ts_index >= images.size()) { // out of range
+				std::cout << "fmt-map-duke1: Tileset #" << ts_num << " has "
+					<< images.size() << " images, but the tilecode maps to image #"
+					<< ts_index << ".\n";
 				ret.type = ImageFromCodeInfo::ImageType::Unknown;
 				return ret;
 			}
 
 			ret.img = t->second->openImage(images[ts_index]);
 			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+
+			// If a box was specified, draw the given image over the top of a box
+			if (box) {
+				switch (box) {
+					case 1: // grey
+						purpose = ImagePurpose::ForegroundTileset1;
+						ts_index = 0;
+						break;
+					case 2: // blue
+						purpose = ImagePurpose::ForegroundTileset3;
+						ts_index = 0;
+						break;
+					case 3: // red
+						purpose = ImagePurpose::ForegroundTileset3;
+						ts_index = 1;
+						break;
+					case 4: // door
+						purpose = ImagePurpose::ForegroundTileset3;
+						ts_index = 28;
+						break;
+					default:
+						assert(false); // should never happen
+				}
+				auto t = tileset.find(purpose);
+				if (t != tileset.end()) {
+					auto& images = t->second->files();
+					if (ts_index < images.size()) {
+						auto imgBox = t->second->openImage(images[ts_index]);
+						ret.img = overlayImage(imgBox.get(), ret.img.get());
+					}
+				}
+			}
 			return ret;
 		}
 
@@ -195,8 +341,40 @@ class Map_Duke1: public MapCore, public Map2DCore
 					GraphicsFilename{"solid3.dn1", "tls-ccaves-sub"}
 				),
 				std::make_pair(
-					ImagePurpose::BackgroundTileset9,
-					GraphicsFilename{"border.dn1", "tls-ccaves-sub"}
+					ImagePurpose::ForegroundTileset1,
+					GraphicsFilename{"object0.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::ForegroundTileset2,
+					GraphicsFilename{"object1.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::ForegroundTileset3,
+					GraphicsFilename{"object2.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::SpriteTileset1,
+					GraphicsFilename{"anim0.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::SpriteTileset2,
+					GraphicsFilename{"anim1.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::SpriteTileset3,
+					GraphicsFilename{"anim2.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::SpriteTileset4,
+					GraphicsFilename{"anim3.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::SpriteTileset5,
+					GraphicsFilename{"anim4.dn1", "tls-ccaves-sub"}
+				),
+				std::make_pair(
+					ImagePurpose::SpriteTileset6,
+					GraphicsFilename{"anim5.dn1", "tls-ccaves-sub"}
 				),
 			};
 		}
