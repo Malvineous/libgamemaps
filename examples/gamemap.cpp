@@ -301,7 +301,6 @@ void map2dToPng(const gm::Map2D& map, const gm::TilesetCollection& allTilesets,
 
 	png::image<png::index_pixel> png(outSize.x, outSize.y);
 
-	bool useMask;
 	std::shared_ptr<const gg::Palette> srcPal;
 	gg::ColourDepth depth = gg::ColourDepth::VGA; // default, should never be used
 	for (auto& i : allTilesets) {
@@ -1074,22 +1073,30 @@ finishTesting:
 
 					for (auto& a : pMap->graphicsFilenames()) {
 						if (allTilesets.find(a.first) == allTilesets.end()) {
-							// This tileset hasn't been specified on the command line, but the
-							// map format handler has given us a filename, so open the file
-							// suggested from the map.
-							allTilesets[a.first] = openTileset(a.second.filename, a.second.type);
+							if (a.second.filename.empty()) {
+								std::cerr << toString(a.first) << " is required, and must "
+									"be specified manually with --graphics." << std::endl;
+								iRet = RET_BADARGS;
+							} else {
+								// This tileset hasn't been specified on the command line, but the
+								// map format handler has given us a filename, so open the file
+								// suggested from the map.
+								allTilesets[a.first] = openTileset(a.second.filename, a.second.type);
+							}
 						} else {
-							std::cout << toString(a.first) << " overridden on command-line\n";
+							if (!a.second.filename.empty()) {
+								std::cout << toString(a.first) << " overridden on command-line\n";
+							}
 						}
 					}
 
 					if (allTilesets.empty()) {
-						std::cerr << "You must use --graphics to specify a tileset."
-							<< std::endl;
+						std::cerr << "No tilesets were loaded, map cannot be rendered.  "
+							"Use --graphics to specify a tileset." << std::endl;
 						iRet = RET_BADARGS;
-						continue;
+					} else {
+						map2dToPng(*map2d, allTilesets, i.value[0]);
 					}
-					map2dToPng(*map2d, allTilesets, i.value[0]);
 				} else {
 					std::cerr << PROGNAME ": Rendering this type of map is not yet "
 						"implemented." << std::endl;
