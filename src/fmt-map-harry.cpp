@@ -116,7 +116,7 @@ class Layer_Harry_Actor: public Map2DCore::LayerCore
 					<< u16le(t.pos.x)
 					<< u16le(t.pos.y)
 				;
-#warning TODO: Work out what the remaining 123 bytes are for
+				/// @todo Work out what the remaining 123 bytes are for
 				char pad[128-5];
 				memset(pad, 0x00, 128-5);
 				content.write(pad, 128-5);
@@ -182,8 +182,8 @@ class Layer_Harry_Background: public Map2DCore::LayerCore
 		{
 			this->v_allItems.reserve(dims.x * dims.y);
 
-			for (unsigned int y = 0; y < dims.x; y++) {
-				for (unsigned int x = 0; x < dims.y; x++) {
+			for (unsigned int y = 0; y < dims.y; y++) {
+				for (unsigned int x = 0; x < dims.x; x++) {
 					uint8_t code;
 					content >> u8(code);
 					if (code == HH_DEFAULT_TILE) continue;
