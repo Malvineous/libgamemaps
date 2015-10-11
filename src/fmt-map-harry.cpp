@@ -134,7 +134,7 @@ class Layer_Harry_Actor: public Map2DCore::LayerCore
 			return Caps::HasOwnTileSize | Caps::UseImageDims;
 		}
 
-		virtual Point tileSize()
+		virtual Point tileSize() const
 		{
 			return {1, 1};
 		}
