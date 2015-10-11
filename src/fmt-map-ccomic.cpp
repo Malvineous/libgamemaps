@@ -235,16 +235,16 @@ std::string MapType_CComic::friendlyName() const
 
 std::vector<std::string> MapType_CComic::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("pt");
-	return vcExtensions;
+	return {
+		"pt",
+	};
 }
 
 std::vector<std::string> MapType_CComic::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Captain Comic");
-	return vcGames;
+	return {
+		"Captain Comic",
+	};
 }
 
 MapType::Certainty MapType_CComic::isInstance(stream::input& content) const
