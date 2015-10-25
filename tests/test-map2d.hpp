@@ -77,6 +77,7 @@ class test_map2d: public test_main
 
 		/// Add a test to the suite.  Used by ADD_MAP2D_TEST().
 		void addBoundTest(bool empty, boost::function<void()> fnTest,
+			boost::unit_test::const_string file, std::size_t line,
 			boost::unit_test::const_string name);
 
 		/// Reset the map content to the initial state and run the given test.
@@ -270,6 +271,11 @@ class test_map2d: public test_main
 
 /// Add a test_map2d member function to the test suite
 #define ADD_MAP2D_TEST(create, fn) \
-	this->test_map2d::addBoundTest(create, std::bind(fn, this), BOOST_TEST_STRINGIZE(fn));
+	this->test_map2d::addBoundTest( \
+		create, \
+		std::bind(fn, this), \
+		__FILE__, __LINE__, \
+		BOOST_TEST_STRINGIZE(fn) \
+	);
 
 #endif // _CAMOTO_GAMEMAPS_TEST_MAP2D_HPP_

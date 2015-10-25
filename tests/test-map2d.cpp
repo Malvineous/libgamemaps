@@ -56,14 +56,16 @@ void test_map2d::addTests()
 }
 
 void test_map2d::addBoundTest(bool empty, boost::function<void()> fnTest,
+	boost::unit_test::const_string file, std::size_t line,
 	boost::unit_test::const_string name)
 {
-	std::function<void()> fnTestWrapper = std::bind(&test_map2d::runTest,
-		this, empty, fnTest);
-	this->ts->add(boost::unit_test::make_test_case(
-		boost::unit_test::callback0<>(fnTestWrapper),
-		createString(name << '[' << this->basename << ']')
-	));
+	this->ts->add(
+		boost::unit_test::make_test_case(
+			std::bind(&test_map2d::runTest, this, empty, fnTest),
+			createString(name << '[' << this->basename << ']'),
+			file, line
+		)
+	);
 	return;
 }
 
@@ -182,13 +184,15 @@ void test_map2d::checkData(std::function<std::string(test_map2d&)> fnExpected,
 void test_map2d::isInstance(MapType::Certainty result,
 	const std::string& content)
 {
-	std::function<void()> fnTest = std::bind(&test_map2d::test_isInstance,
-		this, result, content, this->numIsInstanceTests);
-	this->ts->add(boost::unit_test::make_test_case(
-		boost::unit_test::callback0<>(fnTest),
-		createString("test_map2d[" << this->basename << "]::isinstance_c"
-			<< std::setfill('0') << std::setw(2) << this->numIsInstanceTests)
-	));
+	this->ts->add(
+		boost::unit_test::make_test_case(
+			std::bind(&test_map2d::test_isInstance, this, result, content,
+				this->numIsInstanceTests),
+			createString("test_map2d[" << this->basename << "]::isinstance_c"
+				<< std::setfill('0') << std::setw(2) << this->numIsInstanceTests),
+			__FILE__, __LINE__
+		)
+	);
 	this->numIsInstanceTests++;
 	return;
 }
@@ -212,13 +216,15 @@ void test_map2d::test_isInstance(MapType::Certainty result,
 
 void test_map2d::invalidContent(const std::string& content)
 {
-	auto fnTest = std::bind(&test_map2d::test_invalidContent,
-		this, content, this->numInvalidContentTests);
-	this->ts->add(boost::unit_test::make_test_case(
-		boost::unit_test::callback0<>(fnTest),
-		createString("test_map2d[" << this->basename << "]::invalidcontent_i"
-			<< std::setfill('0') << std::setw(2) << this->numInvalidContentTests)
-	));
+	this->ts->add(
+		boost::unit_test::make_test_case(
+			std::bind(&test_map2d::test_invalidContent, this, content,
+				this->numInvalidContentTests),
+			createString("test_map2d[" << this->basename << "]::invalidcontent_i"
+				<< std::setfill('0') << std::setw(2) << this->numInvalidContentTests),
+			__FILE__, __LINE__
+		)
+	);
 	this->numInvalidContentTests++;
 	return;
 }
@@ -256,6 +262,7 @@ void test_map2d::conversion(const std::string& input,
 			&test_map2d::test_conversion, this, input, output,
 			this->numConversionTests
 		),
+		__FILE__, __LINE__,
 		createString("test_map2d[" << this->basename << "]::conversion_"
 			<< std::setfill('0') << std::setw(2) << this->numConversionTests)
 	);
@@ -306,6 +313,7 @@ void test_map2d::changeAttribute(unsigned int index, unsigned int before,
 			&test_map2d::test_changeAttribute, this, index, before, after, output,
 			this->numAttributeTests
 		),
+		__FILE__, __LINE__,
 		createString("test_map2d[" << this->basename << "]::changeAttribute_"
 			<< std::setfill('0') << std::setw(2) << this->numAttributeTests)
 	);
