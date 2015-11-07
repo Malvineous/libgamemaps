@@ -126,6 +126,43 @@ Map2D::Background Map2DCore::background(const TilesetCollection& tileset)
 	return bg;
 }
 
+Map2D::Background Map2DCore::backgroundFromTilecode(
+	const TilesetCollection& tileset, unsigned int code) const
+{
+	Layer::Item item;
+	item.code = code;
+	auto imgInfo = this->v_layers[0]->imageFromCode(item, tileset);
+
+	Background bg;
+	if (imgInfo.type == Layer::ImageFromCodeInfo::ImageType::Supplied) {
+		// Got the image for the default tile, use that
+		bg.att = Background::Attachment::SingleImageTiled;
+		bg.img = imgInfo.img;
+	} else {
+		// Couldn't get the tile image for some reason, use transparent BG
+		bg.att = Background::Attachment::NoBackground;
+	}
+	return bg;
+}
+
+Map2D::Background Map2DCore::backgroundUseBGImage(
+	const TilesetCollection& tileset) const
+{
+	Background bg;
+	bg.att = Background::Attachment::NoBackground;
+
+	auto t = tileset.find(ImagePurpose::BackgroundImage);
+	if (t != tileset.end()) {
+		auto images = t->second->files();
+		if (images.size() > 0) {
+			// Just open the first image, it will have been whatever was supplied
+			// by this->graphicsFilenames[BackgroundImage]
+			bg.att = Background::Attachment::SingleImageCentred;
+			bg.img = t->second->openImage(images[0]);
+		}
+	}
+	return bg;
+}
 
 Map2DCore::LayerCore::~LayerCore()
 {
@@ -194,25 +231,6 @@ std::shared_ptr<const gamegraphics::Palette> Map2DCore::LayerCore::palette(
 
 	throw camoto::error("BUG: Map2D::Layer implementation reported having a "
 		"palette but didn't implement getPalette()!");
-}
-
-Map2D::Background Map2DCore::backgroundFromTilecode(
-	const TilesetCollection& tileset, unsigned int code) const
-{
-	Layer::Item item;
-	item.code = code;
-	auto imgInfo = this->v_layers[0]->imageFromCode(item, tileset);
-
-	Background bg;
-	if (imgInfo.type == Layer::ImageFromCodeInfo::ImageType::Supplied) {
-		// Got the image for the default tile, use that
-		bg.att = Background::Attachment::SingleImageTiled;
-		bg.img = imgInfo.img;
-	} else {
-		// Couldn't get the tile image for some reason, use transparent BG
-		bg.att = Background::Attachment::NoBackground;
-	}
-	return bg;
 }
 
 } // namespace gamemaps

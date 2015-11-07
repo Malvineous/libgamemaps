@@ -891,20 +891,7 @@ class Map_Nukem2: public MapCore, public Map2DCore
 
 		Background background(const TilesetCollection& tileset) const
 		{
-			Background bg;
-			bg.att = Background::Attachment::NoBackground;
-
-			auto t = tileset.find(ImagePurpose::BackgroundImage);
-			if (t != tileset.end()) {
-				auto images = t->second->files();
-				if (images.size() > 0) {
-					// Just open the first image, it will have been whatever was supplied
-					// by this->graphicsFilenames[BackgroundImage]
-					bg.att = Background::Attachment::SingleImageCentred;
-					bg.img = t->second->openImage(images[0]);
-				}
-			}
-			return bg;
+			return this->backgroundUseBGImage(tileset);
 		}
 
 	private:

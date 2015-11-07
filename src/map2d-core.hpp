@@ -64,6 +64,14 @@ class Map2DCore: virtual public Map2D
 		Background backgroundFromTilecode(const TilesetCollection& tileset,
 			unsigned int code) const;
 
+		/// Use the background image item for the map background.
+		/**
+		 * This is a helper function for descendent classes to use when implementing
+		 * background(), for those maps that supply a background image in the
+		 * tileset collection, by using ImagePurpose::BackgroundImage.
+		 */
+		Background backgroundUseBGImage(const TilesetCollection& tileset) const;
+
 		std::vector<std::shared_ptr<Layer>> v_layers; ///< Layers for layers()
 		std::vector<std::shared_ptr<Path>> v_paths; ///< Paths for paths()
 };

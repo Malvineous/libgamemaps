@@ -606,7 +606,7 @@ class Map_Cosmo: public MapCore, public Map2DCore
 
 		Background background(const TilesetCollection& tileset) const
 		{
-			return this->backgroundFromTilecode(tileset, CCA_DEFAULT_BGTILE);
+			return this->backgroundUseBGImage(tileset);
 		}
 
 	private:
