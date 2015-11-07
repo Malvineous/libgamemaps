@@ -21,9 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/scoped_array.hpp>
 #include <camoto/iostream_helpers.hpp>
-#include "map2d-generic.hpp"
+#include <camoto/util.hpp> // make_unique
+#include "map-core.hpp"
+#include "map2d-core.hpp"
 #include "fmt-map-nukem2.hpp"
 
 /// Width of each tile in pixels
@@ -31,12 +32,6 @@
 
 /// Height of each tile in pixels
 #define DN2_TILE_HEIGHT 8
-
-/// Width of map view during gameplay, in pixels
-#define DN2_VIEWPORT_WIDTH 256
-
-/// Height of map view during gameplay, in pixels
-#define DN2_VIEWPORT_HEIGHT 160
 
 /// Length of the map data, in bytes
 #define DN2_LAYER_LEN_BG 65500u
@@ -71,204 +66,903 @@ namespace gamemaps {
 
 using namespace camoto::gamegraphics;
 
-class Layer_Nukem2Actor: virtual public GenericMap2D::Layer
+class Layer_Nukem2_Actors: public Map2DCore::LayerCore
 {
 	public:
-		Layer_Nukem2Actor(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Actors",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
+		Layer_Nukem2_Actors(stream::input& content, stream::len* lenMap)
+		{
+			unsigned int numActorInts;
+			content
+				>> u16le(numActorInts)
+			;
+			unsigned int numActors = numActorInts / 3;
+			if (*lenMap < numActors * 6) throw stream::error("Map file has been truncated!");
+
+			this->v_allItems.reserve(numActors);
+			for (unsigned int i = 0; i < numActors; i++) {
+				this->v_allItems.emplace_back();
+				auto& t = this->v_allItems.back();
+				t.type = Item::Type::Default;
+				content
+					>> u16le(t.code)
+					>> u16le(t.pos.x)
+					>> u16le(t.pos.y)
+				;
+			}
+			*lenMap -= 6 * numActors;
+		}
+
+		virtual ~Layer_Nukem2_Actors()
 		{
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		void flush(stream::output& content, const Point& mapSize)
 		{
-			TilesetCollection::const_iterator t = tileset->find(SpriteTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
-
-			// TODO
-			const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-			if (item->code >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = t->second->openImage(images[item->code]);
-			return Map2D::Layer::Supplied;
-		}
-};
-
-class Layer_Nukem2Background: virtual public GenericMap2D::Layer
-{
-	public:
-		Layer_Nukem2Background(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Background",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
-		{
+			uint16_t numActorInts = this->v_allItems.size() * 3;
+			content << u16le(numActorInts);
+			for (auto& i : this->v_allItems) {
+				assert((i.pos.x < mapSize.x) && (i.pos.y < mapSize.y));
+				content
+					<< u16le(i.code)
+					<< u16le(i.pos.x)
+					<< u16le(i.pos.y)
+				;
+			}
+			return;
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		virtual std::string title() const
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
-			const Tileset::VC_ENTRYPTR& czoneTilesets = t->second->getItems();
-
-			unsigned int index = item->code;
-			unsigned int czoneTarget = 0;
-			if (czoneTarget >= czoneTilesets.size()) return Map2D::Layer::Unknown; // out of range
-			TilesetPtr ts = t->second->openTileset(czoneTilesets[czoneTarget]);
-			const Tileset::VC_ENTRYPTR& images = ts->getItems();
-			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = ts->openImage(images[index]);
-			return Map2D::Layer::Supplied;
-		}
-};
-
-class Layer_Nukem2Foreground: virtual public GenericMap2D::Layer
-{
-	public:
-		Layer_Nukem2Foreground(ItemPtrVectorPtr& items, ItemPtrVectorPtr& validItems)
-			:	GenericMap2D::Layer(
-					"Foreground",
-					Map2D::Layer::NoCaps,
-					0, 0,
-					0, 0,
-					items, validItems
-				)
-		{
+			return "Actors";
 		}
 
-		virtual Map2D::Layer::ImageType imageFromCode(
-			const Map2D::Layer::ItemPtr& item, const TilesetCollectionPtr& tileset,
-			ImagePtr *out) const
+		virtual Caps caps() const
 		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundTileset1);
-			if (t == tileset->end()) return Map2D::Layer::Unknown; // no tileset?!
-			const Tileset::VC_ENTRYPTR& czoneTilesets = t->second->getItems();
-
-			unsigned int index = item->code;
-			unsigned int czoneTarget = 1;
-			if (czoneTarget >= czoneTilesets.size()) return Map2D::Layer::Unknown; // out of range
-			TilesetPtr ts = t->second->openTileset(czoneTilesets[czoneTarget]);
-			const Tileset::VC_ENTRYPTR& images = ts->getItems();
-			if (index >= images.size()) return Map2D::Layer::Unknown; // out of range
-			*out = ts->openImage(images[index]);
-			return Map2D::Layer::Supplied;
+			return Caps::UseImageDims;
 		}
-};
 
-class Map2D_Nukem2: virtual public GenericMap2D
-{
-	public:
-		Map2D_Nukem2(const Attributes& attributes,
-			unsigned int width, LayerPtrVector& layers)
-			:	GenericMap2D(
-					attributes, GraphicsFilenames(),
-					Map2D::HasViewport,
-					DN2_VIEWPORT_WIDTH, DN2_VIEWPORT_HEIGHT,
-					width, DN2_NUM_TILES_BG / width,
-					DN2_TILE_WIDTH, DN2_TILE_HEIGHT,
-					layers, Map2D::PathPtrVectorPtr()
-				)
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
 		{
-			// Populate the graphics filenames
-			assert(this->attributes.size() > 0);
+			ImageFromCodeInfo ret;
 
-			Map::GraphicsFilename gf;
-			gf.type = "tls-nukem2-czone";
-			gf.filename = this->attributes[ATTR_CZONE].filenameValue;
-			if (!gf.filename.empty()) {
-				this->graphicsFilenames[BackgroundTileset1] = gf;
+			auto t = tileset.find(ImagePurpose::SpriteTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
 			}
 
-			gf.type = "img-nukem2-backdrop";
-			gf.filename = this->attributes[ATTR_BACKDROP].filenameValue;
-			if (!gf.filename.empty()) {
-				this->graphicsFilenames[BackgroundImage] = gf;
+			auto& images = t->second->files();
+			unsigned int index = item.code - 31;
+			unsigned int num = images.size();
+			if (index >= num) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
 			}
-		}
-
-		Map2D::ImageAttachment getBackgroundImage(
-			const TilesetCollectionPtr& tileset, ImagePtr *outImage,
-			PaletteEntry *outColour) const
-		{
-			TilesetCollection::const_iterator t = tileset->find(BackgroundImage);
-			if (t != tileset->end()) {
-				const Tileset::VC_ENTRYPTR& images = t->second->getItems();
-				if (images.size() > 0) {
-					// Just open the first image, it will have been whatever was supplied
-					// by this->graphicsFilenames[BackgroundImage]
-					*outImage = t->second->openImage(images[0]);
-					return Map2D::SingleImageCentred;
+			while (!(images[index]->fAttr & gamearchive::Archive::File::Attribute::Folder)) {
+				// Some images are duplicated, but libgamegraphics reports these as
+				// empty tilesets.  So if we encounter an empty one, find the next
+				// available actor.
+				index++;
+				if (index >= num) { // out of range
+					ret.type = ImageFromCodeInfo::ImageType::Unknown;
+					return ret;
 				}
 			}
 
-			return Map2D::NoBackground;
+			auto tsActor = t->second->openTileset(images[index]);
+			auto& actorFrames = tsActor->files();
+			if (actorFrames.size() <= 0) { // no images
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = tsActor->openImage(actorFrames[0]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> validItems;
+#warning TODO
+			for (int i = 0; i < 10; i++) {
+				validItems.emplace_back();
+				Item& item = validItems.back();
+				item.type = Item::Type::Default;
+				item.pos = {0, 0};
+				item.code = i + 31;
+				validItems.push_back(item);
+			}
+			return validItems;
 		}
 };
 
+class Layer_Nukem2_Background: public Map2DCore::LayerCore
+{
+	public:
+		Layer_Nukem2_Background(std::vector<Item>& items)
+		{
+			this->v_allItems = items;
+		}
 
-std::string MapType_Nukem2::getMapCode() const
+		virtual ~Layer_Nukem2_Background()
+		{
+		}
+
+		void flush(stream::output& content, const Point& mapSize)
+		{
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Background";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			unsigned int czoneIndex = 1;
+
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto& czones = t->second->files();
+			if (czoneIndex >= czones.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+			auto czoneTiles = t->second->openTileset(czones[czoneIndex]);
+
+			auto& images = czoneTiles->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = czoneTiles->openImage(images[item.code]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> validItems;
+			for (unsigned int i = 0; i < DN2_NUM_SOLID_TILES; i++) {
+				validItems.emplace_back();
+				auto& t = validItems.back();
+
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				validItems.push_back(t);
+			}
+			return validItems;
+		}
+};
+
+class Layer_Nukem2_Foreground: public Map2DCore::LayerCore
+{
+	public:
+		Layer_Nukem2_Foreground(std::vector<Item>& items)
+		{
+			this->v_allItems = items;
+		}
+
+		virtual ~Layer_Nukem2_Foreground()
+		{
+		}
+
+		void flush(stream::output& content, const Point& mapSize)
+		{
+			return;
+		}
+
+		virtual std::string title() const
+		{
+			return "Foreground";
+		}
+
+		virtual Caps caps() const
+		{
+			return Caps::Default;
+		}
+
+		virtual ImageFromCodeInfo imageFromCode(const Item& item,
+			const TilesetCollection& tileset) const
+		{
+			ImageFromCodeInfo ret;
+
+			unsigned int czoneIndex = 2;
+
+			auto t = tileset.find(ImagePurpose::BackgroundTileset1);
+			if (t == tileset.end()) { // no tileset?!
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			auto& czones = t->second->files();
+			if (czoneIndex >= czones.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+			auto czoneTiles = t->second->openTileset(czones[czoneIndex]);
+
+			auto& images = czoneTiles->files();
+			if (item.code >= images.size()) { // out of range
+				ret.type = ImageFromCodeInfo::ImageType::Unknown;
+				return ret;
+			}
+
+			ret.img = czoneTiles->openImage(images[item.code]);
+			ret.type = ImageFromCodeInfo::ImageType::Supplied;
+			return ret;
+		}
+
+		virtual std::vector<Item> availableItems() const
+		{
+			std::vector<Item> validItems;
+			for (unsigned int i = 0; i < DN2_NUM_MASKED_TILES; i++) {
+				validItems.emplace_back();
+				auto& t = validItems.back();
+
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i;
+				validItems.push_back(t);
+			}
+			return validItems;
+		}
+};
+
+class Map_Nukem2: public MapCore, public Map2DCore
+{
+	public:
+		Map_Nukem2(std::unique_ptr<stream::inout> content)
+			:	content(std::move(content))
+		{
+			stream::pos lenMap = this->content->size();
+			this->content->seekg(0, stream::start);
+
+			uint16_t bgOffset, unk;
+			std::string zoneFile, backFile, musFile;
+			*this->content
+				>> u16le(bgOffset)
+			;
+
+			// Set the attributes
+			{
+				assert(this->v_attributes.size() == ATTR_CZONE); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.name = "CZone tileset";
+				a.desc = "Filename of the tileset to use for drawing the foreground and background layers.";
+				*this->content >> nullPadded(a.filenameValue, 13);
+				// Trim off the padding spaces
+				a.filenameValue = a.filenameValue.substr(0, a.filenameValue.find_last_not_of(' ') + 1);
+				a.filenameSpec.push_back("*.mni");
+			};
+			{
+				assert(this->v_attributes.size() == ATTR_BACKDROP); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.name = "Backdrop";
+				a.desc = "Filename of the backdrop to draw behind the map.";
+				*this->content >> nullPadded(a.filenameValue, 13);
+				// Trim off the padding spaces
+				a.filenameValue = a.filenameValue.substr(0, a.filenameValue.find_last_not_of(' ') + 1);
+				a.filenameSpec.push_back("*.mni");
+			};
+			{
+				assert(this->v_attributes.size() == ATTR_MUSIC); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.name = "Song";
+				a.desc = "File to play as background music.";
+				*this->content >> nullPadded(a.filenameValue, 13);
+				// Trim off the padding spaces
+				a.filenameValue = a.filenameValue.substr(0, a.filenameValue.find_last_not_of(' ') + 1);
+				a.filenameSpec.push_back("*.imf");
+			};
+
+			uint8_t flags, altBack;
+			*this->content
+				>> u8(flags)
+				>> u8(altBack)
+				>> u16le(unk)
+			;
+			lenMap -= 2+13+13+13+1+1+2+2;
+
+			{
+				assert(this->v_attributes.size() == ATTR_USEALTBD); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.name = "Alt backdrop?";
+				a.desc = "When should the alternate backdrop file be used?";
+				a.enumValue = (flags >> 6) & 3;
+				a.enumValueNames = {
+					"Never",
+					"After destroying force field",
+					"After teleporting",
+					"Both? (this value has an unknown/untested effect)",
+				};
+			};
+			{
+				assert(this->v_attributes.size() == ATTR_QUAKE); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.name = "Earthquake";
+				a.desc = "Should the level shake like there is an earthquake?";
+				a.enumValue = (flags >> 5) & 1;
+				a.enumValueNames = {
+					"No",
+					"Yes",
+				};
+			};
+			{
+				assert(this->v_attributes.size() == ATTR_SCROLLBD); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.name = "Backdrop movement";
+				a.desc = "Should the backdrop move when the player is stationary?";
+				a.enumValue = (flags >> 3) & 3;
+				a.enumValueNames = {
+					"No",
+					"Scroll left",
+					"Scroll up",
+					"3 (this value has an unknown/untested effect)",
+				};
+			};
+			{
+				assert(this->v_attributes.size() == ATTR_PARALLAX); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.name = "Parallax";
+				a.desc = "How should the backdrop scroll when the player moves?";
+				a.enumValue = (flags >> 0) & 3;
+				a.enumValueNames = {
+					"Fixed - no movement",
+					"Horizontal and vertical movement",
+					"Horizontal movement only",
+					"3 (this value has an unknown/untested effect)",
+				};
+			};
+			{
+				assert(this->v_attributes.size() == ATTR_ALTBD); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Integer;
+				a.name = "Alt backdrop pic";
+				a.desc = "Number of alternate backdrop file (DROPx.MNI), 0 if unused";
+				a.integerValue = altBack;
+				a.integerMinValue = 0;
+				a.integerMaxValue = 24;
+			};
+
+			// Read in the actor layer
+			auto layerAC = std::make_shared<Layer_Nukem2_Actors>(
+				*this->content, &lenMap
+			);
+
+			// Read the main layer
+			this->content->seekg(bgOffset, stream::start);
+			*this->content
+				>> u16le(this->mapWidth)
+			;
+
+			unsigned int tileValues[DN2_NUM_TILES_BG];
+			memset(tileValues, 0, sizeof(tileValues));
+
+			unsigned int *v = tileValues;
+			for (unsigned int i = 0; (i < DN2_NUM_TILES_BG) && (lenMap >= 2); i++) {
+				*this->content >> u16le(*v++);
+				lenMap -= 2;
+			}
+
+			uint16_t lenExtra;
+			*this->content >> u16le(lenExtra);
+			unsigned int extraValues[DN2_NUM_TILES_BG];
+			memset(extraValues, 0, sizeof(extraValues));
+			unsigned int *ev = extraValues;
+			unsigned int *ev_end = extraValues + DN2_NUM_TILES_BG;
+			for (unsigned int i = 0; i < lenExtra; i++) {
+				uint8_t code;
+				*this->content >> u8(code);
+				lenMap--;
+				if (code & 0x80) {
+					// Multiple bytes concatenated together
+					// code == 0xFF for one byte, 0xFE for two bytes, etc.
+					unsigned int len = 0x100 - code;
+					while (len--) {
+						*this->content >> u8(code);
+						lenMap--;
+						i++;
+						if (ev + 4 >= ev_end) break;
+						*ev++ = (code << 5) & 0x60;
+						*ev++ = (code << 3) & 0x60;
+						*ev++ = (code << 1) & 0x60;
+						*ev++ = (code >> 1) & 0x60;
+					}
+				} else {
+					unsigned int len = code;
+					*this->content >> u8(code);
+					lenMap--;
+					i++;
+					if (code == 0x00) {
+						ev += len * 4; // faster
+					} else {
+						while (len--) {
+							if (ev + 4 >= ev_end) break;
+							*ev++ = (code << 5) & 0x60;
+							*ev++ = (code << 3) & 0x60;
+							*ev++ = (code << 1) & 0x60;
+							*ev++ = (code >> 1) & 0x60;
+						}
+					}
+				}
+				if (ev + 4 > ev_end) {
+					// This would read past the end of the array, so skip it
+					lenMap -= lenExtra - i - 1;
+					this->content->seekg(lenExtra - i - 1, stream::cur);
+					break;
+				}
+			}
+
+			std::vector<Layer::Item> bgItems, fgItems;
+
+			v = tileValues;
+			ev = extraValues;
+			for (unsigned int i = 0; i < DN2_NUM_TILES_BG; i++) {
+				if (*v & 0x8000) {
+					// This cell has a foreground and background tile
+					{
+						int code = *v & 0x3FF;
+						if (code != DN2_DEFAULT_BGTILE) {
+							bgItems.emplace_back();
+							auto& t = bgItems.back();
+							t.type = Layer::Item::Type::Default;
+							t.pos.x = i % mapWidth;
+							t.pos.y = i / mapWidth;
+							t.code = code;
+						}
+					}
+
+					{
+						fgItems.emplace_back();
+						auto& t = fgItems.back();
+						t.type = Layer::Item::Type::Default;
+						t.pos.x = i % mapWidth;
+						t.pos.y = i / mapWidth;
+						t.code = ((*v >> 10) & 0x1F) | *ev;
+					}
+
+				} else if (*v < DN2_NUM_SOLID_TILES * DN2_TILE_WIDTH) {
+					// Background only tile
+
+					int code = *v >> 3;
+					if (code != DN2_DEFAULT_BGTILE) {
+						bgItems.emplace_back();
+						auto& t = bgItems.back();
+						t.type = Layer::Item::Type::Default;
+						t.pos.x = i % mapWidth;
+						t.pos.y = i / mapWidth;
+						t.code = code;
+					}
+				} else {
+					// Foreground only tile
+
+					fgItems.emplace_back();
+					auto& t = fgItems.back();
+					t.type = Layer::Item::Type::Default;
+					t.pos.x = i % mapWidth;
+					t.pos.y = i / mapWidth;
+					t.code = ((*v >> 3) - DN2_NUM_SOLID_TILES) / 5;
+				}
+				v++;
+				ev++;
+			}
+
+			auto layerBG = std::make_shared<Layer_Nukem2_Background>(bgItems);
+			auto layerFG = std::make_shared<Layer_Nukem2_Foreground>(fgItems);
+
+			// Trailing filenames
+			{
+				assert(this->v_attributes.size() == ATTR_ZONEATTR); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.name = "Zone attribute";
+				a.desc = "Filename of the zone tile attributes.";
+				*this->content >> nullPadded(a.filenameValue, 13);
+				// Trim off the padding spaces
+				a.filenameValue = a.filenameValue.substr(0, a.filenameValue.find_last_not_of(' ') + 1);
+				a.filenameSpec.push_back("*.mni");
+			}
+			{
+				assert(this->v_attributes.size() == ATTR_ZONETSET); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.name = "Zone tileset";
+				a.desc = "Filename of the zone solid tileset.";
+				*this->content >> nullPadded(a.filenameValue, 13);
+				// Trim off the padding spaces
+				a.filenameValue = a.filenameValue.substr(0, a.filenameValue.find_last_not_of(' ') + 1);
+				a.filenameSpec.push_back("*.mni");
+			}
+			{
+				assert(this->v_attributes.size() == ATTR_ZONEMSET); // make sure compile-time index is correct
+				this->v_attributes.emplace_back();
+				auto& a = this->v_attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.name = "Zone masked tileset";
+				a.desc = "Filename of the zone masked tileset.";
+				*this->content >> nullPadded(a.filenameValue, 13);
+				// Trim off the padding spaces
+				a.filenameValue = a.filenameValue.substr(0, a.filenameValue.find_last_not_of(' ') + 1);
+				a.filenameSpec.push_back("*.mni");
+			}
+
+			this->v_layers.push_back(layerBG);
+			this->v_layers.push_back(layerFG);
+			this->v_layers.push_back(layerAC);
+		}
+
+		virtual ~Map_Nukem2()
+		{
+		}
+
+		virtual void flush()
+		{
+			auto layerBG = dynamic_cast<Layer_Nukem2_Background*>(this->v_layers[0].get());
+			auto layerFG = dynamic_cast<Layer_Nukem2_Foreground*>(this->v_layers[1].get());
+			auto layerAC = dynamic_cast<Layer_Nukem2_Actors*>(this->v_layers[2].get());
+
+			// Figure out where the main data will start
+			auto& actors = layerAC->items();
+			stream::pos offBG = 2+13+13+13+1+1+2+2+6*actors.size();
+
+			this->content->seekp(0, stream::start);
+			*this->content
+				<< u16le(offBG)
+			;
+
+			// CZone
+			auto& attr0 = this->v_attributes[ATTR_CZONE];
+			std::string val = attr0.filenameValue;
+			int padamt = 12 - val.length();
+			val += std::string(padamt, ' '); // pad with spaces
+			*this->content << nullPadded(val, 13);
+
+			// Backdrop
+			auto& attr1 = this->v_attributes[ATTR_BACKDROP];
+			val = attr1.filenameValue;
+			padamt = 12 - val.length();
+			val += std::string(padamt, ' '); // pad with spaces
+			*this->content << nullPadded(val, 13);
+
+			// Song
+			auto& attr2 = this->v_attributes[ATTR_MUSIC];
+			val = attr2.filenameValue;
+			padamt = 12 - val.length();
+			val += std::string(padamt, ' '); // pad with spaces
+			*this->content << nullPadded(val, 13);
+
+			uint8_t flags = 0;
+
+			auto& attr3 = this->v_attributes[ATTR_USEALTBD];
+			flags |= attr3.enumValue << 6;
+
+			auto& attr4 = this->v_attributes[ATTR_QUAKE];
+			flags |= attr4.enumValue << 5;
+
+			auto& attr5 = this->v_attributes[ATTR_SCROLLBD];
+			flags |= attr5.enumValue << 3;
+
+			auto& attr6 = this->v_attributes[ATTR_PARALLAX];
+			flags |= attr6.enumValue << 0;
+
+			*this->content << u8(flags);
+
+			auto& attr7 = this->v_attributes[ATTR_ALTBD];
+			*this->content << u8(attr7.integerValue);
+
+			*this->content << u16le(0);
+
+			auto mapDims = this->mapSize();
+
+			// Write the actor layer
+			layerAC->flush(*this->content, mapDims);
+
+			// Write the background layer
+			std::vector<uint16_t> bg(DN2_NUM_TILES_BG, DN2_DEFAULT_BGTILE);
+
+			// Set the default foreground tile
+			std::vector<uint16_t> fg(DN2_NUM_TILES_BG, (uint16_t)-1);
+
+			// Set the default extra bits
+			std::vector<uint16_t> extra(DN2_NUM_TILES_BG, 0x00);
+
+			for (auto& i : layerBG->items()) {
+				assert((i.pos.x < mapDims.x) && (i.pos.y < mapDims.y));
+				bg[i.pos.y * mapDims.x + i.pos.x] = i.code;
+			}
+
+			for (auto& i : layerFG->items()) {
+				assert((i.pos.x < mapDims.x) && (i.pos.y < mapDims.y));
+				fg[i.pos.y * mapDims.x + i.pos.x] = i.code;
+			}
+
+			*this->content << u16le(mapDims.x);
+
+			assert(mapDims.x * mapDims.y < DN2_NUM_TILES_BG);
+			for (unsigned int i = 0; i < DN2_NUM_TILES_BG; i++) {
+				if (fg[i] == (uint16_t)-1) {
+					// BG tile only
+					*this->content << u16le(bg[i] * 8);
+				} else if (bg[i] == 0x00) {
+					// FG tile only
+					*this->content << u16le((fg[i] * 5 + DN2_NUM_SOLID_TILES) * 8);
+				} else {
+					// BG and FG tile
+					uint16_t code = 0x8000 | bg[i] | ((fg[i] & 0x1F) << 10);
+					if (fg[i] & 0x60) {
+						// Need to save these extra bits
+						extra[i] = fg[i] & 0x60;
+					}
+					*this->content << u16le(code);
+				}
+			}
+
+			std::vector<int> rawExtra;
+			for (unsigned int i = 0; i < DN2_NUM_TILES_BG / 4; i++) {
+				rawExtra.push_back(
+					(extra[i * 4 + 0] >> 5)
+					| (extra[i * 4 + 1] >> 3)
+					| (extra[i * 4 + 2] >> 1)
+					| (extra[i * 4 + 3] << 1)
+				);
+			}
+
+			std::vector<uint8_t> rleExtra;
+			std::vector<int> diffCount;
+			std::vector<int>::iterator i = rawExtra.begin();
+			assert(i != rawExtra.end());
+			int lastByte = *i;
+			int lastByteCount = 1;
+			i++;
+			for (; i != rawExtra.end(); i++) {
+				if (lastByte == *i) {
+					// Write out the different bytes so this byte will get written as at
+					// least a duplicate
+					while (!diffCount.empty()) {
+						std::vector<int>::iterator end;
+						int len;
+						if (diffCount.size() > 0x7F) { // 0x80 length freezes the game
+							len = 0x7F;
+							end = diffCount.begin() + 0x7F;
+						} else {
+							len = diffCount.size();
+							end = diffCount.end();
+						}
+						rleExtra.push_back(0x100 - len);
+						rleExtra.insert(rleExtra.end(), diffCount.begin(), end);
+						diffCount.erase(diffCount.begin(), end);
+					}
+					assert(diffCount.empty());
+					lastByteCount++;
+				} else {
+					// This byte is different to the last
+					if (lastByteCount > 1) {
+						while (lastByteCount > 0) {
+							int amt = std::min(0x7F, lastByteCount);
+							rleExtra.push_back(amt);
+							rleExtra.push_back(lastByte);
+							lastByteCount -= amt;
+						}
+						// proceed with this new, different byte becoming lastByte
+					} else {
+						diffCount.push_back(lastByte);
+					}
+					lastByte = *i;
+					lastByteCount = 1;
+				}
+			}
+			while (!diffCount.empty()) {
+				std::vector<int>::iterator end;
+				int len;
+				if (diffCount.size() > 0x80) {
+					len = 0x80;
+					end = diffCount.begin() + 0x80;
+				} else {
+					len = diffCount.size();
+					end = diffCount.end();
+				}
+				rleExtra.push_back(0x100 - len);
+				rleExtra.insert(rleExtra.end(), diffCount.begin(), end);
+				diffCount.erase(diffCount.begin(), end);
+			}
+			if ((lastByte != 0x00) && (lastByteCount > 0)) {
+				// Need to write out trailing repeated data
+				while (lastByteCount > 0) {
+					int amt = std::min(0x7F, lastByteCount);
+					rleExtra.push_back(amt);
+					rleExtra.push_back(lastByte);
+					lastByteCount -= amt;
+				}
+			}
+			// Last two bytes are always 0x00
+			rleExtra.push_back(0x00);
+			rleExtra.push_back(0x00);
+
+			*this->content << u16le(rleExtra.size());
+			this->content->write(rleExtra.data(), rleExtra.size());
+
+			// Zone attribute filename (null-padded, not space-padded)
+			auto& attr8 = this->v_attributes[ATTR_ZONEATTR];
+			*this->content << nullPadded(attr8.filenameValue, 13);
+
+			// Zone solid tileset filename (null-padded, not space-padded)
+			auto& attr9 = this->v_attributes[ATTR_ZONETSET];
+			*this->content << nullPadded(attr9.filenameValue, 13);
+
+			// Zone masked tileset filename (null-padded, not space-padded)
+			auto& attr10 = this->v_attributes[ATTR_ZONEMSET];
+			*this->content << nullPadded(attr10.filenameValue, 13);
+
+			this->content->flush();
+			return;
+		}
+
+		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
+		{
+			return {
+				// Background tiles
+				std::make_pair(
+					ImagePurpose::BackgroundTileset1,
+					GraphicsFilename{
+						this->v_attributes[ATTR_CZONE].filenameValue,
+						"tls-nukem2-czone"
+					}
+				),
+				// Backdrop
+				std::make_pair(
+					ImagePurpose::BackgroundImage,
+					GraphicsFilename{
+						this->v_attributes[ATTR_BACKDROP].filenameValue,
+						"img-nukem2-backdrop"
+					}
+				),
+			};
+		}
+
+		virtual Caps caps() const
+		{
+			return
+				Map2D::Caps::HasViewport
+				| Map2D::Caps::HasMapSize
+				| Map2D::Caps::SetMapSize
+				| Map2D::Caps::HasTileSize
+			;
+		}
+
+		virtual Point viewport() const
+		{
+			return {256, 160};
+		}
+
+		virtual Point mapSize() const
+		{
+			return {this->mapWidth, 32750 / this->mapWidth};
+		}
+
+		virtual void mapSize(const Point& newSize)
+		{
+			if (newSize.x * newSize.y > 32750) {
+				throw camoto::error("Map dimensions too large.  "
+					"Width multiplied by height must be less than 32751.");
+			}
+			this->mapWidth = newSize.x;
+			return;
+		}
+
+		virtual Point tileSize() const
+		{
+			return {DN2_TILE_WIDTH, DN2_TILE_HEIGHT};
+		}
+
+		Background background(const TilesetCollection& tileset) const
+		{
+			Background bg;
+			bg.att = Background::Attachment::NoBackground;
+
+			auto t = tileset.find(ImagePurpose::BackgroundImage);
+			if (t != tileset.end()) {
+				auto images = t->second->files();
+				if (images.size() > 0) {
+					// Just open the first image, it will have been whatever was supplied
+					// by this->graphicsFilenames[BackgroundImage]
+					bg.att = Background::Attachment::SingleImageCentred;
+					bg.img = t->second->openImage(images[0]);
+				}
+			}
+			return bg;
+		}
+
+	private:
+		std::unique_ptr<stream::inout> content;
+		unsigned int mapWidth;
+};
+
+
+std::string MapType_Nukem2::code() const
 {
 	return "map2d-nukem2";
 }
 
-std::string MapType_Nukem2::getFriendlyName() const
+std::string MapType_Nukem2::friendlyName() const
 {
 	return "Duke Nukem II level";
 }
 
-std::vector<std::string> MapType_Nukem2::getFileExtensions() const
+std::vector<std::string> MapType_Nukem2::fileExtensions() const
 {
-	std::vector<std::string> vcExtensions;
-	vcExtensions.push_back("mni");
-	return vcExtensions;
+	return {"mni"};
 }
 
-std::vector<std::string> MapType_Nukem2::getGameList() const
+std::vector<std::string> MapType_Nukem2::games() const
 {
-	std::vector<std::string> vcGames;
-	vcGames.push_back("Duke Nukem II");
-	return vcGames;
+	return {
+		"Duke Nukem II",
+	};
 }
 
-MapType::Certainty MapType_Nukem2::isInstance(stream::input_sptr psMap) const
+MapType::Certainty MapType_Nukem2::isInstance(stream::input& content) const
 {
-	stream::len lenMap = psMap->size();
+	stream::len lenMap = content.size();
 
 	// TESTED BY: fmt_map_nukem2_isinstance_c01
 	if (lenMap < 2+13+13+13+1+1+2+2 + 2+DN2_LAYER_LEN_BG) return MapType::DefinitelyNo; // too short
 
-	psMap->seekg(0, stream::start);
+	content.seekg(0, stream::start);
 	uint16_t bgOffset;
 	std::string zoneFile, backFile, musFile;
-	psMap
+	content
 		>> u16le(bgOffset)
 	;
 
 	// TESTED BY: fmt_map_nukem2_isinstance_c02
 	if (bgOffset > lenMap - (2+DN2_LAYER_LEN_BG)) return MapType::DefinitelyNo; // offset wrong
 
-	psMap->seekg(13 * 3 + 4, stream::cur);
+	content.seekg(13 * 3 + 4, stream::cur);
 
 	uint16_t numActorInts;
-	psMap >> u16le(numActorInts);
+	content >> u16le(numActorInts);
 
 	// TESTED BY: fmt_map_nukem2_isinstance_c03
 	if (2+13*3+6 + numActorInts * 2 + 2+DN2_LAYER_LEN_BG > lenMap) return MapType::DefinitelyNo; // too many actors
 
-	psMap->seekg(bgOffset + 2+DN2_LAYER_LEN_BG, stream::start);
+	content.seekg(bgOffset + 2+DN2_LAYER_LEN_BG, stream::start);
 	uint16_t lenExtra;
-	psMap >> u16le(lenExtra);
+	content >> u16le(lenExtra);
 	// TESTED BY: fmt_map_nukem2_isinstance_c04
 	if (bgOffset + 2+DN2_LAYER_LEN_BG + lenExtra+2 > lenMap) return MapType::DefinitelyNo; // extra data too long
 
@@ -279,552 +973,23 @@ MapType::Certainty MapType_Nukem2::isInstance(stream::input_sptr psMap) const
 	return MapType::PossiblyYes;
 }
 
-MapPtr MapType_Nukem2::create(SuppData& suppData) const
+std::unique_ptr<Map> MapType_Nukem2::create(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
 	// TODO: Implement
 	throw stream::error("Not implemented yet!");
 }
 
-MapPtr MapType_Nukem2::open(stream::input_sptr input, SuppData& suppData) const
+std::unique_ptr<Map> MapType_Nukem2::open(
+	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	stream::pos lenMap = input->size();
-	input->seekg(0, stream::start);
-
-	uint16_t bgOffset, unk, numActorInts;
-	std::string zoneFile, backFile, musFile;
-	uint8_t flags, altBack;
-	input
-		>> u16le(bgOffset)
-	;
-
-	Map::Attributes attributes;
-	Map::Attribute attr;
-
-	attr.type = Map::Attribute::Filename;
-	attr.name = "CZone tileset";
-	attr.desc = "Filename of the tileset to use for drawing the foreground and background layers";
-	input >> nullPadded(attr.filenameValue, 13);
-	// Trim off the padding spaces
-	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
-	attr.filenameValidExtension = "mni";
-	assert(attributes.size() == ATTR_CZONE); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Filename;
-	attr.name = "Backdrop";
-	attr.desc = "Filename of the backdrop to draw behind the map";
-	input >> nullPadded(attr.filenameValue, 13);
-	// Trim off the padding spaces
-	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
-	attr.filenameValidExtension = "mni";
-	assert(attributes.size() == ATTR_BACKDROP); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Filename;
-	attr.name = "Music";
-	attr.desc = "File to play as background music";
-	input >> nullPadded(attr.filenameValue, 13);
-	// Trim off the padding spaces
-	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
-	attr.filenameValidExtension = "imf";
-	assert(attributes.size() == ATTR_MUSIC); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	input
-		>> u8(flags)
-		>> u8(altBack)
-		>> u16le(unk)
-		>> u16le(numActorInts)
-	;
-	lenMap -= 2+13+13+13+1+1+2+2;
-
-	attr.type = Map::Attribute::Enum;
-	attr.name = "Use alt backdrop?";
-	attr.desc = "When should the alternate backdrop file be used?";
-	attr.enumValue = (flags >> 6) & 3;
-	attr.enumValueNames.push_back("Never");
-	attr.enumValueNames.push_back("After destroying force field");
-	attr.enumValueNames.push_back("After teleporting");
-	attr.enumValueNames.push_back("Both? (this value has an unknown/untested effect)");
-	assert(attributes.size() == ATTR_USEALTBD); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Enum;
-	attr.name = "Earthquake";
-	attr.desc = "Should the level shake like there is an earthquake?";
-	attr.enumValue = (flags >> 5) & 1;
-	attr.enumValueNames.push_back("No");
-	attr.enumValueNames.push_back("Yes");
-	assert(attributes.size() == ATTR_QUAKE); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Enum;
-	attr.name = "Backdrop movement";
-	attr.desc = "Should the backdrop move when the player is stationary?";
-	attr.enumValue = (flags >> 3) & 3;
-	attr.enumValueNames.push_back("No");
-	attr.enumValueNames.push_back("Scroll left");
-	attr.enumValueNames.push_back("Scroll up");
-	attr.enumValueNames.push_back("3 (this value has an unknown/untested effect)");
-	assert(attributes.size() == ATTR_SCROLLBD); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Enum;
-	attr.name = "Parallax";
-	attr.desc = "How should the backdrop scroll when the player moves?";
-	attr.enumValue = (flags >> 0) & 3;
-	attr.enumValueNames.push_back("Fixed - no movement");
-	attr.enumValueNames.push_back("Horizontal and vertical movement");
-	attr.enumValueNames.push_back("Horizontal movement only");
-	attr.enumValueNames.push_back("3 (this value has an unknown/untested effect)");
-	assert(attributes.size() == ATTR_PARALLAX); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Integer;
-	attr.name = "Alt backdrop";
-	attr.desc = "Number of alternate backdrop file (DROPx.MNI)";
-	attr.integerValue = altBack;
-	attr.integerMinValue = 1;
-	attr.integerMaxValue = 24;
-	assert(attributes.size() == ATTR_ALTBD); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	// Read in the actor layer
-	unsigned int numActors = numActorInts / 3;
-	if (lenMap < numActors * 6) throw stream::error("Map file has been truncated!");
-	Map2D::Layer::ItemPtrVectorPtr actors(new Map2D::Layer::ItemPtrVector());
-	actors->reserve(numActors);
-	for (unsigned int i = 0; i < numActors; i++) {
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		input
-			>> u16le(t->code)
-			>> u16le(t->x)
-			>> u16le(t->y)
-		;
-		actors->push_back(t);
-	}
-	lenMap -= 6 * numActors;
-
-	Map2D::Layer::ItemPtrVectorPtr validActorItems(new Map2D::Layer::ItemPtrVector());
-	Map2D::LayerPtr actorLayer(new Layer_Nukem2Actor(actors, validActorItems));
-
-	input->seekg(bgOffset, stream::start);
-	uint16_t mapWidth;
-	input
-		>> u16le(mapWidth)
-	;
-
-	// Read the main layer
-	Map2D::Layer::ItemPtrVectorPtr tilesBG(new Map2D::Layer::ItemPtrVector());
-	Map2D::Layer::ItemPtrVectorPtr tilesFG(new Map2D::Layer::ItemPtrVector());
-	unsigned int tileValues[DN2_NUM_TILES_BG];
-	memset(tileValues, 0, sizeof(tileValues));
-
-	unsigned int *v = tileValues;
-	for (unsigned int i = 0; (i < DN2_NUM_TILES_BG) && (lenMap >= 2); i++) {
-		input >> u16le(*v++);
-		lenMap -= 2;
-	}
-
-	uint16_t lenExtra;
-	input >> u16le(lenExtra);
-	unsigned int extraValues[DN2_NUM_TILES_BG];
-	memset(extraValues, 0, sizeof(extraValues));
-	unsigned int *ev = extraValues;
-	unsigned int *ev_end = extraValues + DN2_NUM_TILES_BG;
-	for (unsigned int i = 0; i < lenExtra; i++) {
-		uint8_t code;
-		input >> u8(code);
-		lenMap--;
-		if (code & 0x80) {
-			// Multiple bytes concatenated together
-			// code == 0xFF for one byte, 0xFE for two bytes, etc.
-			unsigned int len = 0x100 - code;
-			while (len--) {
-				input >> u8(code);
-				lenMap--;
-				i++;
-				if (ev + 4 >= ev_end) break;
-				*ev++ = (code << 5) & 0x60;
-				*ev++ = (code << 3) & 0x60;
-				*ev++ = (code << 1) & 0x60;
-				*ev++ = (code >> 1) & 0x60;
-			}
-		} else {
-			unsigned int len = code;
-			input >> u8(code);
-			lenMap--;
-			i++;
-			if (code == 0x00) {
-				ev += len * 4; // faster
-			} else {
-				while (len--) {
-					if (ev + 4 >= ev_end) break;
-					*ev++ = (code << 5) & 0x60;
-					*ev++ = (code << 3) & 0x60;
-					*ev++ = (code << 1) & 0x60;
-					*ev++ = (code >> 1) & 0x60;
-				}
-			}
-		}
-		if (ev + 4 > ev_end) {
-			// This would read past the end of the array, so skip it
-			lenMap -= lenExtra - i - 1;
-			input->seekg(lenExtra - i - 1, stream::cur);
-			break;
-		}
-	}
-
-	v = tileValues;
-	ev = extraValues;
-	for (unsigned int i = 0; i < DN2_NUM_TILES_BG; i++) {
-		if (*v & 0x8000) {
-			// This cell has a foreground and background tile
-			{
-				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-				t->type = Map2D::Layer::Item::Default;
-				t->x = i % mapWidth;
-				t->y = i / mapWidth;
-				t->code = *v & 0x3FF;
-				if (t->code != DN2_DEFAULT_BGTILE) tilesBG->push_back(t);
-			}
-
-			{
-				Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-				t->type = Map2D::Layer::Item::Default;
-				t->x = i % mapWidth;
-				t->y = i / mapWidth;
-				t->code = ((*v >> 10) & 0x1F) | *ev;
-				tilesFG->push_back(t);
-			}
-
-		} else if (*v < DN2_NUM_SOLID_TILES * DN2_TILE_WIDTH) {
-			// Background only tile
-
-			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-			t->type = Map2D::Layer::Item::Default;
-			t->x = i % mapWidth;
-			t->y = i / mapWidth;
-			t->code = *v >> 3;
-			if (t->code != DN2_DEFAULT_BGTILE) tilesBG->push_back(t);
-		} else {
-			// Foreground only tile
-
-			Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-			t->type = Map2D::Layer::Item::Default;
-			t->x = i % mapWidth;
-			t->y = i / mapWidth;
-			t->code = ((*v >> 3) - DN2_NUM_SOLID_TILES) / 5;
-			tilesFG->push_back(t);
-		}
-		v++;
-		ev++;
-	}
-
-	// Populate the list of permitted tiles
-	Map2D::Layer::ItemPtrVectorPtr validBGItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i < DN2_NUM_SOLID_TILES; i++) {
-		// Background tiles first
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validBGItems->push_back(t);
-	}
-	Map2D::Layer::ItemPtrVectorPtr validFGItems(new Map2D::Layer::ItemPtrVector());
-	for (unsigned int i = 0; i < DN2_NUM_MASKED_TILES; i++) {
-		// Then foreground tiles
-		Map2D::Layer::ItemPtr t(new Map2D::Layer::Item());
-		t->type = Map2D::Layer::Item::Default;
-		t->x = 0;
-		t->y = 0;
-		t->code = i;
-		validFGItems->push_back(t);
-	}
-
-	// Trailing filenames
-	attr.type = Map::Attribute::Filename;
-	attr.name = "Zone attribute (unused)";
-	attr.desc = "Filename of the zone tile attributes (unused)";
-	input >> nullPadded(attr.filenameValue, 13);
-	// Trim off the padding spaces
-	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
-	attr.filenameValidExtension = "mni";
-	assert(attributes.size() == ATTR_ZONEATTR); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Filename;
-	attr.name = "Zone tileset (unused)";
-	attr.desc = "Filename of the zone solid tileset (unused)";
-	input >> nullPadded(attr.filenameValue, 13);
-	// Trim off the padding spaces
-	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
-	attr.filenameValidExtension = "mni";
-	assert(attributes.size() == ATTR_ZONETSET); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	attr.type = Map::Attribute::Filename;
-	attr.name = "Zone masked tileset (unused)";
-	attr.desc = "Filename of the zone masked tileset (unused)";
-	input >> nullPadded(attr.filenameValue, 13);
-	// Trim off the padding spaces
-	attr.filenameValue = attr.filenameValue.substr(0, attr.filenameValue.find_last_not_of(' ') + 1);
-	attr.filenameValidExtension = "mni";
-	assert(attributes.size() == ATTR_ZONEMSET); // make sure compile-time index is correct
-	attributes.push_back(attr);
-
-	// Create the map structures
-	Map2D::LayerPtr bgLayer(new Layer_Nukem2Background(tilesBG, validBGItems));
-	Map2D::LayerPtr fgLayer(new Layer_Nukem2Foreground(tilesFG, validFGItems));
-
-	Map2D::LayerPtrVector layers;
-	layers.push_back(bgLayer);
-	layers.push_back(fgLayer);
-	layers.push_back(actorLayer);
-
-	Map2DPtr map(new Map2D_Nukem2(attributes, mapWidth, layers));
-
-	return map;
+	return std::make_unique<Map_Nukem2>(std::move(content));
 }
 
-void MapType_Nukem2::write(MapPtr map, stream::expanding_output_sptr output,
-	ExpandingSuppData& suppData) const
-{
-	Map2DPtr map2d = boost::dynamic_pointer_cast<Map2D>(map);
-	if (!map2d) throw stream::error("Cannot write this type of map as this format.");
-	if (map2d->getLayerCount() != 3)
-		throw stream::error("Incorrect layer count for this format.");
-
-	// Figure out where the main data will start
-	Map2D::LayerPtr layerA = map2d->getLayer(2);
-	const Map2D::Layer::ItemPtrVectorPtr actors = layerA->getAllItems();
-	stream::pos offBG = 2+13+13+13+1+1+2+2+6*actors->size();
-
-	output
-		<< u16le(offBG)
-	;
-	// CZone
-	Map::Attribute& attr0 = map->attributes[ATTR_CZONE];
-	std::string val = attr0.filenameValue;
-	int padamt = 12 - val.length();
-	val += std::string(padamt, ' '); // pad with spaces
-	output << nullPadded(val, 13);
-
-	// Backdrop
-	Map::Attribute& attr1 = map->attributes[ATTR_BACKDROP];
-	val = attr1.filenameValue;
-	padamt = 12 - val.length();
-	val += std::string(padamt, ' '); // pad with spaces
-	output << nullPadded(val, 13);
-
-	// Song
-	Map::Attribute& attr2 = map->attributes[ATTR_MUSIC];
-	val = attr2.filenameValue;
-	padamt = 12 - val.length();
-	val += std::string(padamt, ' '); // pad with spaces
-	output << nullPadded(val, 13);
-
-	uint8_t flags = 0;
-
-	Map::Attribute& attr3 = map->attributes[ATTR_USEALTBD];
-	flags |= attr3.enumValue << 6;
-
-	Map::Attribute& attr4 = map->attributes[ATTR_QUAKE];
-	flags |= attr4.enumValue << 5;
-
-	Map::Attribute& attr5 = map->attributes[ATTR_SCROLLBD];
-	flags |= attr5.enumValue << 3;
-
-	Map::Attribute& attr6 = map->attributes[ATTR_PARALLAX];
-	flags |= attr6.enumValue << 0;
-
-	output << u8(flags);
-
-	Map::Attribute& attr7 = map->attributes[ATTR_ALTBD];
-	output << u8(attr7.integerValue);
-
-	output << u16le(0);
-
-	unsigned int mapWidth, mapHeight;
-	map2d->getMapSize(&mapWidth, &mapHeight);
-
-	// Write the actor layer
-	uint16_t numActorInts = actors->size() * 3;
-	output << u16le(numActorInts);
-	for (Map2D::Layer::ItemPtrVector::const_iterator
-		i = actors->begin(); i != actors->end(); i++
-	) {
-		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
-		output
-			<< u16le((*i)->code)
-			<< u16le((*i)->x)
-			<< u16le((*i)->y)
-		;
-	}
-
-	// Write the background layer
-	uint16_t *bg = new uint16_t[DN2_NUM_TILES_BG];
-	boost::scoped_array<uint16_t> sbg(bg);
-	// Set the default background tile
-	memset(bg, 0x00, DN2_NUM_TILES_BG * sizeof(uint16_t));
-
-	uint16_t *fg = new uint16_t[DN2_NUM_TILES_BG];
-	boost::scoped_array<uint16_t> sfg(fg);
-	// Set the default foreground tile
-	memset(fg, 0xFF, DN2_NUM_TILES_BG * sizeof(uint16_t));
-
-	uint16_t *extra = new uint16_t[DN2_NUM_TILES_BG];
-	boost::scoped_array<uint16_t> sextra(extra);
-	// Set the default extra bits
-	memset(extra, 0x00, DN2_NUM_TILES_BG * sizeof(uint16_t));
-
-	Map2D::LayerPtr layerBG = map2d->getLayer(0);
-	const Map2D::Layer::ItemPtrVectorPtr items = layerBG->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator
-		i = items->begin(); i != items->end(); i++
-	) {
-		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
-		bg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-	}
-
-	Map2D::LayerPtr layerFG = map2d->getLayer(1);
-	const Map2D::Layer::ItemPtrVectorPtr itemsFG = layerFG->getAllItems();
-	for (Map2D::Layer::ItemPtrVector::const_iterator
-		i = itemsFG->begin(); i != itemsFG->end(); i++
-	) {
-		assert(((*i)->x < mapWidth) && ((*i)->y < mapHeight));
-		fg[(*i)->y * mapWidth + (*i)->x] = (*i)->code;
-	}
-
-	output << u16le(mapWidth);
-
-	assert(mapWidth * mapHeight < DN2_NUM_TILES_BG);
-	for (unsigned int i = 0; i < DN2_NUM_TILES_BG; i++) {
-		if (fg[i] == (uint16_t)-1) {
-			// BG tile only
-			output << u16le(bg[i] * 8);
-		} else if (bg[i] == 0x00) {
-			// FG tile only
-			output << u16le((fg[i] * 5 + DN2_NUM_SOLID_TILES) * 8);
-		} else {
-			// BG and FG tile
-			uint16_t code = 0x8000 | bg[i] | ((fg[i] & 0x1F) << 10);
-			if (fg[i] & 0x60) {
-				// Need to save these extra bits
-				extra[i] = fg[i] & 0x60;
-			}
-			output << u16le(code);
-		}
-	}
-
-	std::vector<int> rawExtra;
-	for (unsigned int i = 0; i < DN2_NUM_TILES_BG / 4; i++) {
-		rawExtra.push_back(
-			  (extra[i * 4 + 0] >> 5)
-			| (extra[i * 4 + 1] >> 3)
-			| (extra[i * 4 + 2] >> 1)
-			| (extra[i * 4 + 3] << 1)
-		);
-	}
-
-	std::vector<int> rleExtra;
-	std::vector<int> diffCount;
-	std::vector<int>::iterator i = rawExtra.begin();
-	assert(i != rawExtra.end());
-	int lastByte = *i;
-	int lastByteCount = 1;
-	i++;
-	for (; i != rawExtra.end(); i++) {
-		if (lastByte == *i) {
-			// Write out the different bytes so this byte will get written as at
-			// least a duplicate
-			while (!diffCount.empty()) {
-				std::vector<int>::iterator end;
-				int len;
-				if (diffCount.size() > 0x7F) { // 0x80 length freezes the game
-					len = 0x7F;
-					end = diffCount.begin() + 0x7F;
-				} else {
-					len = diffCount.size();
-					end = diffCount.end();
-				}
-				rleExtra.push_back(0x100 - len);
-				rleExtra.insert(rleExtra.end(), diffCount.begin(), end);
-				diffCount.erase(diffCount.begin(), end);
-			}
-			assert(diffCount.empty());
-			lastByteCount++;
-		} else {
-			// This byte is different to the last
-			if (lastByteCount > 1) {
-				while (lastByteCount > 0) {
-					int amt = std::min(0x7F, lastByteCount);
-					rleExtra.push_back(amt);
-					rleExtra.push_back(lastByte);
-					lastByteCount -= amt;
-				}
-				// proceed with this new, different byte becoming lastByte
-			} else {
-				diffCount.push_back(lastByte);
-			}
-			lastByte = *i;
-			lastByteCount = 1;
-		}
-	}
-	while (!diffCount.empty()) {
-		std::vector<int>::iterator end;
-		int len;
-		if (diffCount.size() > 0x80) {
-			len = 0x80;
-			end = diffCount.begin() + 0x80;
-		} else {
-			len = diffCount.size();
-			end = diffCount.end();
-		}
-		rleExtra.push_back(0x100 - len);
-		rleExtra.insert(rleExtra.end(), diffCount.begin(), end);
-		diffCount.erase(diffCount.begin(), end);
-	}
-	if ((lastByte != 0x00) && (lastByteCount > 0)) {
-		// Need to write out trailing repeated data
-		while (lastByteCount > 0) {
-			int amt = std::min(0x7F, lastByteCount);
-			rleExtra.push_back(amt);
-			rleExtra.push_back(lastByte);
-			lastByteCount -= amt;
-		}
-	}
-	// Last two bytes are always 0x00
-	rleExtra.push_back(0x00);
-	rleExtra.push_back(0x00);
-
-	output << u16le(rleExtra.size());
-	for (std::vector<int>::iterator i = rleExtra.begin(); i != rleExtra.end(); i++) {
-		output << u8(*i);
-	}
-
-	// Zone attribute filename (null-padded, not space-padded)
-	Map::Attribute& attr8 = map->attributes[ATTR_ZONEATTR];
-	output << nullPadded(attr8.filenameValue, 13);
-
-	// Zone solid tileset filename (null-padded, not space-padded)
-	Map::Attribute& attr9 = map->attributes[ATTR_ZONETSET];
-	output << nullPadded(attr9.filenameValue, 13);
-
-	// Zone masked tileset filename (null-padded, not space-padded)
-	Map::Attribute& attr10 = map->attributes[ATTR_ZONEMSET];
-	output << nullPadded(attr10.filenameValue, 13);
-
-	output->flush();
-	return;
-}
-
-SuppFilenames MapType_Nukem2::getRequiredSupps(stream::input_sptr input,
+SuppFilenames MapType_Nukem2::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
-	SuppFilenames supps;
-	return supps;
+	return {};
 }
 
 } // namespace gamemaps
