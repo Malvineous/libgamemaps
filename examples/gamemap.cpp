@@ -28,7 +28,7 @@
 #include <camoto/util.hpp>
 #include <camoto/stream_file.hpp>
 #include <png++/png.hpp>
-
+#include "common-attributes.hpp"
 #include "pngutil.hpp"
 
 namespace po = boost::program_options;
@@ -472,7 +472,7 @@ int main(int iArgC, char *cArgV[])
 	po::options_description poActions("Actions");
 	poActions.add_options()
 		("info,i",
-			"display information about the map")
+			"display information about the map, including attributes/metadata")
 
 		("print,p", po::value<int>(),
 			"print the given layer in ASCII")
@@ -760,103 +760,7 @@ finishTesting:
 		// Run through the actions on the command line
 		for (auto& i : pa.options) {
 			if (i.string_key.compare("info") == 0) {
-				auto attributes = pMap->attributes();
-				std::cout << (bScript ? "attribute_count=" : "Number of attributes: ")
-					<< attributes.size() << "\n";
-				int attrNum = 0;
-				for (auto& a : attributes) {
-
-					if (bScript) std::cout << "attribute" << attrNum << "_name=";
-					else std::cout << "Attribute " << attrNum+1 << ": ";
-					std::cout << a.name << "\n";
-
-					if (bScript) std::cout << "attribute" << attrNum << "_desc=";
-					else std::cout << "  Description: ";
-					std::cout << a.desc << "\n";
-
-					if (bScript) std::cout << "attribute" << attrNum << "_type=";
-					else std::cout << "  Type: ";
-					switch (a.type) {
-
-						case gm::Attribute::Type::Integer: {
-							std::cout << (bScript ? "int" : "Integer value") << "\n";
-
-							if (bScript) std::cout << "attribute" << attrNum << "_value=";
-							else std::cout << "  Current value: ";
-							std::cout << a.integerValue << "\n";
-
-							if (bScript) {
-								std::cout << "attribute" << attrNum << "_min=" << a.integerMinValue
-									<< "\nattribute" << attrNum << "_max=" << a.integerMaxValue;
-							} else {
-								std::cout << "  Range: ";
-								if ((a.integerMinValue == 0) && (a.integerMaxValue == 0)) {
-									std::cout << "[unlimited]";
-								} else {
-									std::cout << a.integerMinValue << " to " << a.integerMaxValue;
-								}
-							}
-							std::cout << "\n";
-							break;
-						}
-
-						case gm::Attribute::Type::Enum: {
-							std::cout << (bScript ? "enum" : "Item from list") << "\n";
-
-							if (bScript) std::cout << "attribute" << attrNum << "_value=";
-							else std::cout << "  Current value: ";
-							if (a.enumValue > a.enumValueNames.size()) {
-								std::cout << (bScript ? "error" : "[out of range]");
-							} else {
-								if (bScript) std::cout << a.enumValue;
-								else std::cout << "[" << a.enumValue << "] "
-									<< a.enumValueNames[a.enumValue];
-							}
-							std::cout << "\n";
-
-							if (bScript) std::cout << "attribute" << attrNum
-								<< "_choice_count=" << a.enumValueNames.size() << "\n";
-
-							int option = 0;
-							for (std::vector<std::string>::const_iterator
-								j = a.enumValueNames.begin(); j != a.enumValueNames.end(); j++
-							) {
-								if (bScript) {
-									std::cout << "attribute" << attrNum << "_choice" << option
-										<< "=";
-								} else {
-									std::cout << "  Allowed value " << option << ": ";
-								}
-								std::cout << *j << "\n";
-								option++;
-							}
-							break;
-						}
-
-						case gm::Attribute::Type::Filename: {
-							std::cout << (bScript ? "filename" : "Filename") << "\n";
-
-							if (bScript) std::cout << "attribute" << attrNum << "_value=";
-							else std::cout << "  Current value: ";
-							std::cout << a.filenameValue << "\n";
-
-							if (bScript) std::cout << "attribute" << attrNum
-								<< "_filespec=";
-							else std::cout << "  Valid files: ";
-							std::cout << "*";
-							if (!a.filenameValidExtension.empty()) {
-								std::cout << '.' << a.filenameValidExtension;
-							}
-							std::cout << "\n";
-							break;
-						}
-
-						default:
-							std::cout << (bScript ? "unknown" : "Unknown type (fix this!)");
-							break;
-					}
-					attrNum++;
-				}
+				listAttributes(pMap.get(), bScript);
 
 				std::cout << (bScript ? "gfx_filename_count=" : "Number of graphics filenames: ")
 					<< pMap->graphicsFilenames().size() << "\n";

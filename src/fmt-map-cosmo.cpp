@@ -358,9 +358,9 @@ class Map_Cosmo: public MapCore, public Map2DCore
 			lenMap -= 4;
 
 			// Set the attributes
-			assert(this->attr.size() == ATTR_BACKDROP); // make sure compile-time index is correct
-			this->attr.emplace_back();
-			auto& attrBackdrop = this->attr.back();
+			assert(this->v_attributes.size() == ATTR_BACKDROP); // make sure compile-time index is correct
+			this->v_attributes.emplace_back();
+			auto& attrBackdrop = this->v_attributes.back();
 			attrBackdrop.type = Attribute::Type::Enum;
 			attrBackdrop.name = "Backdrop";
 			attrBackdrop.desc = "Index of backdrop to draw behind level.";
@@ -394,36 +394,36 @@ class Map_Cosmo: public MapCore, public Map2DCore
 				"25 - Circuit PC (bdcircpc.mni)",
 			};
 
-			assert(this->attr.size() == ATTR_RAIN); // make sure compile-time index is correct
-			this->attr.emplace_back();
-			auto& attrRain = this->attr.back();
+			assert(this->v_attributes.size() == ATTR_RAIN); // make sure compile-time index is correct
+			this->v_attributes.emplace_back();
+			auto& attrRain = this->v_attributes.back();
 			attrRain.type = Attribute::Type::Enum;
 			attrRain.name = "Rain";
 			attrRain.desc = "Is it raining in this level?";
 			attrRain.enumValue = (flags >> 5) & 1;
 			attrRain.enumValueNames = {"No", "Yes"};
 
-			assert(this->attr.size() == ATTR_SCROLL_X); // make sure compile-time index is correct
-			this->attr.emplace_back();
-			auto& attrScrollX = this->attr.back();
+			assert(this->v_attributes.size() == ATTR_SCROLL_X); // make sure compile-time index is correct
+			this->v_attributes.emplace_back();
+			auto& attrScrollX = this->v_attributes.back();
 			attrScrollX.type = Attribute::Type::Enum;
 			attrScrollX.name = "Scroll X";
 			attrScrollX.desc = "Should the backdrop scroll horizontally?";
 			attrScrollX.enumValue = (flags >> 6) & 1;
 			attrScrollX.enumValueNames = {"No", "Yes"};
 
-			assert(this->attr.size() == ATTR_SCROLL_Y); // make sure compile-time index is correct
-			this->attr.emplace_back();
-			auto& attrScrollY = this->attr.back();
+			assert(this->v_attributes.size() == ATTR_SCROLL_Y); // make sure compile-time index is correct
+			this->v_attributes.emplace_back();
+			auto& attrScrollY = this->v_attributes.back();
 			attrScrollY.type = Attribute::Type::Enum;
 			attrScrollY.name = "Scroll Y";
 			attrScrollY.desc = "Should the backdrop scroll vertically?";
 			attrScrollY.enumValue = (flags >> 7) & 1;
 			attrScrollY.enumValueNames = {"No", "Yes"};
 
-			assert(this->attr.size() == ATTR_PAL_ANIM); // make sure compile-time index is correct
-			this->attr.emplace_back();
-			auto& attrPalAnim = this->attr.back();
+			assert(this->v_attributes.size() == ATTR_PAL_ANIM); // make sure compile-time index is correct
+			this->v_attributes.emplace_back();
+			auto& attrPalAnim = this->v_attributes.back();
 			attrPalAnim.type = Attribute::Type::Enum;
 			attrPalAnim.name = "Palette animation";
 			attrPalAnim.desc = "Type of colour animation to use in this level.  Only "
@@ -440,9 +440,9 @@ class Map_Cosmo: public MapCore, public Map2DCore
 				"7 - Unknown/unused",
 			};
 
-			assert(this->attr.size() == ATTR_MUSIC); // make sure compile-time index is correct
-			this->attr.emplace_back();
-			auto& attrMusic = this->attr.back();
+			assert(this->v_attributes.size() == ATTR_MUSIC); // make sure compile-time index is correct
+			this->v_attributes.emplace_back();
+			auto& attrMusic = this->v_attributes.back();
 			attrMusic.type = Attribute::Type::Enum;
 			attrMusic.name = "Music";
 			attrMusic.desc = "Index of the song to play as background music in the level.";
@@ -495,23 +495,22 @@ class Map_Cosmo: public MapCore, public Map2DCore
 
 			auto mapSize = this->mapSize();
 
-			auto attributes = this->attributes();
-			assert(attributes.size() == 6);
+			assert(this->v_attributes.size() == 6);
 
-			assert(attributes[ATTR_BACKDROP].type == Attribute::Type::Enum);
-			assert(attributes[ATTR_RAIN    ].type == Attribute::Type::Enum);
-			assert(attributes[ATTR_SCROLL_X].type == Attribute::Type::Enum);
-			assert(attributes[ATTR_SCROLL_Y].type == Attribute::Type::Enum);
-			assert(attributes[ATTR_PAL_ANIM].type == Attribute::Type::Enum);
-			assert(attributes[ATTR_MUSIC   ].type == Attribute::Type::Enum);
+			assert(this->v_attributes[ATTR_BACKDROP].type == Attribute::Type::Enum);
+			assert(this->v_attributes[ATTR_RAIN    ].type == Attribute::Type::Enum);
+			assert(this->v_attributes[ATTR_SCROLL_X].type == Attribute::Type::Enum);
+			assert(this->v_attributes[ATTR_SCROLL_Y].type == Attribute::Type::Enum);
+			assert(this->v_attributes[ATTR_PAL_ANIM].type == Attribute::Type::Enum);
+			assert(this->v_attributes[ATTR_MUSIC   ].type == Attribute::Type::Enum);
 
 			uint16_t flags =
-				   attributes[ATTR_BACKDROP].enumValue
-				| (attributes[ATTR_RAIN    ].enumValue << 5)
-				| (attributes[ATTR_SCROLL_X].enumValue << 6)
-				| (attributes[ATTR_SCROLL_Y].enumValue << 7)
-				| (attributes[ATTR_PAL_ANIM].enumValue << 8)
-				| (attributes[ATTR_MUSIC   ].enumValue << 11)
+				   this->v_attributes[ATTR_BACKDROP].enumValue
+				| (this->v_attributes[ATTR_RAIN    ].enumValue << 5)
+				| (this->v_attributes[ATTR_SCROLL_X].enumValue << 6)
+				| (this->v_attributes[ATTR_SCROLL_Y].enumValue << 7)
+				| (this->v_attributes[ATTR_PAL_ANIM].enumValue << 8)
+				| (this->v_attributes[ATTR_MUSIC   ].enumValue << 11)
 			;
 
 			this->content->seekp(0, stream::start);
@@ -538,7 +537,7 @@ class Map_Cosmo: public MapCore, public Map2DCore
 			GraphicsFilename gf;
 			gf.type = "img-cosmo-backdrop";
 
-			switch (this->attributes().at(ATTR_BACKDROP).enumValue) {
+			switch (this->v_attributes.at(ATTR_BACKDROP).enumValue) {
 				case 0: gf.filename = "bdblank.mni"; break;
 				case 1: gf.filename = "bdpipe.mni"; break;
 				case 2: gf.filename = "bdredsky.mni"; break;

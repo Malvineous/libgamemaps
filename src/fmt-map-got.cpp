@@ -395,8 +395,8 @@ class Map_GOT: public MapCore, public Map2DCore
 				>> u8(defaultSong)
 			;
 
-			this->attr.emplace_back();
-			auto& attrBGTile = this->attr.back();
+			this->v_attributes.emplace_back();
+			auto& attrBGTile = this->v_attributes.back();
 			attrBGTile.type = Attribute::Type::Enum;
 			attrBGTile.name = "Background";
 			attrBGTile.desc = "Default background tile to display behind level.";
@@ -406,8 +406,8 @@ class Map_GOT: public MapCore, public Map2DCore
 				"0 - todo: tile list",
 			};
 
-			this->attr.emplace_back();
-			auto& attrMusic = this->attr.back();
+			this->v_attributes.emplace_back();
+			auto& attrMusic = this->v_attributes.back();
 			attrMusic.type = Attribute::Type::Enum;
 			attrMusic.name = "Music";
 			attrMusic.desc = "Index of the song to play as background music in the level.";
@@ -436,8 +436,8 @@ class Map_GOT: public MapCore, public Map2DCore
 			this->content->read(holePos, 10);
 
 			for (int i = 0; i < 10; i++) {
-				this->attr.emplace_back();
-				auto& attrHoleScreen = this->attr.back();
+				this->v_attributes.emplace_back();
+				auto& attrHoleScreen = this->v_attributes.back();
 				attrHoleScreen.type = Attribute::Type::Integer;
 				attrHoleScreen.name = createString("Hole/ladder " << i << " target");
 				attrHoleScreen.desc = "Screen number of hole/ladder destination.";
@@ -445,8 +445,8 @@ class Map_GOT: public MapCore, public Map2DCore
 				attrHoleScreen.integerMinValue = 0;
 				attrHoleScreen.integerMaxValue = GOT_MAP_NUMSCREENS - 1;
 
-				this->attr.emplace_back();
-				auto& attrHolePosX = this->attr.back();
+				this->v_attributes.emplace_back();
+				auto& attrHolePosX = this->v_attributes.back();
 				attrHolePosX.type = Attribute::Type::Integer;
 				attrHolePosX.name = createString("Hole/ladder " << i << " target X");
 				attrHolePosX.desc = "Player X coordinate on destination screen, after exiting hole/ladder.";
@@ -454,8 +454,8 @@ class Map_GOT: public MapCore, public Map2DCore
 				attrHolePosX.integerMinValue = 0;
 				attrHolePosX.integerMaxValue = GOT_MAP_WIDTH - 1;
 
-				this->attr.emplace_back();
-				auto& attrHolePosY = this->attr.back();
+				this->v_attributes.emplace_back();
+				auto& attrHolePosY = this->v_attributes.back();
 				attrHolePosY.type = Attribute::Type::Integer;
 				attrHolePosY.name = createString("Hole/ladder " << i << " target Y");
 				attrHolePosY.desc = "Player Y coordinate on destination screen, after exiting hole/ladder.";
@@ -479,19 +479,18 @@ class Map_GOT: public MapCore, public Map2DCore
 		virtual void flush()
 		{
 			assert(this->layers().size() == 3);
-			assert(this->attributes().size() == 2 + 10*3);
+			assert(this->v_attributes.size() == 2 + 10*3);
 
 			this->content->truncate(GOT_MAP_LEN);
 			this->content->seekp(0, stream::start);
-			auto attributes = this->attributes();
 
 			// Write the background layer
 			auto layerBG = dynamic_cast<Layer_GOT_Background*>(this->v_layers[0].get());
 			layerBG->flush(*this->content);
 
 			*this->content
-				<< u8(attributes[0].enumValue)
-				<< u8(attributes[1].enumValue)
+				<< u8(this->v_attributes[0].enumValue)
+				<< u8(this->v_attributes[1].enumValue)
 			;
 
 			// Write the actor layer
@@ -506,9 +505,9 @@ class Map_GOT: public MapCore, public Map2DCore
 			uint8_t holeScr[10], holePos[10];
 			for (int i = 0; i < 10; i++) {
 				int attBase = 2 + i * 3;
-				holeScr[i] = attributes[attBase + 0].integerValue;
-				holePos[i] = attributes[attBase + 2].integerValue * GOT_MAP_WIDTH
-					+ attributes[attBase + 1].integerValue;
+				holeScr[i] = this->v_attributes[attBase + 0].integerValue;
+				holePos[i] = this->v_attributes[attBase + 2].integerValue * GOT_MAP_WIDTH
+					+ this->v_attributes[attBase + 1].integerValue;
 			}
 			this->content->write(holeScr, 10);
 			this->content->write(holePos, 10);

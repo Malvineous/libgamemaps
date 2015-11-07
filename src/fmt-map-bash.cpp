@@ -115,7 +115,7 @@ class Layer_Bash_Background: public Map2DCore::LayerCore
 					if ((code & 0x1FF) != MB_DEFAULT_BGTILE) {
 						this->v_allItems.emplace_back();
 						auto& t = this->v_allItems.back();
-						t.type = Map2D::Layer::Item::Type::Default;
+						t.type = Item::Type::Default;
 						t.pos = {x, y};
 						t.code = code & 0x1FF;
 					}
@@ -205,11 +205,11 @@ class Layer_Bash_Background: public Map2DCore::LayerCore
 				// The default tile actually has an image, so don't exclude it
 				if (i == MB_DEFAULT_BGTILE) continue;
 
-				Map2D::Layer::Item t;
-				t.type = Map2D::Layer::Item::Type::Default;
+				items.emplace_back();
+				auto& t = items.back();
+				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
-				items.push_back(t);
 			}
 			return items;
 		}
@@ -892,8 +892,8 @@ class Map_Bash: public MapCore, public Map2DCore
 			};
 			this->content->seekg(0, stream::start);
 			for (unsigned int i = 0; i < MB_NUM_ATTRIBUTES; i++) {
-				this->attr.emplace_back();
-				auto& attr = this->attr.back();
+				this->v_attributes.emplace_back();
+				auto& attr = this->v_attributes.back();
 				attr.type = Attribute::Type::Filename;
 				attr.name = attrNames[i];
 				attr.desc = attrDesc[i];
@@ -910,7 +910,7 @@ class Map_Bash: public MapCore, public Map2DCore
 						attr.filenameValue += validTypes[i];
 					}
 				}
-				attr.filenameValidExtension = validTypes[i];
+				attr.filenameSpec.push_back(std::string("*.") + validTypes[i]);
 			}
 
 			std::vector<uint16_t> bgdata;
@@ -965,17 +965,17 @@ class Map_Bash: public MapCore, public Map2DCore
 				// Background tiles
 				std::make_pair(
 					ImagePurpose::BackgroundTileset1,
-					GraphicsFilename{this->attr[0].filenameValue, "tls-bash-bg"}
+					GraphicsFilename{this->v_attributes[0].filenameValue, "tls-bash-bg"}
 				),
 				// Foreground tiles
 				std::make_pair(
 					ImagePurpose::ForegroundTileset1,
-					GraphicsFilename{this->attr[1].filenameValue, "tls-bash-fg"}
+					GraphicsFilename{this->v_attributes[1].filenameValue, "tls-bash-fg"}
 				),
 				// Bonus tiles
 				std::make_pair(
 					ImagePurpose::ForegroundTileset2,
-					GraphicsFilename{this->attr[2].filenameValue, "tls-bash-fg"}
+					GraphicsFilename{this->v_attributes[2].filenameValue, "tls-bash-fg"}
 				),
 			};
 		}
@@ -983,11 +983,11 @@ class Map_Bash: public MapCore, public Map2DCore
 		virtual void flush()
 		{
 			// Write map info file
-			assert(this->attr.size() == MB_NUM_ATTRIBUTES);
+			assert(this->v_attributes.size() == MB_NUM_ATTRIBUTES);
 			this->content->seekp(0, stream::start);
 			std::string val;
 			unsigned int i = 0;
-			for (auto& attr : this->attributes()) {
+			for (auto& attr : this->v_attributes) {
 				if (attr.filenameValue.empty()) {
 					val = "UNNAMED";
 				} else {

@@ -239,8 +239,8 @@ class Map_SAgent: public MapCore, public Map2DCore
 
 			unsigned int bgtile;
 			{
-				this->attr.emplace_back();
-				Attribute& attr = this->attr.back();
+				this->v_attributes.emplace_back();
+				Attribute& attr = this->v_attributes.back();
 				attr.type = Attribute::Type::Enum;
 				attr.name = "Background tile";
 				attr.desc = "Default tile to use as level background";
@@ -384,7 +384,7 @@ class Map_SAgent: public MapCore, public Map2DCore
 				throw stream::error("This map format must be less than "
 					"46"/*TOSTRING(SAM_MAX_ROWS)*/ " cells tall.");
 
-			if (this->attr.size() != 1) {
+			if (this->v_attributes.size() != 1) {
 				throw stream::error("Cannot write map as there is an incorrect number "
 					"of attributes set.");
 			}
@@ -553,7 +553,7 @@ class Map_SAgent: public MapCore, public Map2DCore
 						<< (lineCount - SAM_MAX_ROWS) << " row(s) in order to save the level."));
 			}
 
-			auto& attrBG = this->attr[0];
+			auto& attrBG = this->v_attributes[0];
 			if (attrBG.type != Attribute::Type::Enum) {
 				throw stream::error("Cannot write map as there is an attribute of the "
 					"wrong type (bg != enum)");

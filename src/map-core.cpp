@@ -80,50 +80,5 @@ MapCore::~MapCore()
 {
 }
 
-std::vector<Attribute> MapCore::attributes() const
-{
-	return this->attr;
-}
-
-void MapCore::attribute(unsigned int index, int newValue)
-{
-	assert(index < this->attr.size());
-	auto& a = this->attr[index];
-
-	switch (a.type) {
-		case Attribute::Type::Integer:
-			a.integerValue = newValue;
-			break;
-		case Attribute::Type::Enum:
-			a.enumValue = newValue;
-			break;
-		default:
-			// Tried to set an integer value on a non-integer attribute
-			assert(false);
-			return;
-	}
-	return;
-}
-
-void MapCore::attribute(unsigned int index, const std::string& newValue)
-{
-	assert(index < this->attr.size());
-	auto& a = this->attr[index];
-
-	switch (a.type) {
-		case Attribute::Type::Filename:
-			a.filenameValue = newValue;
-			break;
-		case Attribute::Type::Text:
-			a.textValue = newValue;
-			break;
-		default:
-			// Tried to set a string value on a non-string attribute
-			assert(false);
-			return;
-	}
-	return;
-}
-
 } // namespace gamemaps
 } // namespace camoto

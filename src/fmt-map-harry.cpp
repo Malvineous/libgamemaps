@@ -298,8 +298,8 @@ class Map_Harry: public MapCore, public Map2DCore
 			uint8_t mapFlags;
 			*this->content >> u8(mapFlags);
 
-			this->attr.emplace_back();
-			auto& attrParallax = this->attr.back();
+			this->v_attributes.emplace_back();
+			auto& attrParallax = this->v_attributes.back();
 			attrParallax.type = Attribute::Type::Enum;
 			attrParallax.name = "Background";
 			attrParallax.desc = "How to position the background layer as the player "
@@ -356,7 +356,7 @@ class Map_Harry: public MapCore, public Map2DCore
 		virtual void flush()
 		{
 			assert(this->layers().size() == 3);
-			assert(this->attributes().size() == 1);
+			assert(this->v_attributes.size() == 1);
 
 			auto dims = this->mapSize();
 			this->content->truncate(
@@ -371,7 +371,6 @@ class Map_Harry: public MapCore, public Map2DCore
 				+ dims.x * dims.y * 2 // bg + fg layer
 			);
 			this->content->seekp(0, stream::start);
-			auto attributes = this->attributes();
 
 			// Find the player-start-point objects
 			uint16_t startX = 0, startY = 0;
@@ -395,7 +394,7 @@ class Map_Harry: public MapCore, public Map2DCore
 				}
 			}
 
-			uint8_t mapFlags = attributes[0].enumValue;
+			uint8_t mapFlags = this->v_attributes[0].enumValue;
 
 			*this->content
 				<< nullPadded("\x11SubZero Game File", 0x12)

@@ -30,37 +30,6 @@ class MapCore: virtual public Map
 {
 	public:
 		virtual ~MapCore();
-
-		/// Get a list of attributes for this map.
-		virtual std::vector<Attribute> attributes() const;
-
-		/// Change one of the map's integer/enum attributes.
-		/**
-		 * @param index
-		 *   Index into vector returned by attributes().  0 is the first item.
-		 *
-		 * @param newValue
-		 *   The new value to set for the attribute.
-		 */
-		virtual void attribute(unsigned int index, int newValue);
-
-		/// Change one of the map's string/filename attributes.
-		/**
-		 * @param index
-		 *   Index into vector returned by attributes().  0 is the first item.
-		 *
-		 * @param newValue
-		 *   The new value to set for the attribute.
-		 */
-		virtual void attribute(unsigned int index, const std::string& newValue);
-
-	protected:
-		/// List of attributes (if any) in this map.
-		/**
-		 * Descendent classes should add their attributes to this in their
-		 * constructor.
-		 */
-		std::vector<Attribute> attr;
 };
 
 } // namespace gamemaps
