@@ -72,6 +72,7 @@ const char* toString(ImagePurpose p)
 		case ImagePurpose::FontTileset8: return "FontTileset8";
 		case ImagePurpose::FontTileset9: return "FontTileset9";
 		case ImagePurpose::BackgroundImage: return "BackgroundImage";
+		case ImagePurpose::ImagePurposeCount: break; // prevent compiler warning
 	}
 	return "<unknown ImagePurpose>";
 }

@@ -100,7 +100,7 @@ constexpr bool ImagePurpose_IsTileset(ImagePurpose p)
 
 /// Convert an ImagePurpose to a string
 // implemented in map-core.cpp
-const char* DLL_EXPORT toString(ImagePurpose p);
+const char* CAMOTO_GAMEMAPS_API toString(ImagePurpose p);
 
 /// List of Tileset shared pointers.
 typedef std::map<ImagePurpose, std::shared_ptr<gamegraphics::Tileset>> TilesetCollection;

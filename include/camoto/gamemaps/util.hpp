@@ -23,8 +23,8 @@
 
 #include <camoto/gamemaps/map2d.hpp>
 
-#ifndef DLL_EXPORT
-#define DLL_EXPORT
+#ifndef CAMOTO_GAMEMAPS_API
+#define CAMOTO_GAMEMAPS_API
 #endif
 
 namespace camoto {
@@ -45,7 +45,7 @@ namespace gamemaps {
  * @param tileSize
  *   Stores tile width and height on return, in pixels.
  */
-void DLL_EXPORT getLayerDims(const Map2D& map, const Map2D::Layer& layer,
+void CAMOTO_GAMEMAPS_API getLayerDims(const Map2D& map, const Map2D::Layer& layer,
 	Point *layerSize, Point *tileSize);
 
 } // namespace gamemaps

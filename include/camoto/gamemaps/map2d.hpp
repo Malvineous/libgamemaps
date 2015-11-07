@@ -82,10 +82,14 @@ class Map2D: virtual public Map
 
 		/// Change the size of each cell in the layer.
 		/**
-		 * @pre caps() must include CanResize.
+		 * @pre caps() must include SetMapSize.
 		 *
 		 * @param newSize
 		 *   New layer width and height, as number of tiles.
+		 *
+		 * @post The map size will be updated, but not necessarily to the size
+		 *  given.  mapSize(void) should be called after this function to retrieve
+		 *  the actual size set.
 		 */
 		virtual void mapSize(const Point& newSize) = 0;
 
@@ -337,8 +341,8 @@ class Map2D::Layer
 		 * @return true if the tile is permitted at the current position (instance
 		 *  limits notwithstanding) or false if the tile cannot be placed here.
 		 */
-		virtual bool tilePermittedAt(const Map2D::Layer::Item& item,
-			const Point& pos, unsigned int *maxCount) const = 0;
+		virtual bool tilePermittedAt(const Item& item, const Point& pos,
+			unsigned int *maxCount) const = 0;
 
 		/// Get the palette to use with this layer.
 		/**
