@@ -21,25 +21,25 @@
 #ifndef _CAMOTO_GAMEMAPS_MAP_WORDRESC_HPP_
 #define _CAMOTO_GAMEMAPS_MAP_WORDRESC_HPP_
 
-#include "base-maptype.hpp"
+#include <camoto/gamemaps/maptype.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
 /// Word Rescue level reader/writer.
-class MapType_WordRescue: virtual public MapType_Base
+class MapType_WordRescue: virtual public MapType
 {
 	public:
-		virtual std::string getMapCode() const;
-		virtual std::string getFriendlyName() const;
-		virtual std::vector<std::string> getFileExtensions() const;
-		virtual std::vector<std::string> getGameList() const;
-		virtual Certainty isInstance(stream::input_sptr psMap) const;
-		virtual MapPtr create(SuppData& suppData) const;
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
-		virtual void write(MapPtr map, stream::expanding_output_sptr output,
-			ExpandingSuppData& suppData) const;
-		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+		virtual std::string code() const;
+		virtual std::string friendlyName() const;
+		virtual std::vector<std::string> fileExtensions() const;
+		virtual std::vector<std::string> games() const;
+		virtual Certainty isInstance(stream::input& content) const;
+		virtual std::unique_ptr<Map> create(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const;
+		virtual std::unique_ptr<Map> open(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const;
+		virtual SuppFilenames getRequiredSupps(stream::input& content,
 			const std::string& filename) const;
 };
 
