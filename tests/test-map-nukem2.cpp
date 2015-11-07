@@ -28,8 +28,11 @@ class test_map_nukem2: public test_map2d
 			this->type = "map2d-nukem2";
 			this->pxSize = {64 * 8, 511 * 8};
 			this->numLayers = 3;
+			this->mapCode[0].pos = {0, 0};
 			this->mapCode[0].code = 0x01;
+			this->mapCode[1].pos = {0, 0};
 			this->mapCode[1].code = 0x70;
+			this->mapCode[2].pos = {0, 0};
 			this->mapCode[2].code = 0x02;
 		}
 

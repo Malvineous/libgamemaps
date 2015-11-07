@@ -20,6 +20,27 @@
 
 #include "test-map2d.hpp"
 
+class test_map_cosmo_suppextra1: public test_map2d
+{
+	public:
+		test_map_cosmo_suppextra1()
+		{
+			this->type = "map2d-cosmo.extra1";
+		}
+
+		virtual std::string initialstate()
+		{
+			return STRING_WITH_NULLS(
+				"\x21\x09" "\x40\x00" "\x03\x00"
+
+				"\x1F\x00" "\x00\x00" "\x00\x00"
+
+				"\x00\x00\x08\x00\x10\x00\x18\x00\x20\x00\x28\x00\x30\x00\x38\x00"
+				"\x40\x00\x48\x00\x50\x00\x58\x00\x60\x00\x68\x00\x70\x00\x78\x00"
+				) + std::string((16 * 3 + 64 * 511) * 2, '\0');
+		}
+};
+
 class test_map_cosmo: public test_map2d
 {
 	public:
@@ -32,6 +53,8 @@ class test_map_cosmo: public test_map2d
 			this->mapCode[0].code = 0x08;
 			this->mapCode[1].pos = {0, 0};
 			this->mapCode[1].code = 0x1F;
+
+			this->suppResult[SuppItem::Extra1] = std::make_unique<test_map_cosmo_suppextra1>();
 		}
 
 		void addTests()

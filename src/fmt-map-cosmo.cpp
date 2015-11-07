@@ -71,8 +71,11 @@ using namespace camoto::gamegraphics;
 class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 {
 	public:
-		Layer_Cosmo_Actors(stream::input& content, stream::pos& lenMap)
+		Layer_Cosmo_Actors(stream::input& content, stream::input& actrinfo,
+			stream::pos& lenMap)
 		{
+			this->readActorHeights(actrinfo);
+
 			// Read in the actor layer
 			uint16_t numActorInts;
 			content >> u16le(numActorInts);
@@ -87,6 +90,14 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 					>> u16le(t.pos.x)
 					>> u16le(t.pos.y)
 				;
+
+				// Sprite coordinates are for the bottom-left tile, but Camoto uses the
+				// top-left, so we have to adjust the sprites based on their height.
+				int index = this->actorCodeToTileIndex(t.code);
+				if ((index >= 0) && ((unsigned int)index < this->actorHeight.size())) {
+					t.pos.y -= this->actorHeight[index] - 1;
+				}
+
 				switch (t.code) {
 					case 295: // falling star
 						t.type = Item::Type::Movement;
@@ -157,10 +168,16 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 				return ret;
 			}
 
+			int index = this->actorCodeToTileIndex(item.code);
+			if (index < 0) {
+				ret.type = ImageFromCodeInfo::ImageType::HexDigit;
+				ret.digit = 0x100 + item.code; // 0x100 means display two-digit hex
+				return ret;
+			}
+
 			auto& images = t->second->files();
-			unsigned int index = item.code - 31;
 			unsigned int num = images.size();
-			if (index >= num) { // out of range
+			if ((unsigned int)index >= num) { // out of range
 				ret.type = ImageFromCodeInfo::ImageType::Unknown;
 				return ret;
 			}
@@ -169,7 +186,7 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 				// empty tilesets.  So if we encounter an empty one, find the next
 				// available actor.
 				index++;
-				if (index >= num) { // out of range
+				if ((unsigned int)index >= num) { // out of range
 					ret.type = ImageFromCodeInfo::ImageType::Unknown;
 					return ret;
 				}
@@ -229,6 +246,62 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 			}
 			return validItems;
 		}
+
+		/// Read in the actor info, so we can find the height of each actor
+		void readActorHeights(stream::input& content)
+		{
+			auto lenContent = content.size();
+			content.seekg(0, stream::start);
+			unsigned int nextOffset;
+			content >> u16le(nextOffset);
+
+			unsigned int numImages = nextOffset;
+			// The file data is loaded in lots of 65535 bytes, into memory blocks of
+			// 65536 bytes.  This means after every 65535 bytes, a padding byte should be
+			// inserted in order for the offsets to add up correctly.  Likewise when
+			// saving data, every 65536th byte should be dropped.
+			nextOffset *= 2;
+			nextOffset -= nextOffset / 65536;
+			if (lenContent < numImages * 2) {
+				throw stream::error("Actor info FAT truncated");
+			}
+			std::vector<stream::pos> offsets;
+			offsets.reserve(numImages);
+			for (unsigned int i = 0; i < numImages; i++) {
+				offsets.push_back(nextOffset);
+				if (i == numImages - 1) {
+					nextOffset = lenContent;
+				} else {
+					content >> u16le(nextOffset);
+					nextOffset *= 2;
+					nextOffset -= nextOffset / 65536;
+				}
+			}
+			// Now read the sizes
+			uint16_t height;
+			for (auto i : offsets) {
+				content.seekg(i, stream::start);
+				content >> u16le(height);
+				this->actorHeight.push_back(height);
+			}
+			return;
+		}
+
+		/// Convert an actor code from the map file to an actrinfo index.
+		/**
+		 * This is used both when loading and saving the actor layer (to
+		 * correctly adjust the height of the actor sprites) as well as
+		 * when mapping tile codes back to images.
+		 */
+		int actorCodeToTileIndex(unsigned int code) const
+		{
+			if (code < 32) return -1;
+			return code - 31;
+		}
+
+	protected:
+		/// Height of each actor frame, in tiles
+		std::vector<unsigned int> actorHeight;
 };
 
 class Layer_Cosmo_Background: public Map2DCore::LayerCore
@@ -241,12 +314,18 @@ class Layer_Cosmo_Background: public Map2DCore::LayerCore
 			this->v_allItems.reserve(CCA_NUM_TILES_BG);
 
 			for (unsigned int i = 0; (i < CCA_NUM_TILES_BG) && (lenMap >= 2); i++) {
-				Map2D::Layer::Item t;
+				uint16_t code;
+				content >> u16le(code);
+
+				// Don't push zero codes (these are transparent/no-tile)
+				if (code == CCA_DEFAULT_BGTILE) continue;
+
+				this->v_allItems.emplace_back();
+				auto& t = this->v_allItems.back();
+
 				t.type = Item::Type::Default;
 				t.pos = {i % mapWidth, i / mapWidth};
-				content >> u16le(t.code);
-				// Don't push zero codes (these are transparent/no-tile)
-				if (t.code != CCA_DEFAULT_BGTILE) this->v_allItems.push_back(t);
+				t.code = code;
 				lenMap -= 2;
 			}
 		}
@@ -324,18 +403,20 @@ class Layer_Cosmo_Background: public Map2DCore::LayerCore
 			for (unsigned int i = 0; i < CCA_NUM_SOLID_TILES; i++) {
 				if (i == CCA_DEFAULT_BGTILE) continue;
 
-				Map2D::Layer::Item t;
+				validItems.emplace_back();
+				auto& t = validItems.back();
+
 				t.type = Map2D::Layer::Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i << 3;
-				validItems.push_back(t);
 			}
 			for (unsigned int i = 0; i < CCA_NUM_MASKED_TILES; i++) {
-				Map2D::Layer::Item t;
+				validItems.emplace_back();
+				auto& t = validItems.back();
+
 				t.type = Map2D::Layer::Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = (CCA_NUM_SOLID_TILES + i * 5) << 3;
-				validItems.push_back(t);
 			}
 			return validItems;
 		}
@@ -344,7 +425,7 @@ class Layer_Cosmo_Background: public Map2DCore::LayerCore
 class Map_Cosmo: public MapCore, public Map2DCore
 {
 	public:
-		Map_Cosmo(std::unique_ptr<stream::inout> content)
+		Map_Cosmo(std::unique_ptr<stream::inout> content, stream::input& actrinfo)
 			:	content(std::move(content))
 		{
 			stream::pos lenMap = this->content->size();
@@ -471,7 +552,7 @@ class Map_Cosmo: public MapCore, public Map2DCore
 
 			// Read in the actor layer
 			auto layerAC = std::make_shared<Layer_Cosmo_Actors>(
-				*this->content, lenMap
+				*this->content, actrinfo, lenMap
 			);
 
 			// Read the background layer
@@ -576,7 +657,10 @@ class Map_Cosmo: public MapCore, public Map2DCore
 					ImagePurpose::ForegroundTileset1,
 					GraphicsFilename{"masktile.mni", "tls-cosmo-masked"}
 				),
-#warning TODO: Actor tileset
+				std::make_pair(
+					ImagePurpose::SpriteTileset1,
+					GraphicsFilename{"actrinfo.mni", "tls-cosmo-actrinfo"}
+				),
 			};
 		}
 
@@ -678,13 +762,20 @@ std::unique_ptr<Map> MapType_Cosmo::create(
 std::unique_ptr<Map> MapType_Cosmo::open(
 	std::unique_ptr<stream::inout> content, SuppData& suppData) const
 {
-	return std::make_unique<Map_Cosmo>(std::move(content));
+	auto suppActrInfo = suppData.find(SuppItem::Extra1);
+	if (suppActrInfo == suppData.end()) {
+		throw camoto::error("Missing content for Extra1 (actor info) "
+			"supplementary item.");
+	}
+	return std::make_unique<Map_Cosmo>(std::move(content), *(suppActrInfo->second));
 }
 
 SuppFilenames MapType_Cosmo::getRequiredSupps(stream::input& content,
 	const std::string& filename) const
 {
-	return {};
+	SuppFilenames supps;
+	supps[SuppItem::Extra1] = "actrinfo.mni";
+	return supps;
 }
 
 } // namespace gamemaps
