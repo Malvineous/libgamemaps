@@ -227,7 +227,8 @@ class Map_Zone66: public MapCore, public Map2DCore
 
 		virtual std::map<ImagePurpose, GraphicsFilename> graphicsFilenames() const
 		{
-#warning TODO: Proper graphics filename
+			// Graphics filenames aren't stored in the map file, so we can't return
+			// anything here, they'll have to be supplied manually.
 			return {};
 		}
 
