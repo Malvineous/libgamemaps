@@ -31,15 +31,15 @@ class test_map_wordresc: public test_map2d
 			this->mapCode[0].pos.x = 0;
 			this->mapCode[0].pos.y = 0;
 			this->mapCode[0].code = 0x02;
-			this->mapCode[1].pos.x = 1;
-			this->mapCode[1].pos.y = 0;
-			this->mapCode[1].code = 0x73;
-			this->mapCode[2].pos.x = 0;
+			this->mapCode[1].pos.x = 0;
+			this->mapCode[1].pos.y = 4;
+			this->mapCode[1].code = 0x01; // WR_CODE_GRUZZLE
+			this->mapCode[2].pos.x = 1;
 			this->mapCode[2].pos.y = 4;
-			this->mapCode[2].code = 0x01; // WR_CODE_GRUZZLE
+			this->mapCode[2].code = 0x02; // WR_CODE_SLIME
 			this->mapCode[3].pos.x = 1;
-			this->mapCode[3].pos.y = 4;
-			this->mapCode[3].code = 0x02; // WR_CODE_SLIME
+			this->mapCode[3].pos.y = 0;
+			this->mapCode[3].code = 0x73;
 		}
 
 		void addTests()
