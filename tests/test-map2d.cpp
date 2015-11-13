@@ -424,7 +424,7 @@ void test_map2d::test_read()
 
 	unsigned int l = 0;
 	for (auto& layer : this->map->layers()) {
-		bool foundFirstTile = false;
+		bool foundTile = false;
 		Point target = {-1, -1};
 		for (auto& i : layer->items()) {
 			target = this->mapCode[l].pos;
@@ -432,18 +432,18 @@ void test_map2d::test_read()
 				(i.pos.x == target.x)
 				&& (i.pos.y == target.y)
 			) {
-				BOOST_REQUIRE_MESSAGE(foundFirstTile == false,
+				BOOST_REQUIRE_MESSAGE(foundTile == false,
 					"Test design error - there are multiple tiles at (" << target.x << ","
 					<< target.y << ") in layer #" << l << ".  Pick another position "
 					"with only one tile for testing the map code.");
-				foundFirstTile = true;
+				foundTile = true;
 				BOOST_REQUIRE_EQUAL(i.code, this->mapCode[l].code);
 			}
 		}
-		BOOST_REQUIRE_MESSAGE(foundFirstTile == true,
-			"Unable to find first tile in layer " << l
+		BOOST_REQUIRE_MESSAGE(foundTile == true,
+			"Unable to find tile in layer " << l
 			<< " (counting from layer 0) at position " << target.x << "," << target.y);
-		BOOST_TEST_MESSAGE("Found first tile in layer " << l);
+		BOOST_TEST_MESSAGE("Found tile in layer " << l);
 		l++;
 	}
 }
