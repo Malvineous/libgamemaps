@@ -343,7 +343,7 @@ class Layer_Sweeney_Object: public Map2DCore::LayerCore
 
 		void flush(stream::output& content)
 		{
-			uint16_t numObjects = this->v_allItems.size();
+			uint16_t numObjects = (uint16_t)this->v_allItems.size();
 			content << u16le(numObjects);
 
 			for (auto& t : this->v_allItems) {

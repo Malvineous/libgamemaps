@@ -379,7 +379,7 @@ class Map_Harry: public MapCore, public Map2DCore
 			bool setPlayer = false;
 			auto layer = this->layers().at(2);
 			auto actors = layer->items();
-			uint16_t numActors = actors.size();
+			uint16_t numActors = (uint16_t)actors.size();
 			for (auto& t : actors) {
 				if (t.type & Layer::Item::Type::Player) {
 					// This is the player starting location

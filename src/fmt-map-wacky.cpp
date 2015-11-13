@@ -216,7 +216,7 @@ class Map_Wacky: public MapCore, public Map2DCore
 
 			auto& path = this->v_paths[0];
 
-			uint16_t count = path->points.size();
+			uint16_t count = (uint16_t)path->points.size();
 			this->compPath->truncate(2 + count * 14);
 			this->compPath->seekp(0, stream::start);
 
