@@ -871,7 +871,7 @@ class Map_Nukem2: public MapCore, public Map2DCore
 
 		virtual Point mapSize() const
 		{
-			return {this->mapWidth, 32750 / this->mapWidth};
+			return {(long)this->mapWidth, (long)(32750 / this->mapWidth)};
 		}
 
 		virtual void mapSize(const Point& newSize)

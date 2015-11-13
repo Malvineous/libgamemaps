@@ -83,7 +83,8 @@ class Layer_Zone66_Background: public Map2DCore::LayerCore
 
 				Item t;
 				t.type = Item::Type::Default;
-				t.pos = {i % Z66_MAP_WIDTH, i / Z66_MAP_WIDTH};
+				t.pos.x = i % Z66_MAP_WIDTH;
+				t.pos.y = i / Z66_MAP_WIDTH;
 				t.code = tm[bg[i]];
 				this->v_allItems.push_back(t);
 			}

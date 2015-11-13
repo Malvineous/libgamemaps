@@ -116,7 +116,8 @@ class Layer_Bash_Background: public Map2DCore::LayerCore
 						this->v_allItems.emplace_back();
 						auto& t = this->v_allItems.back();
 						t.type = Item::Type::Default;
-						t.pos = {x, y};
+						t.pos.x = x;
+						t.pos.y = y;
 						t.code = code & 0x1FF;
 					}
 
@@ -247,7 +248,8 @@ class Layer_Bash_Foreground: public Map2DCore::LayerCore
 						this->v_allItems.emplace_back();
 						auto& t = this->v_allItems.back();
 						t.type = Item::Type::Default;
-						t.pos = {x, y};
+						t.pos.x = x;
+						t.pos.y = y;
 						t.code = code;
 					}
 				}

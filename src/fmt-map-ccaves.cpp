@@ -302,7 +302,7 @@ class Map_CCaves: public MapCore, public Map2DCore
 				tilesBG.emplace_back(); \
 				Layer::Item& t = tilesBG.back(); \
 				t.type = Layer::Item::Type::Default; \
-				t.pos = {x + (dx), y + (dy)}; \
+				t.pos = {(long)(x + (dx)), (long)(y + (dy))}; \
 				if (IS_IBEAM(val)) { \
 					t.code = CCT_IBEAM(ibeam_tile, (val)); \
 				} else if (IS_BLOCK(val)) { \
@@ -434,7 +434,8 @@ class Map_CCaves: public MapCore, public Map2DCore
 								tilesFG.emplace_back();
 								Layer::Item& t = tilesFG.back();
 								t.type = Layer::Item::Type::Default;
-								t.pos = {x, y};
+								t.pos.x = x;
+								t.pos.y = y;
 								t.code = m.tileIndexFG;
 							}
 							break;
@@ -719,7 +720,7 @@ class Map_CCaves: public MapCore, public Map2DCore
 
 		virtual Point mapSize() const
 		{
-			return {CC_MAP_WIDTH, this->mapHeight};
+			return {CC_MAP_WIDTH, (long)this->mapHeight};
 		}
 
 		virtual Point tileSize() const

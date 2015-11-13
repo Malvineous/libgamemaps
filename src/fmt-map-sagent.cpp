@@ -333,7 +333,8 @@ class Map_SAgent: public MapCore, public Map2DCore
 												tiles->emplace_back();
 												auto& t = tiles->back();
 												t.type = Layer::Item::Type::Default;
-												t.pos = {x - (3 - dx), y - (2 - dy)};
+												t.pos.x = x - (3 - dx);
+												t.pos.y = y - (2 - dy);
 												t.code = code;
 											}
 										}
@@ -348,7 +349,8 @@ class Map_SAgent: public MapCore, public Map2DCore
 						tiles->emplace_back();
 						auto& t = tiles->back();
 						t.type = Layer::Item::Type::Default;
-						t.pos = {x, y};
+						t.pos.x = x;
+						t.pos.y = y;
 						t.code = code;
 					}
 				}
@@ -641,7 +643,7 @@ class Map_SAgent: public MapCore, public Map2DCore
 
 		virtual Point mapSize() const
 		{
-			return {SAM_MAP_WIDTH, this->mapHeight};
+			return {SAM_MAP_WIDTH, (long)this->mapHeight};
 		}
 
 		virtual Point tileSize() const

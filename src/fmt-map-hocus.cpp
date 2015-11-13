@@ -69,7 +69,8 @@ class Layer_Hocus_8bit: public Map2DCore::LayerCore
 			for (unsigned int i = 0; i < HP_MAP_SIZE; i++) {
 				Item t;
 				t.type = Item::Type::Default;
-				t.pos = {i % HP_MAP_WIDTH, i / HP_MAP_WIDTH};
+				t.pos.x = i % HP_MAP_WIDTH;
+				t.pos.y = i / HP_MAP_WIDTH;
 				t.code = bg[i];
 				if (t.code != HP_DEFAULT_TILE) this->v_allItems.push_back(t);
 			}

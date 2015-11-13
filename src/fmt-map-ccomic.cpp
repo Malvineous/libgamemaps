@@ -58,7 +58,8 @@ class Layer_CComic_Background: public Map2DCore::LayerCore
 
 				Item t;
 				t.type = Item::Type::Default;
-				t.pos = {i % mapSize.x, i / mapSize.x};
+				t.pos.x = i % mapSize.x;
+				t.pos.y = i / mapSize.x;
 				t.code = bg[i];
 				this->v_allItems.push_back(t);
 			}

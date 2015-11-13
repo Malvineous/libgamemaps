@@ -69,7 +69,8 @@ class Layer_Harry_Actor: public Map2DCore::LayerCore
 				this->v_allItems.emplace_back();
 				auto& t = this->v_allItems.back();
 				t.type = Item::Type::Player;
-				t.pos = {startX, startY};
+				t.pos.x = startX;
+				t.pos.y = startY;
 				t.code = 0; // unused
 				t.playerNumber = 0; // player 1
 				t.playerFacingLeft = false; // fixed?
@@ -191,7 +192,8 @@ class Layer_Harry_Background: public Map2DCore::LayerCore
 					this->v_allItems.emplace_back();
 					auto& t = this->v_allItems.back();
 					t.type = Item::Type::Default;
-					t.pos = {x, y};
+					t.pos.x = x;
+					t.pos.y = y;
 					t.code = code;
 				}
 			}

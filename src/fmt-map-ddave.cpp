@@ -66,7 +66,8 @@ class Layer_DDave_Background: public Map2DCore::LayerCore
 			for (unsigned int i = 0; i < DD_LAYER_LEN_BG; i++) {
 				Item t;
 				t.type = Item::Type::Default;
-				t.pos = {i % DD_MAP_WIDTH, i / DD_MAP_WIDTH};
+				t.pos.x = i % DD_MAP_WIDTH;
+				t.pos.y = i / DD_MAP_WIDTH;
 				t.code = bg[i];
 				if (t.code != DD_DEFAULT_BGTILE) this->v_allItems.push_back(t);
 			}

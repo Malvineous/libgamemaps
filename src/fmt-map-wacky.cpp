@@ -73,7 +73,8 @@ class Layer_Wacky_Background: public Map2DCore::LayerCore
 				this->v_allItems.emplace_back();
 				auto& t = this->v_allItems.back();
 				t.type = Item::Type::Default;
-				t.pos = {i % WW_MAP_WIDTH, i / WW_MAP_WIDTH};
+				t.pos.x = i % WW_MAP_WIDTH;
+				t.pos.y = i / WW_MAP_WIDTH;
 				t.code = bg[i];
 			}
 		}

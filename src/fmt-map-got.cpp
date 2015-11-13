@@ -109,7 +109,8 @@ class Layer_GOT_Background: public Map2DCore::LayerCore
 				this->v_allItems.emplace_back();
 				auto& t = this->v_allItems.back();
 				t.type = Item::Type::Default;
-				t.pos = {i % GOT_MAP_WIDTH, i / GOT_MAP_WIDTH};
+				t.pos.x = i % GOT_MAP_WIDTH;
+				t.pos.y = i / GOT_MAP_WIDTH;
 				t.code = buf[i];
 			}
 		}

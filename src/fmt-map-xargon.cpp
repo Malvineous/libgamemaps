@@ -132,7 +132,8 @@ class Layer_Sweeney_Background: public Map2DCore::LayerCore
 					auto& t = this->v_allItems.back();
 
 					t.type = Item::Type::Default;
-					t.pos = {x, y};
+					t.pos.x = x;
+					t.pos.y = y;
 					t.code = code;
 				}
 			}

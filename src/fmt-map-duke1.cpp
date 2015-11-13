@@ -59,7 +59,8 @@ class Layer_Duke1_Background: public Map2DCore::LayerCore
 			Item t;
 			for (unsigned int i = 0; i < DN1_LAYER_LEN_BG; i++) {
 				t.type = Item::Type::Default;
-				t.pos = {i % DN1_MAP_WIDTH, i / DN1_MAP_WIDTH};
+				t.pos.x = i % DN1_MAP_WIDTH;
+				t.pos.y = i / DN1_MAP_WIDTH;
 				*this->content >> u16le(t.code);
 				if (t.code != DN1_DEFAULT_BGTILE) this->v_allItems.push_back(t);
 			}

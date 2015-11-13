@@ -66,7 +66,8 @@ class Layer_Rockford_Background: public Map2DCore::LayerCore
 			for (unsigned int i = 0; i < RF_LAYER_LEN_BG; i++) {
 				Item t;
 				t.type = Item::Type::Default;
-				t.pos = {i % RF_MAP_WIDTH, i / RF_MAP_WIDTH};
+				t.pos.x = i % RF_MAP_WIDTH;
+				t.pos.y = i / RF_MAP_WIDTH;
 				t.code = bg[i];
 				if (t.code != RF_DEFAULT_BGTILE) this->v_allItems.push_back(t);
 			}

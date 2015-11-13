@@ -58,7 +58,8 @@ class Layer_DarkAges_Background: public Map2DCore::LayerCore
 			for (unsigned int i = 0; i < DA_LAYER_LEN_BG; i++) {
 				Item t;
 				t.type = Item::Type::Default;
-				t.pos = {i % DA_MAP_WIDTH, i / DA_MAP_WIDTH};
+				t.pos.x = i % DA_MAP_WIDTH;
+				t.pos.y = i / DA_MAP_WIDTH;
 				t.code = bg[i];
 				if (t.code != DA_DEFAULT_BGTILE) this->v_allItems.push_back(t);
 			}

@@ -325,7 +325,8 @@ class Layer_Cosmo_Background: public Map2DCore::LayerCore
 				auto& t = this->v_allItems.back();
 
 				t.type = Item::Type::Default;
-				t.pos = {i % mapWidth, i / mapWidth};
+				t.pos.x = i % mapWidth;
+				t.pos.y = i / mapWidth;
 				t.code = code;
 				lenMap -= 2;
 			}
@@ -681,7 +682,7 @@ class Map_Cosmo: public MapCore, public Map2DCore
 
 		virtual Point mapSize() const
 		{
-			return {this->mapWidth, 32768 / this->mapWidth};
+			return {(long)this->mapWidth, (long)(32768 / this->mapWidth)};
 		}
 
 		virtual Point tileSize() const
