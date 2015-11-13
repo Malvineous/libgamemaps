@@ -68,11 +68,13 @@ class Layer_Wacky_Background: public Map2DCore::LayerCore
 
 			this->v_allItems.reserve(WW_LAYER_LEN_BG);
 			for (unsigned int i = 0; i < WW_LAYER_LEN_BG; i++) {
-				Item t;
+				if (bg[i] == WW_DEFAULT_BGTILE) continue;
+
+				this->v_allItems.emplace_back();
+				auto& t = this->v_allItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {i % WW_MAP_WIDTH, i / WW_MAP_WIDTH};
 				t.code = bg[i];
-				if (t.code != WW_DEFAULT_BGTILE) this->v_allItems.push_back(t);
 			}
 		}
 
@@ -139,14 +141,15 @@ class Layer_Wacky_Background: public Map2DCore::LayerCore
 			for (unsigned int i = 0; i <= WW_MAX_VALID_TILECODE; i++) {
 				if (i == WW_DEFAULT_BGTILE) continue;
 
-				Item t;
+				validItems.emplace_back();
+				auto t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
-				validItems.push_back(t);
 			}
 			return validItems;
 		}
+
 	private:
 		std::unique_ptr<stream::inout> content;
 };
