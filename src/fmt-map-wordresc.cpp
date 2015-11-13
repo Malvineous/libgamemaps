@@ -979,10 +979,10 @@ class Map_WordRescue: public MapCore, public Map2DCore
 
 				// Write the number of items first, except for letters which are fixed at 7
 				if (i == INDEX_DRIP) {
-					uint16_t len = drips.size();
+					uint16_t len = (uint16_t)drips.size();
 					*this->content << u16le(len);
 				} else if (i != INDEX_LETTER) {
-					uint16_t len = itemLocations[i].size();
+					uint16_t len = (uint16_t)itemLocations[i].size();
 					*this->content << u16le(len);
 				}
 

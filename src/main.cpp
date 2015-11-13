@@ -44,7 +44,8 @@ using namespace camoto::gamemaps;
 namespace camoto {
 
 template <>
-const std::vector<std::shared_ptr<const MapType> > FormatEnumerator<MapType>::formats()
+const std::vector<std::shared_ptr<const MapType> > CAMOTO_GAMEMAPS_API
+	FormatEnumerator<MapType>::formats()
 {
 	std::vector<std::shared_ptr<const MapType> > list;
 	FormatEnumerator<MapType>::addFormat<
