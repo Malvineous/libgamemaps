@@ -54,11 +54,14 @@ class test_map_jill: public test_map2d
 			this->type = "map2d-jill";
 			this->pxSize = {128 * 16, 64 * 16};
 			this->numLayers = 2;
+			this->mapCode[0].pos.x = 0;
+			this->mapCode[0].pos.y = 0;
 			this->mapCode[0].code = 0x01;
+			this->mapCode[1].pos.x = 1;
+			this->mapCode[1].pos.y = 2;
 			this->mapCode[1].code = 0x01;
 			this->suppResult[SuppItem::Extra1].reset(new test_suppx1_map_jill());
-			this->skipInstDetect.push_back("map-wordresc");
-			this->skipInstDetect.push_back("map-xargon");
+			this->skipInstDetect.push_back("map2d-wordresc");
 		}
 
 		void addTests()
@@ -73,49 +76,356 @@ class test_map_jill: public test_map2d
 				"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
 			));
 
-			// c02: Exact size w/ no text section
-			this->isInstance(MapType::DefinitelyYes,
+			// c02: Make sure the object and savedata layers aren't cut off
+			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
 				STRING_WITH_NULLS(
 					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
 					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-				) + std::string((16 * 7 + 128 * 63) * 2, '\x00') + STRING_WITH_NULLS(
-					"\x01\x00"
-					"\x01" "\x10\x00" "\x10\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x04\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
 					"\x00\x00" "\x00\x00"
-					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
 					"\x00\x00" "\x00\x00"
 					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
 					"\x00\x00" "\x00\x00"
-				) + std::string(97, '\x00') // empty savedata
+				)
 			);
 
-			// c03: Truncated object layer
+			// c03: Player object must be first
 			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
 				STRING_WITH_NULLS(
 					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
 					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-				) + std::string((16 * 7 + 128 * 63) * 2, '\x00') + STRING_WITH_NULLS(
-					"\x01\x00"
-					"\x01"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
 				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" "Hello" "\0"
+					"\x07\x00" "Goodbye" "\0"
+				)
+			);
+
+			// c04: Wrong number of player objects
+			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x00" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" "Hello" "\0"
+					"\x07\x00" "Goodbye" "\0"
+				)
+			);
+
+			// c05: Exact size w/ no string table
+			this->isInstance(MapType::DefinitelyYes,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00" // no string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00" // no string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+			);
+
+			// c06: String's length bytes are cut
+			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" // terminating null is cut
+				)
+			);
+
+			// c07: Empty string
+			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" "Hello" "\0"
+					"\x00\x00\0"
+				)
+			);
+
+			// c08: String itself is cut
+			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" "He" // string itself is cut
+				)
+			);
+
+			// c09: Too many strings
+			std::string many;
+			for (int i = 0; i < 513; i++) {
+				many.append("\x01\x00x\0", 4);
+			}
+			this->isInstance(MapType::DefinitelyNo,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x02\x00")
+				+ std::string(68, '\x00')
+				// String list (lots of short strings)
+				+ many
 			);
 		}
 
 		virtual std::string initialstate()
 		{
 			return
+				// Background layer
 				STRING_WITH_NULLS(
 					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
 					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-				) + std::string((16 * 7 + 128 * 63) * 2, '\x00') + STRING_WITH_NULLS(
-					"\x01\x00"
-					"\x01" "\x00\x00" "\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
 					"\x00\x00" "\x00\x00"
 					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
 					"\x00\x00" "\x00\x00"
 					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
 					"\x00\x00" "\x00\x00"
-				) + std::string(70, '\x00') // empty savedata
+
+					"\x01" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x01" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x03\x00")
+				+ std::string(68, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" "Hello" "\0"
+					"\x07\x00" "Goodbye" "\0"
+				)
 			;
 		}
 };

@@ -22,55 +22,42 @@
 #define _CAMOTO_GAMEMAPS_MAP_XARGON_HPP_
 
 #include <map>
-#include "base-maptype.hpp"
+#include <camoto/gamemaps/maptype.hpp>
 
 namespace camoto {
 namespace gamemaps {
 
-/// Generic level reader/writer for games based on Tim Sweeney's Jill engine.
-class MapType_Sweeney: virtual public MapType_Base
-{
-	public:
-		virtual Certainty isInstance(stream::input_sptr psMap) const;
-		virtual MapPtr create(SuppData& suppData) const;
-		virtual MapPtr open(stream::input_sptr input, SuppData& suppData) const;
-		virtual void write(MapPtr map, stream::expanding_output_sptr output,
-			ExpandingSuppData& suppData) const;
-
-		typedef std::map<uint16_t, uint16_t> image_map;
-		typedef boost::shared_ptr<image_map> image_map_sptr;
-
-	protected:
-		unsigned int viewportWidth;
-		unsigned int viewportHeight;
-		unsigned int lenSavedata;
-};
-
 /// Jill of the Jungle level reader/writer.
-class MapType_Jill: virtual public MapType_Sweeney
+class MapType_Jill: virtual public MapType
 {
 	public:
-		MapType_Jill();
-
-		virtual std::string getMapCode() const;
-		virtual std::string getFriendlyName() const;
-		virtual std::vector<std::string> getFileExtensions() const;
-		virtual std::vector<std::string> getGameList() const;
-		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+		virtual std::string code() const;
+		virtual std::string friendlyName() const;
+		virtual std::vector<std::string> fileExtensions() const;
+		virtual std::vector<std::string> games() const;
+		virtual Certainty isInstance(stream::input& content) const;
+		virtual std::unique_ptr<Map> create(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const;
+		virtual std::unique_ptr<Map> open(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const;
+		virtual SuppFilenames getRequiredSupps(stream::input& content,
 			const std::string& filename) const;
 };
 
 /// Xargon level reader/writer.
-class MapType_Xargon: virtual public MapType_Sweeney
+class MapType_Xargon: virtual public MapType
 {
 	public:
-		MapType_Xargon();
-
-		virtual std::string getMapCode() const;
-		virtual std::string getFriendlyName() const;
-		virtual std::vector<std::string> getFileExtensions() const;
-		virtual std::vector<std::string> getGameList() const;
-		virtual SuppFilenames getRequiredSupps(stream::input_sptr input,
+		virtual std::string code() const;
+		virtual std::string friendlyName() const;
+		virtual std::vector<std::string> fileExtensions() const;
+		virtual std::vector<std::string> games() const;
+		virtual Certainty isInstance(stream::input& content) const;
+		virtual std::unique_ptr<Map> create(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const;
+		virtual std::unique_ptr<Map> open(std::unique_ptr<stream::inout> content,
+			SuppData& suppData) const;
+		virtual SuppFilenames getRequiredSupps(stream::input& content,
 			const std::string& filename) const;
 };
 
