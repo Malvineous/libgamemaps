@@ -121,7 +121,8 @@ class Layer_Cosmo_Actors: public Map2DCore::LayerCore
 		void flush(stream::output& content, const Point& mapSize)
 		{
 			// Write the actor layer
-			uint16_t numActorInts = this->v_allItems.size() * 3;
+			auto numActorInts = this->v_allItems.size() * 3;
+			if (numActorInts > 32767) throw camoto::error("Too many actors - max 32767.");
 			content << u16le(numActorInts);
 
 			for (auto& i : this->v_allItems) {
