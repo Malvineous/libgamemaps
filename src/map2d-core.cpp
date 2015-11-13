@@ -42,6 +42,7 @@ Point Map2DCore::viewport() const
 	// This is a bug - if caps() reports no viewport, you cannot call this
 	// function.
 	assert(false);
+	return {0, 0};
 }
 
 Point Map2DCore::mapSize() const
