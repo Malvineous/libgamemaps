@@ -209,7 +209,7 @@ class Map_CComic: public MapCore, public Map2DCore
 
 		Background background(const TilesetCollection& tileset) const
 		{
-#warning Is the background really black, or does it use the first tile?
+/// @todo Is the background really black, or does it use the first tile?
 			Background bg;
 			bg.att = Background::Attachment::SingleColour;
 			bg.clr = gamegraphics::PaletteEntry{0, 0, 0, 255};

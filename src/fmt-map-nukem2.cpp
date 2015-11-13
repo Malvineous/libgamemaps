@@ -165,7 +165,7 @@ class Layer_Nukem2_Actors: public Map2DCore::LayerCore
 		virtual std::vector<Item> availableItems() const
 		{
 			std::vector<Item> validItems;
-#warning TODO
+/// @todo Correct list of actors
 			for (int i = 0; i < 10; i++) {
 				validItems.emplace_back();
 				Item& item = validItems.back();

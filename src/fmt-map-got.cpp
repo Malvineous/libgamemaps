@@ -160,7 +160,7 @@ class Layer_GOT_Background: public Map2DCore::LayerCore
 
 			ret.img = t->second->openImage(images[item.code]);
 			ret.type = ImageFromCodeInfo::ImageType::Supplied;
-#warning TODO: For tiles between 0xDC and 0xE5, show the hole/ladder number
+/// @todo For tiles between 0xDC and 0xE5, show the hole/ladder number
 			return ret;
 		}
 
@@ -222,7 +222,7 @@ class Layer_GOT_Actor: virtual public Map2DCore::LayerCore
 			content << nullPadded("", padItems); // pad out to 16 bytes
 
 			// Padding, this data is unknown
-#warning TODO: Work out what this data is used for
+/// @todo Work out what this data is used for
 			content << nullPadded("", 16*3);
 			return;
 		}
@@ -402,7 +402,7 @@ class Map_GOT: public MapCore, public Map2DCore
 			attrBGTile.desc = "Default background tile to display behind level.";
 			attrBGTile.enumValue = defaultTileBG;
 			attrBGTile.enumValueNames = {
-#warning TODO: Tile list
+/// @todo Tile list
 				"0 - todo: tile list",
 			};
 
@@ -413,7 +413,7 @@ class Map_GOT: public MapCore, public Map2DCore
 			attrMusic.desc = "Index of the song to play as background music in the level.";
 			attrMusic.enumValue = defaultSong;
 			attrMusic.enumValueNames = {
-#warning TODO: Song list
+/// @todo Song list
 				"0 - song1?",
 				"1 - ?",
 				"2 - todo",

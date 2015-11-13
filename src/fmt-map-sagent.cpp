@@ -188,7 +188,7 @@ class Layer_SAgent_Foreground: public Layer_SAgent_Common
 
 		virtual std::vector<Item> availableItems() const
 		{
-#warning TODO: These tiles are not all valid here, only include ones that work (or perhaps only include ones where the background layer is not null in that cell)
+/// @todo These tiles are not all valid here, only include ones that work (or perhaps only include ones where the background layer is not null in that cell)
 			std::vector<Item> validItems;
 
 			for (const TILE_MAP *next = this->tm; next->code > 0; next++) {
@@ -244,7 +244,7 @@ class Map_SAgent: public MapCore, public Map2DCore
 				attr.type = Attribute::Type::Enum;
 				attr.name = "Background tile";
 				attr.desc = "Default tile to use as level background";
-#warning TODO: Make this an image list
+/// @todo Make this an image list
 				switch (bgcode) {
 					case 667: bgtile = MAKE_TILE( 6, 16); attr.enumValue = 0; break;
 					case 695: bgtile = MAKE_TILE( 6, 44); attr.enumValue = 1; break;

@@ -482,7 +482,7 @@ class Map_CCaves: public MapCore, public Map2DCore
 			auto mapSize = this->mapSize();
 
 			// Maximum width?
-#warning TODO: Is this width changeable or is it fixed?
+/// @todo Is this width changeable or is it fixed?
 			if (mapSize.x > 255)
 				throw stream::error("This map format must be less than 255 tiles wide.");
 

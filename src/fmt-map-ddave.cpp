@@ -233,7 +233,7 @@ class Map_DDave: public MapCore, public Map2DCore
 			}
 
 			// Add terminator if there's enough room.
-#warning TODO: Test to see if this is correct, or if a terminator is always required
+/// @todo Test to see if this is correct, or if a terminator is always required
 			if (pathpos < 256) {
 				path[pathpos++] = DD_PATH_END;
 				path[pathpos++] = DD_PATH_END;

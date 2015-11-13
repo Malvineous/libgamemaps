@@ -130,7 +130,6 @@ class Layer_Zone66_Background: public Map2DCore::LayerCore
 			tilemap
 				<< u16le(numTileMappings)
 				<< u16le(0) /// @todo Animated tiles
-#warning TODO: Animated tiles
 			;
 			for (unsigned int i = 0; i < numTileMappings; i++) {
 				tilemap
@@ -139,16 +138,13 @@ class Layer_Zone66_Background: public Map2DCore::LayerCore
 				;
 			}
 
-#warning TODO: Write correct values for tile points/score
 			/// @todo Write correct values for tile points/score
 			tilemap << nullPadded("", numTileMappings);
 
-#warning TODO: Write correct values for canDestroy flags
 			/// @todo Write correct values for canDestroy flags
 			tilemap << nullPadded("", numTileMappings);
 
 			/// @todo Write animated tile info
-#warning TODO: Write animated tile info
 
 			tilemap.flush();
 

@@ -46,7 +46,7 @@
 #define HP_DEFAULT_TILE 0xFF
 
 /// Largest valid tilecode in bg/fg layers
-#warning TODO: Confirm this value is correct
+/// @todo Confirm this value is correct
 #define HP_MAX_VALID_TILECODE 0xFF
 
 namespace camoto {

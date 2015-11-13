@@ -266,7 +266,7 @@ class Layer_Bash_Foreground: public Map2DCore::LayerCore
 					throw stream::error("Foreground layer has tiles outside map boundary!");
 				}
 				(*tiles)[i.pos.y * this->mapWidth + i.pos.x] = i.code;
-#warning TODO: If the foreground layer contains a skull or collapsing walkway, add the sprites to usedSprites (and remove from "*" in the XML)
+/// @todo If the foreground layer contains a skull or collapsing walkway, add the sprites to usedSprites (and remove from "*" in the XML)
 			}
 			return;
 		}

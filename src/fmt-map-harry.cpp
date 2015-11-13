@@ -408,7 +408,7 @@ class Map_Harry: public MapCore, public Map2DCore
 			this->content->write(this->pal, 768);
 			this->content->write(this->tileFlags, 256);
 
-#warning TODO: Write the unknown data
+/// @todo Write the unknown data
 			char unk[10];
 			memset(unk, 0x00, 10);
 			this->content->write(unk, 10);
