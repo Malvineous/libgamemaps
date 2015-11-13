@@ -31,7 +31,7 @@
 namespace camoto {
 namespace gamemaps {
 
-typedef FormatEnumerator<MapType> MapManager;
+typedef FormatEnumerator<MapType> CAMOTO_GAMEMAPS_API MapManager;
 
 } // namespace gamegraphics
 } // namespace camoto
