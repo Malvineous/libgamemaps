@@ -1,9 +1,7 @@
 Outstanding tasks
 -----------------
 
- - Figure out how to specify DDave starting points (currently hardcoded for level 3)
-
- - Hocus Pocus tests
+ - Figure out how to specify DDave starting points (currently hardcoded for level 3) - info on moddingwiki?
 
  - Monster Bash file detection
 
@@ -24,14 +22,15 @@ Outstanding tasks
      - 1-4 tiles, repeated, alternating on opposite rows (Crystal Caves, Secret Agent)
      - Single tile, repeated (Captain Comic)
 
+ - Have a generic "load a tile in a tileset" function for many of the
+   imageFromCode() implementations to use.
+
 Game support
 ------------
 
-Captain Comic:
- - The default background tile is left in because it often has an image.  This
-   should be removed and changed to part of the background image, i.e. set the
-   background to be this tile repeated, so empty bits of the level show through
-   to this tile.
+Monster Bash:
+ - Replace default black background with first tile, but check to see if that tile is drawn in blank spaces
+ - Assume blank foreground tile is transparent (but maybe first FG tile is 100% transparent too?)
 
 Cosmo:
  - Implement image mapping and valid tiles for sprites (actors)
@@ -39,9 +38,6 @@ Cosmo:
 Crystal Caves:
  - Vines will go through some tiles, insert a solid block at the top of the vine
    to prevent this.
-
-Dark Ages:
- - Add test code
 
 Duke Nukem II:
  - Add support for Actor tiles
@@ -67,3 +63,6 @@ Word Rescue:
  - Either list each question mark box with a number, and only allow one of each
    in a level, or make them all the same type and write out the numbers when
    saving levels, and only allow seven in a level.
+
+Zone 66:
+ - Test code
