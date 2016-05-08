@@ -344,7 +344,7 @@ class Layer_GOT_Object: virtual public Map2DCore::LayerCore
 		{
 			ImageFromCodeInfo ret;
 
-			auto t = tileset.find(ImagePurpose::ForegroundTileset2);
+			auto t = tileset.find(ImagePurpose::ForegroundTileset1);
 			if (t == tileset.end()) { // no tileset?!
 				ret.type = ImageFromCodeInfo::ImageType::Unknown;
 				return ret;
@@ -405,6 +405,7 @@ class Map_GOT: public MapCore, public Map2DCore
 			attrBGTile.enumValueNames = {
 /// @todo Tile list
 				"0 - todo: tile list",
+				"1 - todo: tile list",
 			};
 
 			this->v_attributes.emplace_back();
