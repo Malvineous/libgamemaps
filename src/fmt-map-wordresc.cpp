@@ -217,7 +217,7 @@ class Layer_WR_Background: public Map2DCore::LayerCore
 				if (i == WR_DEFAULT_BGTILE) continue;
 
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
@@ -257,18 +257,20 @@ class Layer_WR_Object_Small: public Map2DCore::LayerCore
 				auto& t = this->v_allItems.back();
 
 				t.type = Item::Type::Movement;
-				t.movementFlags = Item::MovementFlags::DistanceLimit;
+				t.movementFlags = Item::MovementFlags::DistanceLimit
+					| Item::MovementFlags::SpeedLimit;
 				t.movementDistLeft = 0;
 				t.movementDistRight = 0;
 				t.movementDistUp = 0;
 				t.movementDistDown = Item::DistIndeterminate;
+				t.movementSpeedX = 0;
 				content
 					>> u16le(t.pos.x)
 					>> u16le(t.pos.y)
-					>> u16le(t.code) // discard drip freq (nowhere to save it yet)
+					>> u16le(t.movementSpeedY)
 				;
-				t.code <<= 16; // put drip freq in upper 16-bits
-				t.code |= WR_CODE_DRIP;
+				/// @todo Convert t.movementSpeedY from WR units to milliseconds-per-pixel
+				t.code = WR_CODE_DRIP;
 			}
 
 			// Add the map entrance and exit as special items
@@ -368,35 +370,39 @@ class Layer_WR_Object_Small: public Map2DCore::LayerCore
 			std::vector<Item> validItems;
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = WR_CODE_GRUZZLE;
 			}
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = WR_CODE_ENTRANCE;
 			}
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = WR_CODE_EXIT;
 			}
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Movement;
 				t.pos = {0, 0};
 				t.code = WR_CODE_DRIP;
+				t.movementFlags = Item::MovementFlags::DistanceLimit
+					| Item::MovementFlags::SpeedLimit;
 				t.movementDistLeft = 0;
 				t.movementDistRight = 0;
 				t.movementDistUp = 0;
 				t.movementDistDown = Item::DistIndeterminate;
+				t.movementSpeedX = 0;
+				t.movementSpeedY = 0x44;
 			}
 			return validItems;
 		}
@@ -559,7 +565,7 @@ class Layer_WR_Object_Large: public Map2DCore::LayerCore
 			std::vector<Item> validItems;
 			for (unsigned int i = WR_CODE_SLIME; i <= WR_CODE_LETTER7; i++) {
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
@@ -733,7 +739,7 @@ class Layer_WR_Attribute: public Map2DCore::LayerCore
 			std::vector<Item> validItems;
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Blocking;
 				t.pos = {0, 0};
 				t.code = 0x0073;
@@ -746,7 +752,7 @@ class Layer_WR_Attribute: public Map2DCore::LayerCore
 			}
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Blocking;
 				t.pos = {0, 0};
 				t.code = 0x0074;
@@ -759,7 +765,7 @@ class Layer_WR_Attribute: public Map2DCore::LayerCore
 			// Question-mark boxes
 			for (unsigned int i = 0; i < 7; i++) {
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
@@ -768,7 +774,7 @@ class Layer_WR_Attribute: public Map2DCore::LayerCore
 			// Unknown (see tile mapping code)
 			{
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = 0x00FD;
@@ -932,7 +938,8 @@ class Map_WordRescue: public MapCore, public Map2DCore
 					case WR_CODE_DRIP: {
 						DripData dd;
 						dd.pos = t.pos;
-						dd.dripFreq = t.code >> 16;
+						dd.dripFreq = t.movementSpeedY;
+						/// @todo Convert t.movementSpeedY from milliseconds-per-pixel back to WR units
 						drips.push_back(dd);
 						break;
 					}
