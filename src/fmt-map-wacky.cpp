@@ -143,7 +143,7 @@ class Layer_Wacky_Background: public Map2DCore::LayerCore
 				if (i == WW_DEFAULT_BGTILE) continue;
 
 				validItems.emplace_back();
-				auto t = validItems.back();
+				auto& t = validItems.back();
 				t.type = Item::Type::Default;
 				t.pos = {0, 0};
 				t.code = i;
