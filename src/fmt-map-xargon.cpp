@@ -69,7 +69,7 @@ GameData getJillData()
 {
 	GameData gdJill;
 	gdJill.lenSavedata = 70;
-	gdJill.numObjectTypes = 1;
+	gdJill.numObjectTypes = 10;
 	gdJill.viewport = {232, 160};
 	return gdJill;
 }
