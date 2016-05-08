@@ -22,8 +22,9 @@
  */
 
 #include <algorithm>
-#include <set>
+#include <cctype>
 #include <cerrno>
+#include <set>
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/util.hpp> // make_unique
 #include "map-core.hpp"
@@ -712,17 +713,24 @@ class Layer_Bash_Attribute: virtual public Map2DCore::LayerCore
 			if (len > 1048576) throw stream::error("Tile property data (<content/> in XML for tile properties) too large.");
 			std::vector<char> data(len, 0);
 			char *d = data.data();
-			char *end = d;
+			char *start = d, *end = d;
 			content.read(d, len);
 			do {
 				d = end;
 				errno = 0;
 				auto val = strtoul(d, &end, 16);
-				if (errno) {
-					throw stream::error("Error parsing tileinfo content - ensure this "
-						"part of the XML file contains hex digits and whitespace only!");
+				if (d == end) {
+					// No more valid characters
+					if (((unsigned long)(d - start) < len) && (!isspace(*d))) {
+						// Not yet reached end of string, next char is not a space, so
+						// found an invalid char
+						throw error(createString("Error parsing tileinfo content at index "
+							<< (int)(d - start) << " (char " << (int)*d << ").  Ensure this "
+							"part of the XML file contains hex digits and whitespace only!"));
+					} // else reached end of string, loop will exit below
+				} else {
+					values->push_back(val);
 				}
-				values->push_back(val);
 			} while (end != d);
 			return;
 		}
