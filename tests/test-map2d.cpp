@@ -394,8 +394,13 @@ void test_map2d::test_isinstance_others()
 		BOOST_TEST_MESSAGE("Checking " << this->type
 			<< " content against isInstance() for " << otherType);
 
+		// Put this outside the BOOST_CHECK_MESSAGE macro so if an exception is
+		// thrown we can see the above BOOST_TEST_CHECKPOINT message telling us which
+		// handler is to blame.
+		auto isInstanceResult = testType->isInstance(*this->base);
+
 		BOOST_CHECK_MESSAGE(
-			testType->isInstance(*this->base) < MapType::Certainty::DefinitelyYes,
+			isInstanceResult != MapType::Certainty::DefinitelyYes,
 			"isInstance() for " << otherType << " incorrectly recognises content for "
 			<< this->type);
 	}
