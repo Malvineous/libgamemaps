@@ -43,6 +43,13 @@ class test_map_sagent: public test_map2d
 			// technically correct because the formats are the same, only the
 			// tile mapping is different.  So we skip the test to avoid an error.
 			this->skipInstDetect.push_back("map-sagent-world");
+
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 0;
+			}
 		}
 
 		void addTests()
@@ -96,6 +103,18 @@ class test_map_sagent: public test_map2d
 				"* d                                     \x0D\x0A"
 				"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x0D\x0A"
 			) + std::string(42 * (48 - 6), '\0')
+			);
+
+			// Attribute 00: BG tile
+			this->changeAttribute(0, 6, STRING_WITH_NULLS(
+				"333                                     \x0D\x0A"
+				"   3567                                 \x0D\x0A"
+				"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x0D\x0A"
+				"O    " "  "    "                                O\x0D\x0A"
+				"O 567" " \xD2" "                                O\x0D\x0A"
+				"*  d " " f"    "                                 \x0D\x0A"
+				"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x0D\x0A"
+				) + std::string(42 * (48 - 7), '\0')
 			);
 		}
 
