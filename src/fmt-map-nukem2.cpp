@@ -169,11 +169,10 @@ class Layer_Nukem2_Actors: public Map2DCore::LayerCore
 /// @todo Correct list of actors
 			for (int i = 0; i < 10; i++) {
 				validItems.emplace_back();
-				Item& item = validItems.back();
-				item.type = Item::Type::Default;
-				item.pos = {0, 0};
-				item.code = i + 31;
-				validItems.push_back(item);
+				auto& t = validItems.back();
+				t.type = Item::Type::Default;
+				t.pos = {0, 0};
+				t.code = i + 31;
 			}
 			return validItems;
 		}
