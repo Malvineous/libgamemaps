@@ -34,6 +34,13 @@ class test_map_harry: public test_map2d
 			this->mapCode[1].code = 0x01; // 0x00 is empty tile and thus skipped
 			this->mapCode[2].pos = {0, 0};
 			this->mapCode[2].code = 0x01; // 0x00 is empty tile and thus skipped
+
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 1;
+			}
 		}
 
 		void addTests()
@@ -186,6 +193,34 @@ class test_map_harry: public test_map2d
 
 			// c06b: Prev test plus one byte works
 			this->isInstance(MapType::DefinitelyYes, tooShort + std::string(1, '\0'));
+
+			// Attribute 00: Parallax
+			this->changeAttribute(0, 0, STRING_WITH_NULLS(
+				"\x11SubZero Game File" "\x00\x00\x00\x00" "\x02\x00\x03\x00" "\x00\x00"
+				"\x00"
+			)
+			+ makePalette()
+			+ makeTileFlags()
+			+ std::string(10, '\0')
+			// Actors
+			+ STRING_WITH_NULLS(
+				"\x01\x00"
+				"\x01" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+			)
+			+ std::string(112, '\0')
+			// BG/FG
+			+ STRING_WITH_NULLS(
+				"\x04\x00" "\x04\x00"
+				"\x01\x02\x03\x04"
+				"\x05\x06\x07\x08"
+				"\x09\x0a\x0b\x0c"
+				"\x0d\x0e\x0f\x00"
+
+				"\x01\x02\x03\x04"
+				"\x05\x06\x07\x08"
+				"\x09\x0a\x0b\x0c"
+				"\x0d\x0e\x0f\x00"
+			));
 		}
 
 		virtual std::string initialstate()
