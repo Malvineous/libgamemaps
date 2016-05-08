@@ -61,6 +61,13 @@ class test_map_xargon: public test_map2d
 			this->mapCode[1].code = 0x33;
 			this->suppResult[SuppItem::Extra1].reset(new test_suppx1_map_xargon());
 			this->skipInstDetect.push_back("map2d-wordresc");
+
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Integer;
+				a.integerValue = 2;
+			}
 		}
 
 		void addTests()
@@ -381,6 +388,48 @@ class test_map_xargon: public test_map2d
 				+ std::string(95, '\x00')
 				// String list (lots of short strings)
 				+ many
+			);
+
+			// Attribute 00: Savegame level number
+			this->changeAttribute(0, 0,
+				// Background layer
+				STRING_WITH_NULLS(
+					"\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00"
+					"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				) + std::string((16 * 7 + 128 * 63) * 2, '\x00')
+				// Object layer
+				+ STRING_WITH_NULLS(
+					"\x03\x00"
+
+					"\x00" "\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x00\x00\x00\x00"
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x01\x00" "\x02\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // first string
+					"\x00\x00" "\x00\x00"
+
+					"\x33" "\x03\x00" "\x04\x00"
+					"\x00\x00" "\x00\x00"
+					"\x10\x00" "\x10\x00" /* TODO: Use real width and height */
+					"\x00\x00" "\x00\x00"
+					"\x00\x00" "\x00\x00" "\x00\x00" "\x01\x00\x00\x00" // second string
+					"\x00\x00" "\x00\x00"
+				)
+				// Empty savedata
+				+ STRING_WITH_NULLS("\x00\x00")
+				+ std::string(95, '\x00')
+				// String list
+				+ STRING_WITH_NULLS(
+					"\x05\x00" "Hello" "\0"
+					"\x07\x00" "Goodbye" "\0"
+				)
 			);
 		}
 
