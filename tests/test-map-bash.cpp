@@ -335,6 +335,49 @@ class test_map_bash: public test_map2d
 			this->mapCode[3].code = 1000025;
 			this->mapCode[3].pos = {0, 0};
 
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "bk1.tbg";
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "fg1.tfg";
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "bon1.tbn";
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "sgl1.sgl";
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "main_r.pal";
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "bash.snd";
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Filename;
+				a.filenameValue = "";
+			}
+
 			this->suppResult[SuppItem::Layer1].reset(new test_suppl1_map_bash());
 			this->suppResult[SuppItem::Layer2].reset(new test_suppl2_map_bash());
 			this->suppResult[SuppItem::Layer3].reset(new test_suppl3_map_bash());
@@ -404,6 +447,72 @@ class test_map_bash: public test_map2d
 				"sgl1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 				"main_r\0\0"    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 				"bash.snd"      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+			));
+
+			// Attribute 00: bk1
+			this->changeAttribute(0, "abc.tbg", STRING_WITH_NULLS(
+				"abc\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"fg1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bon1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"sgl1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"main_r\0\0"    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bash.snd"      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+			));
+
+			// Attribute 01: fg1
+			this->changeAttribute(1, "abc.tfg", STRING_WITH_NULLS(
+				"bk1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"abc\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bon1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"sgl1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"main_r\0\0"    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bash.snd"      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+			));
+
+			// Attribute 02: bon1
+			this->changeAttribute(2, "abc.tbn", STRING_WITH_NULLS(
+				"bk1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"fg1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"abc\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"sgl1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"main_r\0\0"    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bash.snd"      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+			));
+
+			// Attribute 03: sgl1
+			this->changeAttribute(3, "abc.sgl", STRING_WITH_NULLS(
+				"bk1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"fg1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bon1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"abc\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"main_r\0\0"    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bash.snd"      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+			));
+
+			// Attribute 04: main_r
+			this->changeAttribute(4, "abc.pal", STRING_WITH_NULLS(
+				"bk1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"fg1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bon1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"sgl1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"abc\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bash.snd"      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+			));
+
+			// Attribute 05: bash.snd
+			this->changeAttribute(5, "abc.snd", STRING_WITH_NULLS(
+				"bk1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"fg1\0\0\0\0\0" "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"bon1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"sgl1\0\0\0\0"  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"main_r\0\0"    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+				"abc.snd\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 				"UNNAMED\0"     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 			));
 		}
