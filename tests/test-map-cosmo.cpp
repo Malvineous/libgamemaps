@@ -54,6 +54,43 @@ class test_map_cosmo: public test_map2d
 			this->mapCode[1].pos = {0, 0};
 			this->mapCode[1].code = 0x1F;
 
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 1;
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 1;
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 0;
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 0;
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 1;
+			}
+			{
+				this->attributes.emplace_back();
+				auto& a = this->attributes.back();
+				a.type = Attribute::Type::Enum;
+				a.enumValue = 1;
+			}
+
 			this->suppResult[SuppItem::Extra1] = std::make_unique<test_map_cosmo_suppextra1>();
 		}
 
@@ -62,7 +99,7 @@ class test_map_cosmo: public test_map2d
 			this->test_map2d::addTests();
 
 			// Attribute 00: Backdrop
-			this->changeAttribute(0, 1, 25, STRING_WITH_NULLS(
+			this->changeAttribute(0, 25, STRING_WITH_NULLS(
 				"\x39\x09" "\x40\x00" "\x03\x00"
 
 				"\x1F\x00" "\x00\x00" "\x00\x00"
@@ -73,7 +110,7 @@ class test_map_cosmo: public test_map2d
 			);
 
 			// Attribute 01: Rain
-			this->changeAttribute(1, 1, 0, STRING_WITH_NULLS(
+			this->changeAttribute(1, 0, STRING_WITH_NULLS(
 				"\x01\x09" "\x40\x00" "\x03\x00"
 
 				"\x1F\x00" "\x00\x00" "\x00\x00"
@@ -84,7 +121,7 @@ class test_map_cosmo: public test_map2d
 			);
 
 			// Attribute 02: Scroll X
-			this->changeAttribute(2, 0, 1, STRING_WITH_NULLS(
+			this->changeAttribute(2, 1, STRING_WITH_NULLS(
 				"\x61\x09" "\x40\x00" "\x03\x00"
 
 				"\x1F\x00" "\x00\x00" "\x00\x00"
@@ -95,7 +132,7 @@ class test_map_cosmo: public test_map2d
 			);
 
 			// Attribute 03: Scroll Y
-			this->changeAttribute(3, 0, 1, STRING_WITH_NULLS(
+			this->changeAttribute(3, 1, STRING_WITH_NULLS(
 				"\xA1\x09" "\x40\x00" "\x03\x00"
 
 				"\x1F\x00" "\x00\x00" "\x00\x00"
@@ -106,7 +143,7 @@ class test_map_cosmo: public test_map2d
 			);
 
 			// Attribute 04: Palette animation
-			this->changeAttribute(4, 1, 0, STRING_WITH_NULLS(
+			this->changeAttribute(4, 0, STRING_WITH_NULLS(
 				"\x21\x08" "\x40\x00" "\x03\x00"
 
 				"\x1F\x00" "\x00\x00" "\x00\x00"
@@ -117,7 +154,7 @@ class test_map_cosmo: public test_map2d
 			);
 
 			// Attribute 05: Music
-			this->changeAttribute(5, 1, 18, STRING_WITH_NULLS(
+			this->changeAttribute(5, 18, STRING_WITH_NULLS(
 				"\x21\x91" "\x40\x00" "\x03\x00"
 
 				"\x1F\x00" "\x00\x00" "\x00\x00"

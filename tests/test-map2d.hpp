@@ -64,6 +64,7 @@ class test_map2d: public test_main
 		void test_write();
 		void test_codelist();
 		void test_codelist_valid();
+		void test_attributes();
 
 	protected:
 		/// Initial state.
@@ -173,31 +174,35 @@ class test_map2d: public test_main
 		void test_conversion(const std::string& input, const std::string& output,
 			unsigned int testNumber);
 
-		/// Add an attribute change check to run later.
+		/// Add a changeAttribute check to run later.
 		/**
-		 * These checks ensure both an attribute has the correct expected value
-		 * (taken from the initialstate()) as well as ensuring the output data is
-		 * correct after changing the attribute.
+		 * These checks make sure attribute alterations work correctly.
 		 *
-		 * @param index
+		 * @param attributeIndex
 		 *   Zero-based index of the attribute to change.
 		 *
-		 * @param before
-		 *   Value of the attribute obtained from the initialstate() data.
+		 * @param newValue
+		 *   New content for the attribute.
 		 *
-		 * @param after
-		 *   New value to set for the attribute.
-		 *
-		 * @param output
-		 *   Expected content, the same as initialdata() but with whatever bytes
-		 *   are altered due to the attribute having been changed.
+		 * @param content
+		 *   Expected result after taking the initialstate() and changing the
+		 *   given attribute as specified.
 		 */
-		void changeAttribute(unsigned int index, unsigned int before,
-			unsigned int after, const std::string& output);
+		void changeAttribute(unsigned int attributeIndex,
+			const std::string& newValue, const std::string& content);
 
-		/// Perform an attribute-change check now.
-		void test_changeAttribute(unsigned int index, unsigned int before,
-			unsigned int after, const std::string& output, unsigned int testNumber);
+		void changeAttribute(unsigned int attributeIndex,
+			unsigned int newValue, const std::string& content);
+
+		/// Perform a changeAttribute<std::string> check now.
+		void test_changeAttribute(unsigned int attributeIndex,
+			const std::string& newValue, const std::string& content,
+			unsigned int testNumber);
+
+		/// Perform a changeAttribute<int> check now.
+		void test_changeAttribute(unsigned int attributeIndex,
+			int newValue, const std::string& content,
+			unsigned int testNumber);
 
 		/// Does the map content match the parameter?
 		boost::test_tools::predicate_result is_content_equal(const std::string& exp);
@@ -231,7 +236,7 @@ class test_map2d: public test_main
 		unsigned int numConversionTests;
 
 		/// Number of attribute-change tests, used to number them sequentially.
-		unsigned int numAttributeTests;
+		unsigned int numChangeAttributeTests;
 
 	public:
 		/// File type code for this format.
@@ -257,6 +262,9 @@ class test_map2d: public test_main
 			camoto::gamemaps::Point pos;
 			int code;
 		} mapCode[MAP2D_MAX_LAYERS];
+
+		/// List of attributes this format supports, can be empty.
+		std::vector<camoto::Attribute> attributes;
 
 		/// Link between supplementary items and the class containing the expected
 		/// content for each test case.

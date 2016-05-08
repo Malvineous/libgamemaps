@@ -30,7 +30,7 @@ test_map2d::test_map2d()
 	:	numIsInstanceTests(0),
 		numInvalidContentTests(1),
 		numConversionTests(1),
-		numAttributeTests(0)
+		numChangeAttributeTests(0)
 {
 	this->pxSize = {-1, -1};
 	this->numLayers = -1;
@@ -49,6 +49,7 @@ void test_map2d::addTests()
 	ADD_MAP2D_TEST(false, &test_map2d::test_write);
 	ADD_MAP2D_TEST(false, &test_map2d::test_codelist);
 	ADD_MAP2D_TEST(false, &test_map2d::test_codelist_valid);
+	ADD_MAP2D_TEST(false, &test_map2d::test_attributes);
 	//if (this->create) {
 		// TODO
 	//}
@@ -305,58 +306,79 @@ void test_map2d::test_conversion(const std::string& input,
 	return;
 }
 
-void test_map2d::changeAttribute(unsigned int index, unsigned int before,
-	unsigned int after, const std::string& output)
+void test_map2d::changeAttribute(unsigned int attributeIndex,
+	const std::string& newValue, const std::string& content)
 {
-	this->addBoundTest(false,
-		std::bind(
-			&test_map2d::test_changeAttribute, this, index, before, after, output,
-			this->numAttributeTests
-		),
-		__FILE__, __LINE__,
-		createString("test_map2d[" << this->basename << "]::changeAttribute_"
-			<< std::setfill('0') << std::setw(2) << this->numAttributeTests)
+	this->ts->add(
+		boost::unit_test::make_test_case(
+			std::bind(
+				(void(test_map2d::*)(unsigned int, const std::string&,
+					const std::string&, unsigned int))&test_map2d::test_changeAttribute,
+				this, attributeIndex,
+				newValue, content, this->numChangeAttributeTests),
+			createString("test_map2d[" << this->basename << "]::changeAttribute_a"
+				<< std::setfill('0') << std::setw(2) << this->numChangeAttributeTests),
+			__FILE__, __LINE__
+		)
 	);
-	this->numAttributeTests++;
+	this->numChangeAttributeTests++;
 	return;
 }
 
-void test_map2d::test_changeAttribute(unsigned int index, unsigned int before,
-	unsigned int after, const std::string& output, unsigned int testNumber)
+void test_map2d::changeAttribute(unsigned int attributeIndex,
+	unsigned int newValue, const std::string& content)
 {
-	BOOST_TEST_MESSAGE(createString("changeAttribute check (" << this->basename
-		<< "; " << std::setfill('0') << std::setw(2) << testNumber << ")"));
+	this->ts->add(
+		boost::unit_test::make_test_case(
+			std::bind(
+				(void(test_map2d::*)(unsigned int, int,
+					const std::string&, unsigned int))&test_map2d::test_changeAttribute,
+				this, attributeIndex,
+				newValue, content, this->numChangeAttributeTests),
+			createString("test_map2d[" << this->basename << "]::changeAttribute_a"
+				<< std::setfill('0') << std::setw(2) << this->numChangeAttributeTests),
+			__FILE__, __LINE__
+		)
+	);
+	this->numChangeAttributeTests++;
+	return;
+}
 
-	this->base->truncate(0);
+void test_map2d::test_changeAttribute(unsigned int attributeIndex,
+	const std::string& newValue, const std::string& content,
+	unsigned int testNumber)
+{
+	BOOST_TEST_MESSAGE(this->basename << ": changeAttribute_a"
+		<< std::setfill('0') << std::setw(2) << testNumber);
 
-	// Check "before" value
-	auto attributes = this->map->attributes();
-	BOOST_REQUIRE_GT(attributes.size(), index);
-	switch (attributes[index].type) {
-		case Attribute::Type::Enum:
-			BOOST_REQUIRE_EQUAL(attributes[index].enumValue, before);
-			break;
-	}
-
-	// Set "after" value
-	this->map->attribute(index, after);
-
-	// Confirm "after" value stuck
-	attributes = this->map->attributes();
-	BOOST_REQUIRE_GT(attributes.size(), index);
-	switch (attributes[index].type) {
-		case Attribute::Type::Enum:
-			BOOST_REQUIRE_EQUAL(attributes[index].enumValue, after);
-			break;
-	}
-
+	this->prepareTest(false);
+	this->map->attribute(attributeIndex, newValue);
 	this->map->flush();
 
+	// Can't use checkData() here as we don't have parameter for target suppData
 	BOOST_CHECK_MESSAGE(
-		this->is_content_equal(output),
-		"Error writing map after attribute change - data is different to expected"
+		this->is_content_equal(content),
+		"Error setting string attribute"
 	);
+	return;
+}
 
+void test_map2d::test_changeAttribute(unsigned int attributeIndex,
+	int newValue, const std::string& content,
+	unsigned int testNumber)
+{
+	BOOST_TEST_MESSAGE(this->basename << ": changeAttribute_a"
+		<< std::setfill('0') << std::setw(2) << testNumber);
+
+	this->prepareTest(false);
+	this->map->attribute(attributeIndex, newValue);
+	this->map->flush();
+
+	// Can't use checkData() here as we don't have parameter for target suppData
+	BOOST_CHECK_MESSAGE(
+		this->is_content_equal(content),
+		"Error setting int attribute"
+	);
 	return;
 }
 
@@ -505,5 +527,48 @@ void test_map2d::test_codelist_valid()
 			// Type must be a valid Map2D::Layer::Item::Type value
 			BOOST_REQUIRE_LE((int)i.type, 0x001F);
 		}
+	}
+}
+
+void test_map2d::test_attributes()
+{
+	BOOST_TEST_MESSAGE(this->basename << ": Test attributes");
+
+	auto& attrAll = this->map->attributes();
+	// Allow this to proceed so tests can be written without having all attributes
+	// in place from the start.
+	BOOST_CHECK_EQUAL(this->attributes.size(), this->map->attributes().size());
+
+	int i = 0;
+	for (auto& attrExpected : this->attributes) {
+		BOOST_REQUIRE_MESSAGE(i < attrAll.size(),
+			"Cannot find attribute #" << i);
+		auto& attrArchive = attrAll[i];
+
+		BOOST_REQUIRE_EQUAL((int)attrExpected.type, (int)attrArchive.type);
+
+		switch (attrExpected.type) {
+			case Attribute::Type::Integer:
+				BOOST_REQUIRE_EQUAL(attrExpected.integerValue, attrArchive.integerValue);
+				break;
+			case Attribute::Type::Enum:
+				BOOST_REQUIRE_EQUAL(attrExpected.enumValue, attrArchive.enumValue);
+				break;
+			case Attribute::Type::Filename:
+				BOOST_REQUIRE_MESSAGE(
+					this->is_equal(attrExpected.filenameValue, attrArchive.filenameValue),
+					"Error getting filename attribute"
+				);
+				break;
+			case Attribute::Type::Text:
+				BOOST_REQUIRE_MESSAGE(
+					this->is_equal(attrExpected.textValue, attrArchive.textValue),
+					"Error getting text attribute"
+				);
+				break;
+			case Attribute::Type::Image:
+				BOOST_REQUIRE_EQUAL(attrExpected.imageIndex, attrArchive.imageIndex);
+		}
+		i++;
 	}
 }
