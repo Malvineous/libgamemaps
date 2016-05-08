@@ -549,25 +549,25 @@ void test_map2d::test_attributes()
 
 		switch (attrExpected.type) {
 			case Attribute::Type::Integer:
-				BOOST_REQUIRE_EQUAL(attrExpected.integerValue, attrArchive.integerValue);
+				BOOST_CHECK_EQUAL(attrExpected.integerValue, attrArchive.integerValue);
 				break;
 			case Attribute::Type::Enum:
-				BOOST_REQUIRE_EQUAL(attrExpected.enumValue, attrArchive.enumValue);
+				BOOST_CHECK_EQUAL(attrExpected.enumValue, attrArchive.enumValue);
 				break;
 			case Attribute::Type::Filename:
-				BOOST_REQUIRE_MESSAGE(
+				BOOST_CHECK_MESSAGE(
 					this->is_equal(attrExpected.filenameValue, attrArchive.filenameValue),
 					"Error getting filename attribute"
 				);
 				break;
 			case Attribute::Type::Text:
-				BOOST_REQUIRE_MESSAGE(
+				BOOST_CHECK_MESSAGE(
 					this->is_equal(attrExpected.textValue, attrArchive.textValue),
 					"Error getting text attribute"
 				);
 				break;
 			case Attribute::Type::Image:
-				BOOST_REQUIRE_EQUAL(attrExpected.imageIndex, attrArchive.imageIndex);
+				BOOST_CHECK_EQUAL(attrExpected.imageIndex, attrArchive.imageIndex);
 		}
 		i++;
 	}
