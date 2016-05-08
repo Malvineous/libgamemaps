@@ -24,8 +24,6 @@
 #include <map>
 #include <boost/test/unit_test.hpp>
 #include <boost/algorithm/string.hpp> // for case-insensitive string compare
-#include <boost/iostreams/copy.hpp>
-#include <boost/bind.hpp>
 #include <camoto/stream_string.hpp>
 #include <camoto/gamemaps.hpp>
 #include "tests.hpp"
