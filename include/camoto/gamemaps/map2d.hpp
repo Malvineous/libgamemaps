@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <map>
+#include <camoto/enum-ops.hpp>
 #include <camoto/gamegraphics/tileset.hpp>
 #include <camoto/gamegraphics/palette.hpp>
 #include <camoto/gamemaps/map.hpp>
@@ -172,33 +173,9 @@ class Map2D: virtual public Map
 		 */
 		virtual Background background(const TilesetCollection& tileset)
 			const = 0;
-/*
-		inline Map2D(const Attributes& attributes, const GraphicsFilenames& graphicsFilenames,
-			unsigned int caps, unsigned int viewportWidth,
-			unsigned int viewportHeight)
-			:	Map(
-					attributes,
-					graphicsFilenames
-				),
-				caps(caps),
-				viewportX(viewportWidth),
-				viewportY(viewportHeight)
-		{
-		}
-*/
 };
 
-inline Map2D::Caps operator| (Map2D::Caps a, Map2D::Caps b) {
-	return static_cast<Map2D::Caps>(
-		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
-	);
-}
-
-inline bool operator& (Map2D::Caps a, Map2D::Caps b) {
-	return
-		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
-	;
-}
+IMPLEMENT_ENUM_OPERATORS(Map2D::Caps);
 
 /// A map is made up of multiple layers.
 class Map2D::Layer
@@ -370,17 +347,7 @@ class Map2D::Layer
 		virtual std::vector<Item> availableItems() const = 0;
 };
 
-inline Map2D::Layer::Caps operator| (Map2D::Layer::Caps a, Map2D::Layer::Caps b) {
-	return static_cast<Map2D::Layer::Caps>(
-		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
-	);
-}
-
-inline bool operator& (Map2D::Layer::Caps a, Map2D::Layer::Caps b) {
-	return
-		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
-	;
-}
+IMPLEMENT_ENUM_OPERATORS(Map2D::Layer::Caps);
 
 /// Item within the layer (a tile)
 class Map2D::Layer::Item
@@ -450,56 +417,9 @@ class Map2D::Layer::Item
 		GeneralFlags generalFlags;
 };
 
-inline Map2D::Layer::Item::Type operator| (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
-	return static_cast<Map2D::Layer::Item::Type>(
-		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
-	);
-}
-
-inline Map2D::Layer::Item::Type operator|= (Map2D::Layer::Item::Type& a, const Map2D::Layer::Item::Type& b) {
-	a = a | b;
-	return a;
-}
-
-inline bool operator& (Map2D::Layer::Item::Type a, Map2D::Layer::Item::Type b) {
-	return
-		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
-	;
-}
-
-inline Map2D::Layer::Item::MovementFlags operator| (Map2D::Layer::Item::MovementFlags a, Map2D::Layer::Item::MovementFlags b) {
-	return static_cast<Map2D::Layer::Item::MovementFlags>(
-		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
-	);
-}
-
-inline Map2D::Layer::Item::MovementFlags operator|= (Map2D::Layer::Item::MovementFlags& a, const Map2D::Layer::Item::MovementFlags& b) {
-	a = a | b;
-	return a;
-}
-
-inline bool operator& (Map2D::Layer::Item::MovementFlags a, Map2D::Layer::Item::MovementFlags b) {
-	return
-		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
-	;
-}
-
-inline Map2D::Layer::Item::BlockingFlags operator| (Map2D::Layer::Item::BlockingFlags a, Map2D::Layer::Item::BlockingFlags b) {
-	return static_cast<Map2D::Layer::Item::BlockingFlags>(
-		static_cast<unsigned int>(a) | static_cast<unsigned int>(b)
-	);
-}
-
-inline Map2D::Layer::Item::BlockingFlags operator|= (Map2D::Layer::Item::BlockingFlags& a, const Map2D::Layer::Item::BlockingFlags& b) {
-	a = a | b;
-	return a;
-}
-
-inline bool operator& (Map2D::Layer::Item::BlockingFlags a, Map2D::Layer::Item::BlockingFlags b) {
-	return
-		static_cast<unsigned int>(a) & static_cast<unsigned int>(b)
-	;
-}
+IMPLEMENT_ENUM_OPERATORS(Map2D::Layer::Item::Type);
+IMPLEMENT_ENUM_OPERATORS(Map2D::Layer::Item::MovementFlags);
+IMPLEMENT_ENUM_OPERATORS(Map2D::Layer::Item::BlockingFlags);
 
 /// Value to use for tilecodes that have not yet been set.
 const unsigned int INVALID_TILECODE = (unsigned int)-1;
