@@ -1,6 +1,6 @@
 Camoto: Classic-game Modding Tools
 ==================================
-Copyright 2010-2016 Adam Nielsen <<malvineous@shikadi.net>>  
+Copyright 2010-2017 Adam Nielsen <<malvineous@shikadi.net>>  
 http://www.shikadi.net/camoto/  
 Linux/OSX: [![Build Status](https://travis-ci.org/Malvineous/libgamemaps.svg?branch=master)](https://travis-ci.org/Malvineous/libgamemaps)
 
@@ -65,7 +65,8 @@ Many more formats are planned.
 This distribution includes an example program `gamemap` which serves as both
 a command-line interface to the library as well as an example of how to use
 the library.  This program is installed as part of the `make install` process.
-See `man gamemap` for full details.
+See [`man gamemap`](http://www.shikadi.net/camoto/manpage/gamemap) for full
+details.
 
 The library is compiled and installed in the usual way:
 
