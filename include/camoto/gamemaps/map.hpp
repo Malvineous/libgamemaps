@@ -3,7 +3,7 @@
  * @brief Declaration of top-level Map class, for accessing files
  *        storing game map data.
  *
- * Copyright (C) 2010-2015 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2017 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #define _CAMOTO_GAMEMAPS_MAP_HPP_
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include <camoto/error.hpp>
 #include <camoto/attribute.hpp>
 #include <camoto/gamegraphics/tileset.hpp>
