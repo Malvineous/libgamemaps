@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cassert>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <camoto/iostream_helpers.hpp>

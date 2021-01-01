@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cassert>
 #include <iostream>
 #include <list>
 #include <camoto/iostream_helpers.hpp>

@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cassert>
 #include <camoto/iostream_helpers.hpp>
 #include <camoto/util.hpp> // make_unique
 #include "map-core.hpp"
